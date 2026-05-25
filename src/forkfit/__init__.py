@@ -1,5 +1,6 @@
 from .agents import AdapterAgent, ConstraintAgent, ConstraintGuard, UserAgent
 from .llm import BailianLLMClient
+from .fixtures import demo_meal_pack, demo_user_profile
 from .models import (
     AdapterOutput,
     AgentFinding,
@@ -29,6 +30,8 @@ __all__ = [
     "ConstraintAgent",
     "ConstraintGuard",
     "ConstraintSet",
+    "demo_meal_pack",
+    "demo_user_profile",
     "ForkFitResult",
     "ForkFitLangGraphWorkflow",
     "LLMCallTrace",

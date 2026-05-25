@@ -145,33 +145,6 @@ class UserAgent:
         )
         return output
 
-    def _review_taste_fit(
-        self, preference_profile: PreferenceProfile, meal_pack: MealPack
-    ) -> list[AgentFinding]:
-        findings: list[AgentFinding] = []
-        for meal in meal_pack.meals:
-            text = meal.searchable_text()
-            for dislike in preference_profile.dislikes:
-                if _contains_term(text, dislike):
-                    findings.append(
-                        AgentFinding(
-                            type="taste_mismatch",
-                            severity="medium",
-                            affected_items=[meal.id],
-                            message=f"User dislikes {dislike}.",
-                            suggested_action=f"Reduce or replace {dislike} while keeping the meal theme.",
-                        )
-                    )
-        return findings
-
-    def _count_matches(self, terms: list[str], meal_pack: MealPack) -> int:
-        return sum(
-            1
-            for term in terms
-            if any(_contains_term(meal.searchable_text(), term) for meal in meal_pack.meals)
-        )
-
-
 class ConstraintAgent:
     agent_name = "constraint"
 
