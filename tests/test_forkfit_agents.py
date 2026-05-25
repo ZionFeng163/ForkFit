@@ -4,6 +4,7 @@ from forkfit import (
     AgentFinding,
     AgentReview,
     ConstraintAgent,
+    ConstraintGuard,
     ForkFitLangGraphWorkflow,
     Meal,
     MealPack,
@@ -75,6 +76,22 @@ class FakeLLMClient:
                 },
             }
 
+        if agent == "constraint":
+            if trace is not None:
+                from forkfit.models import LLMCallTrace
+
+                trace.llm_calls.append(
+                    LLMCallTrace(
+                        agent="constraint",
+                        model=self.model,
+                        duration_ms=1.0,
+                        prompt_tokens=15,
+                        completion_tokens=15,
+                        status="success",
+                    )
+                )
+            return self._constraint_payload(request)
+
         if agent == "adapter":
             if trace is not None:
                 from forkfit.models import LLMCallTrace
@@ -92,6 +109,83 @@ class FakeLLMClient:
             return self._adapter_payload(request)
 
         raise AssertionError(f"unexpected agent: {agent}")
+
+    def _constraint_payload(self, request):
+        pack = request["meal_pack"]
+        constraints = request["constraints"]
+        findings = []
+
+        for item in pack["meals"]:
+            text = " ".join(
+                [
+                    item["name"],
+                    item.get("notes", ""),
+                    *item["ingredients"],
+                    *item["equipment"],
+                    *item["tags"],
+                ]
+            ).lower()
+            for allergy in constraints.get("allergies", []):
+                if allergy.lower() in text:
+                    findings.append(
+                        {
+                            "type": "allergy",
+                            "severity": "high",
+                            "affected_items": [item["id"]],
+                            "message": f"{item['name']} contains {allergy}.",
+                            "suggested_action": "",
+                            "required_action": "replace ingredient",
+                        }
+                    )
+            available = {entry.lower() for entry in constraints.get("equipment", [])}
+            missing = [
+                entry for entry in item["equipment"] if entry.lower() not in available
+            ]
+            if missing:
+                findings.append(
+                    {
+                        "type": "equipment",
+                        "severity": "high",
+                        "affected_items": [item["id"]],
+                        "message": f"{item['name']} requires unavailable equipment: {', '.join(missing)}.",
+                        "suggested_action": "",
+                        "required_action": "replace equipment method",
+                    }
+                )
+            if item["cook_time_minutes"] > constraints["max_cook_time_minutes"]:
+                findings.append(
+                    {
+                        "type": "time",
+                        "severity": "medium",
+                        "affected_items": [item["id"]],
+                        "message": f"{item['name']} exceeds time limit.",
+                        "suggested_action": "shorten recipe",
+                        "required_action": "",
+                    }
+                )
+
+        if pack["meals"] and sum(item["estimated_cost"] for item in pack["meals"]) > constraints["budget"]:
+            findings.append(
+                {
+                    "type": "budget",
+                    "severity": "medium",
+                    "affected_items": [item["id"] for item in pack["meals"]],
+                    "message": "Estimated cost exceeds budget.",
+                    "suggested_action": "reduce cost",
+                    "required_action": "",
+                }
+            )
+
+        return {
+            "agent": "constraint",
+            "status": "block"
+            if any(item["severity"] == "high" for item in findings)
+            else "warn"
+            if findings
+            else "pass",
+            "findings": findings,
+            "scores": {},
+        }
 
     def _adapter_payload(self, request):
         pack = request["original_meal_pack"]
@@ -395,7 +489,7 @@ class ForkFitAgentTests(unittest.TestCase):
         user_output = UserAgent(FakeLLMClient()).run(user, source)
         constraints = user_output.preference_profile.to_constraints(user)
 
-        review = ConstraintAgent().review(source, constraints)
+        review = ConstraintAgent(FakeLLMClient()).review(source, constraints)
 
         self.assertEqual(review.status, "block")
         self.assertEqual(review.findings[0].type, "allergy")
@@ -404,7 +498,7 @@ class ForkFitAgentTests(unittest.TestCase):
         class MockNutritionAgent:
             agent_name = "nutrition"
 
-            def review(self, meal_pack, constraints):
+            def review(self, meal_pack, constraints, trace=None):
                 return AgentReview(
                     agent="nutrition",
                     status="warn",
@@ -424,7 +518,7 @@ class ForkFitAgentTests(unittest.TestCase):
         source = pack_with(meal())
 
         result = ForkFitLangGraphWorkflow(
-            reviewer_agents=[ConstraintAgent(), MockNutritionAgent()],
+            reviewer_agents=[ConstraintAgent(FakeLLMClient()), MockNutritionAgent()],
             llm_client=FakeLLMClient(),
         ).run(
             user, source
@@ -483,10 +577,23 @@ class ForkFitAgentTests(unittest.TestCase):
                 "final_validation",
             ],
         )
-        self.assertEqual(result.trace.llm_call_count, 2)
+        self.assertEqual(result.trace.llm_call_count, 3)
         self.assertEqual(
-            [call.agent for call in result.trace.llm_calls], ["user", "adapter"]
+            [call.agent for call in result.trace.llm_calls],
+            ["user", "constraint", "adapter"],
         )
+
+    def test_final_validation_is_guard_not_agent(self):
+        user = base_user(allergies=["peanut"])
+        source = pack_with(meal(ingredients=["rice", "peanut sauce"]))
+        constraints = UserAgent(FakeLLMClient()).run(
+            user, source
+        ).preference_profile.to_constraints(user)
+
+        review = ConstraintGuard().review(source, constraints)
+
+        self.assertEqual(review.agent, "constraint_guard")
+        self.assertEqual(review.status, "block")
 
     def test_llm_source_agent_is_normalized_to_single_agent(self):
         self.assertEqual(normalize_source_agent("user | constraint"), "constraint")

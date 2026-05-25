@@ -9,23 +9,25 @@ from .models import (
     AdapterOutput,
     AgentFinding,
     AgentReview,
-    ChangeLogEntry,
     ConstraintSet,
-    Meal,
     MealPack,
-    PreferenceProfile,
-    PreferenceReview,
     UserAgentOutput,
     UserProfile,
     RunTrace,
 )
 from .serialization import adapter_output_from_dict, user_agent_output_from_dict
+from .serialization import agent_review_from_dict
 
 
 class ReviewerAgent(Protocol):
     agent_name: str
 
-    def review(self, meal_pack: MealPack, constraints: ConstraintSet) -> AgentReview:
+    def review(
+        self,
+        meal_pack: MealPack,
+        constraints: ConstraintSet,
+        trace: RunTrace | None = None,
+    ) -> AgentReview:
         ...
 
 
@@ -173,6 +175,74 @@ class UserAgent:
 class ConstraintAgent:
     agent_name = "constraint"
 
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    def review(
+        self,
+        meal_pack: MealPack,
+        constraints: ConstraintSet,
+        trace: RunTrace | None = None,
+    ) -> AgentReview:
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                "You are ForkFit ConstraintAgent. Audit hard feasibility for a "
+                "community meal pack against the provided constraints. Return only "
+                "JSON matching AgentReview. Do not modify the meal pack."
+            ),
+            user=json.dumps(
+                {
+                    "task": "Return AgentReview JSON.",
+                    "schema": {
+                        "agent": "constraint",
+                        "status": "pass | warn | block",
+                        "findings": [
+                            {
+                                "type": "allergy | diet_rule | equipment | budget | time",
+                                "severity": "low | medium | high",
+                                "affected_items": ["meal id"],
+                                "message": "string",
+                                "suggested_action": "string",
+                                "required_action": "string",
+                            }
+                        ],
+                        "scores": {},
+                    },
+                    "rules": [
+                        "High severity means the fork cannot be published until fixed.",
+                        "Allergy, diet_rule, and unavailable equipment conflicts are high severity.",
+                        "Budget and time can be warn unless clearly impossible.",
+                        "affected_items must use meal ids from meal_pack.",
+                        "status is block if any high-severity finding exists, warn if only low/medium findings exist, otherwise pass.",
+                    ],
+                    "meal_pack": meal_pack.to_dict(),
+                    "constraints": asdict(constraints),
+                },
+                ensure_ascii=True,
+            ),
+            trace=trace,
+        )
+        review = agent_review_from_dict(payload)
+        return self._normalize_review(meal_pack, review)
+
+    def _normalize_review(self, meal_pack: MealPack, review: AgentReview) -> AgentReview:
+        valid_ids = {meal.id for meal in meal_pack.meals}
+        review.agent = self.agent_name
+        review.findings = [
+            finding
+            for finding in review.findings
+            if any(item in valid_ids for item in finding.affected_items)
+        ]
+        review.status = _status_from_findings(review.findings)
+        return review
+
+
+class ConstraintGuard:
+    """Deterministic guardrail. This is not an Agent and does not call an LLM."""
+
+    guard_name = "constraint_guard"
+
     def review(self, meal_pack: MealPack, constraints: ConstraintSet) -> AgentReview:
         findings: list[AgentFinding] = []
         findings.extend(self._allergy_findings(meal_pack, constraints))
@@ -183,7 +253,7 @@ class ConstraintAgent:
 
         has_block = any(finding.severity == "high" for finding in findings)
         status = "block" if has_block else "warn" if findings else "pass"
-        return AgentReview(agent=self.agent_name, status=status, findings=findings)
+        return AgentReview(agent=self.guard_name, status=status, findings=findings)
 
     def _allergy_findings(
         self, meal_pack: MealPack, constraints: ConstraintSet
@@ -351,305 +421,38 @@ class AdapterAgent:
         original_ids = {meal.id for meal in original_meal_pack.meals}
         forked_ids = {meal.id for meal in output.forked_meal_pack.meals}
         if original_ids != forked_ids:
-            return self._deterministic_repair(original_meal_pack, user_agent_output, reviews)
+            output.unresolved_items.append(
+                AgentFinding(
+                    type="meal_identity",
+                    severity="high",
+                    affected_items=list(original_ids.symmetric_difference(forked_ids)),
+                    message="Adapter output changed meal ids; minimal fork contract was violated.",
+                    required_action="preserve original meal ids",
+                )
+            )
+            output.summary = "Could not safely fork the meal pack because adapter output changed meal ids."
+            return output
 
-        constrained = ConstraintAgent().review(
+        constrained = ConstraintGuard().review(
             output.forked_meal_pack,
-            user_agent_output.preference_profile.to_constraints(
-                _profile_from_preference(user_agent_output.preference_profile)
-            ),
+            _constraints_from_reviews(user_agent_output, reviews),
         )
         if constrained.status == "block" and not output.unresolved_items:
-            return self._deterministic_repair(original_meal_pack, user_agent_output, reviews)
+            output.unresolved_items = constrained.findings
+            output.summary = "Could not safely fork the meal pack because guard validation found unresolved hard constraints."
+            return output
 
         return output
 
-    def _deterministic_repair(
-        self,
-        original_meal_pack: MealPack,
-        user_agent_output: UserAgentOutput,
-        reviews: list[AgentReview],
-    ) -> AdapterOutput:
-        forked = original_meal_pack.clone()
-        change_log: list[ChangeLogEntry] = []
-        unresolved_items: list[AgentFinding] = []
 
-        for review in reviews:
-            for finding in review.findings:
-                if finding.severity == "high":
-                    resolved = self._apply_constraint_fix(
-                        forked, finding, user_agent_output.preference_profile, change_log
-                    )
-                    if not resolved:
-                        unresolved_items.append(finding)
-
-        if not unresolved_items:
-            self._apply_preference_fixes(
-                forked, user_agent_output.preference_review.findings, change_log
-            )
-            for review in reviews:
-                for finding in review.findings:
-                    if finding.severity != "high":
-                        self._apply_soft_review_fix(forked, finding, change_log)
-
-        summary = self._summary(change_log, unresolved_items)
-        return AdapterOutput(
-            forked_meal_pack=forked,
-            change_log=change_log,
-            unresolved_items=unresolved_items,
-            summary=summary,
-        )
-
-    def _apply_constraint_fix(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        preference_profile: PreferenceProfile,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        if finding.type in {"allergy", "diet_rule"}:
-            return self._replace_blocked_ingredients(
-                meal_pack, finding, preference_profile, change_log
-            )
-        if finding.type == "equipment":
-            return self._replace_equipment_method(
-                meal_pack, finding, preference_profile, change_log
-            )
-        if finding.type == "time":
-            return self._shorten_meal(meal_pack, finding, change_log)
-        if finding.type == "budget":
-            return self._reduce_budget(meal_pack, finding, change_log)
-        return False
-
-    def _apply_preference_fixes(
-        self,
-        meal_pack: MealPack,
-        findings: list[AgentFinding],
-        change_log: list[ChangeLogEntry],
-    ) -> None:
-        for finding in findings:
-            for meal_id in finding.affected_items:
-                meal = meal_pack.find_meal(meal_id)
-                if meal is None:
-                    continue
-                before = ", ".join(meal.ingredients)
-                changed = self._replace_matching_ingredient(
-                    meal,
-                    ["dry chicken breast", "chicken breast"],
-                    "saucy chicken thigh",
-                )
-                if not changed:
-                    meal.notes = _append_note(meal.notes, "Add a saucy rice-bowl finish for better taste fit.")
-                    changed = True
-                if changed:
-                    change_log.append(
-                        ChangeLogEntry(
-                            affected_item=meal.id,
-                            from_value=before,
-                            to_value=", ".join(meal.ingredients),
-                            reason=finding.message,
-                            source_agent="user",
-                        )
-                    )
-
-    def _apply_soft_review_fix(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        if finding.type == "budget":
-            return self._reduce_budget(meal_pack, finding, change_log)
-        if finding.type == "time":
-            return self._shorten_meal(meal_pack, finding, change_log)
-        return False
-
-    def _replace_blocked_ingredients(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        preference_profile: PreferenceProfile,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        blocked_terms = [
-            *preference_profile.allergies,
-            *[_norm(rule).removeprefix("no ") for rule in preference_profile.diet_rules],
-        ]
-        replacement_by_term = {
-            "peanut": "sesame-lime sauce",
-            "pork": "chicken thigh",
-            "shellfish": "tofu",
-            "shrimp": "tofu",
-            "beef": "mushroom tofu",
-            "dairy": "oat yogurt",
-            "milk": "oat milk",
-        }
-        resolved_any = False
-        for meal_id in finding.affected_items:
-            meal = meal_pack.find_meal(meal_id)
-            if meal is None:
-                continue
-            before = ", ".join(meal.ingredients)
-            resolved_meal = False
-            for term in blocked_terms:
-                replacement = replacement_by_term.get(_norm(term))
-                if replacement and self._replace_matching_ingredient(meal, [term], replacement):
-                    self._replace_blocked_metadata(meal, term, replacement)
-                    resolved_meal = True
-            if resolved_meal:
-                change_log.append(
-                    ChangeLogEntry(
-                        affected_item=meal.id,
-                        from_value=before,
-                        to_value=", ".join(meal.ingredients),
-                        reason=finding.message,
-                        source_agent="constraint",
-                    )
-                )
-                resolved_any = True
-        return resolved_any
-
-    def _replace_blocked_metadata(self, meal: Meal, term: str, replacement: str) -> None:
-        normalized_term = _norm(term)
-        if normalized_term and _contains_term(meal.name, term):
-            meal.name = meal.name.replace(term.title(), replacement.title())
-            meal.name = meal.name.replace(term.capitalize(), replacement.title())
-            meal.name = meal.name.replace(term, replacement)
-        meal.tags = [
-            replacement if _contains_term(tag, term) else tag for tag in meal.tags
-        ]
-        if meal.notes and _contains_term(meal.notes, term):
-            meal.notes = meal.notes.replace(term, replacement)
-
-    def _replace_equipment_method(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        preference_profile: PreferenceProfile,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        available = [_norm(item) for item in preference_profile.equipment]
-        preferred = next(
-            (item for item in ["air fryer", "stovetop", "rice cooker"] if item in available),
-            None,
-        )
-        if preferred is None:
-            return False
-
-        resolved = False
-        for meal_id in finding.affected_items:
-            meal = meal_pack.find_meal(meal_id)
-            if meal is None:
-                continue
-            before = ", ".join(meal.equipment)
-            meal.equipment = [preferred]
-            meal.notes = _append_note(meal.notes, f"Converted cooking method to {preferred}.")
-            change_log.append(
-                ChangeLogEntry(
-                    affected_item=meal.id,
-                    from_value=before,
-                    to_value=", ".join(meal.equipment),
-                    reason=finding.message,
-                    source_agent="constraint",
-                )
-            )
-            resolved = True
-        return resolved
-
-    def _shorten_meal(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        resolved = False
-        for meal_id in finding.affected_items:
-            meal = meal_pack.find_meal(meal_id)
-            if meal is None or meal.cook_time_minutes <= 20:
-                continue
-            before = f"{meal.cook_time_minutes} minutes"
-            meal.cook_time_minutes = max(20, meal.cook_time_minutes - 15)
-            meal.notes = _append_note(meal.notes, "Use pre-chopped ingredients to shorten prep.")
-            change_log.append(
-                ChangeLogEntry(
-                    affected_item=meal.id,
-                    from_value=before,
-                    to_value=f"{meal.cook_time_minutes} minutes",
-                    reason=finding.message,
-                    source_agent="constraint",
-                )
-            )
-            resolved = True
-        return resolved
-
-    def _reduce_budget(
-        self,
-        meal_pack: MealPack,
-        finding: AgentFinding,
-        change_log: list[ChangeLogEntry],
-    ) -> bool:
-        expensive_terms = ["salmon", "steak", "shrimp", "beef", "lamb"]
-        resolved = False
-        for meal in meal_pack.meals:
-            before_ingredients = ", ".join(meal.ingredients)
-            if self._replace_matching_ingredient(meal, expensive_terms, "tofu and egg"):
-                before_cost = meal.estimated_cost
-                meal.estimated_cost = max(3.0, meal.estimated_cost - 8.0)
-                change_log.append(
-                    ChangeLogEntry(
-                        affected_item=meal.id,
-                        from_value=f"{before_ingredients} (${before_cost:.2f})",
-                        to_value=f"{', '.join(meal.ingredients)} (${meal.estimated_cost:.2f})",
-                        reason=finding.message,
-                        source_agent="constraint",
-                    )
-                )
-                resolved = True
-                break
-        return resolved
-
-    def _replace_matching_ingredient(
-        self, meal: Meal, terms: list[str], replacement: str
-    ) -> bool:
-        changed = False
-        new_ingredients: list[str] = []
-        for ingredient in meal.ingredients:
-            if any(_contains_term(ingredient, term) for term in terms):
-                if replacement not in new_ingredients:
-                    new_ingredients.append(replacement)
-                changed = True
-            else:
-                new_ingredients.append(ingredient)
-        meal.ingredients = new_ingredients
-        return changed
-
-    def _summary(
-        self, change_log: list[ChangeLogEntry], unresolved_items: list[AgentFinding]
-    ) -> str:
-        if unresolved_items:
-            return "Could not safely fork the meal pack because hard constraints remain unresolved."
-        if change_log:
-            return "Adapted the meal pack with minimal changes for constraints and taste fit."
-        return "Meal pack already fits the user profile; no changes were required."
-
-
-def _append_note(existing: str, note: str) -> str:
-    if not existing:
-        return note
-    if note in existing:
-        return existing
-    return f"{existing} {note}"
-
-
-def _profile_from_preference(preference_profile: PreferenceProfile) -> UserProfile:
-    return UserProfile(
-        people_count=1,
+def _constraints_from_reviews(
+    user_agent_output: UserAgentOutput, reviews: list[AgentReview]
+) -> ConstraintSet:
+    return ConstraintSet(
+        allergies=list(user_agent_output.preference_profile.allergies),
+        diet_rules=list(user_agent_output.preference_profile.diet_rules),
+        equipment=list(user_agent_output.preference_profile.equipment),
         budget=10_000,
-        likes=list(preference_profile.likes),
-        dislikes=list(preference_profile.dislikes),
-        allergies=list(preference_profile.allergies),
-        diet_rules=list(preference_profile.diet_rules),
-        equipment=list(preference_profile.equipment),
         max_cook_time_minutes=24 * 60,
-        soft_preferences=list(preference_profile.soft_preferences),
+        people_count=1,
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from .models import (
     AdapterOutput,
     AgentFinding,
+    AgentReview,
     ChangeLogEntry,
     Meal,
     MealPack,
@@ -73,6 +74,15 @@ def adapter_output_from_dict(data: dict) -> AdapterOutput:
             finding_from_dict(item) for item in data.get("unresolved_items", [])
         ],
         summary=data["summary"],
+    )
+
+
+def agent_review_from_dict(data: dict) -> AgentReview:
+    return AgentReview(
+        agent=data["agent"],
+        status=data["status"],
+        findings=[finding_from_dict(item) for item in data.get("findings", [])],
+        scores={key: float(value) for key, value in data.get("scores", {}).items()},
     )
 
 

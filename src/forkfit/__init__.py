@@ -1,4 +1,4 @@
-from .agents import AdapterAgent, ConstraintAgent, UserAgent
+from .agents import AdapterAgent, ConstraintAgent, ConstraintGuard, UserAgent
 from .llm import BailianLLMClient
 from .models import (
     AdapterOutput,
@@ -27,6 +27,7 @@ __all__ = [
     "BailianLLMClient",
     "ChangeLogEntry",
     "ConstraintAgent",
+    "ConstraintGuard",
     "ConstraintSet",
     "ForkFitResult",
     "ForkFitLangGraphWorkflow",

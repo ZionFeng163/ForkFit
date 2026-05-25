@@ -5,7 +5,7 @@ from typing import Any, Callable, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from .agents import AdapterAgent, ConstraintAgent, ReviewerAgent, UserAgent
+from .agents import AdapterAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, UserAgent
 from .llm import BailianLLMClient, LLMClient
 from .models import (
     AdapterOutput,
@@ -44,9 +44,9 @@ class ForkFitLangGraphWorkflow:
     ) -> None:
         llm_client = llm_client or BailianLLMClient()
         self.user_agent = user_agent or UserAgent(llm_client)
-        self.reviewer_agents = reviewer_agents or [ConstraintAgent()]
+        self.reviewer_agents = reviewer_agents or [ConstraintAgent(llm_client)]
         self.adapter_agent = adapter_agent or AdapterAgent(llm_client)
-        self.final_constraint_agent = ConstraintAgent()
+        self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
     def run(self, user_profile: UserProfile, meal_pack: MealPack) -> ForkFitResult:
@@ -107,7 +107,7 @@ class ForkFitLangGraphWorkflow:
 
     def _run_reviewer_agents(self, state: ForkFitGraphState) -> ForkFitGraphState:
         reviews = [
-            reviewer.review(state["meal_pack"], state["constraints"])
+            reviewer.review(state["meal_pack"], state["constraints"], state["trace"])
             for reviewer in self.reviewer_agents
         ]
         return {"reviews": reviews}
@@ -122,7 +122,7 @@ class ForkFitLangGraphWorkflow:
         return {"adapter_output": adapter_output}
 
     def _run_final_validation(self, state: ForkFitGraphState) -> ForkFitGraphState:
-        final_review = self.final_constraint_agent.review(
+        final_review = self.final_constraint_guard.review(
             state["adapter_output"].forked_meal_pack,
             state["constraints"],
         )

@@ -5,10 +5,12 @@ ForkFit is a small agent-core prototype for personalizing community meal packs.
 The MVP implements three bounded agents:
 
 - `UserAgent`: interprets an explicit user profile and reviews taste fit.
-- `ConstraintAgent`: audits hard constraints from extracted constraints only.
+- `ConstraintAgent`: uses the configured LLM to audit hard constraints from extracted constraints only.
 - `AdapterAgent`: applies minimal changes to create a personalized fork.
 - `ForkFitLangGraphWorkflow`: runs the actual LangGraph flow from input loading
   through final validation.
+- `ConstraintGuard`: deterministic final validation. It is a guardrail, not an
+  Agent.
 
 The design intentionally keeps frontend, backend, database, and recommendation
 systems out of scope. The goal is to make the agent boundaries, review protocol,
@@ -40,8 +42,8 @@ Copy `.env.example` to `.env` and set:
 - `BAILIAN_MODEL`
 - `BAILIAN_BASE_URL`
 
-`UserAgent` and `AdapterAgent` use the configured Bailian model. `ConstraintAgent`
-and final validation remain deterministic guardrails.
+`UserAgent`, `ConstraintAgent`, and `AdapterAgent` use the configured Bailian
+model. Final validation uses `ConstraintGuard`, a deterministic safety guardrail.
 
 Each workflow result includes a trace:
 
