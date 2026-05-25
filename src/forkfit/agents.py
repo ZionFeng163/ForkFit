@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import replace
+import json
+from dataclasses import asdict
 from typing import Protocol
 
+from .llm import LLMClient
 from .models import (
     AdapterOutput,
     AgentFinding,
@@ -15,7 +17,9 @@ from .models import (
     PreferenceReview,
     UserAgentOutput,
     UserProfile,
+    RunTrace,
 )
+from .serialization import adapter_output_from_dict, user_agent_output_from_dict
 
 
 class ReviewerAgent(Protocol):
@@ -51,27 +55,93 @@ def _status_from_findings(findings: list[AgentFinding]) -> str:
 class UserAgent:
     agent_name = "user"
 
-    def run(self, user_profile: UserProfile, meal_pack: MealPack) -> UserAgentOutput:
-        preference_profile = PreferenceProfile(
-            likes=list(user_profile.likes),
-            dislikes=list(user_profile.dislikes),
-            allergies=list(user_profile.allergies),
-            diet_rules=list(user_profile.diet_rules),
-            equipment=list(user_profile.equipment),
-            soft_preferences=list(user_profile.soft_preferences),
-        )
-        findings = self._review_taste_fit(preference_profile, meal_pack)
-        like_hits = self._count_matches(preference_profile.likes, meal_pack)
-        fit_score = max(0.0, min(1.0, 0.75 + like_hits * 0.05 - len(findings) * 0.18))
-        return UserAgentOutput(
-            agent="user",
-            preference_profile=preference_profile,
-            preference_review=PreferenceReview(
-                status="warn" if findings else "pass",
-                fit_score=round(fit_score, 2),
-                findings=findings,
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    def run(
+        self,
+        user_profile: UserProfile,
+        meal_pack: MealPack,
+        trace: RunTrace | None = None,
+    ) -> UserAgentOutput:
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                "You are ForkFit UserAgent. Interpret the explicit user profile "
+                "and review taste fit for a community meal pack. Return only JSON "
+                "matching the requested schema. Do not modify the meal pack and do "
+                "not decide hard feasibility."
             ),
+            user=json.dumps(
+                {
+                    "task": "Return UserAgentOutput JSON.",
+                    "schema": {
+                        "agent": "user",
+                        "preference_profile": {
+                            "likes": [],
+                            "dislikes": [],
+                            "allergies": [],
+                            "diet_rules": [],
+                            "equipment": [],
+                            "soft_preferences": [],
+                        },
+                        "preference_review": {
+                            "status": "pass | warn",
+                            "fit_score": 0.0,
+                            "findings": [
+                                {
+                                    "type": "taste_mismatch",
+                                    "severity": "low | medium | high",
+                                    "affected_items": ["meal id"],
+                                    "message": "string",
+                                    "suggested_action": "string",
+                                    "required_action": "",
+                                }
+                            ],
+                        },
+                    },
+                    "rules": [
+                        "Copy explicit allergies, diet_rules, equipment, likes, dislikes, and soft_preferences from user_profile.",
+                        "Use findings only for taste or preference mismatch.",
+                        "affected_items must use meal ids from meal_pack.",
+                        "status must be warn when findings is non-empty, otherwise pass.",
+                    ],
+                    "user_profile": asdict(user_profile),
+                    "meal_pack": meal_pack.to_dict(),
+                },
+                ensure_ascii=True,
+            ),
+            trace=trace,
         )
+        output = user_agent_output_from_dict(payload)
+        return self._normalize_output(user_profile, meal_pack, output)
+
+    def _normalize_output(
+        self,
+        user_profile: UserProfile,
+        meal_pack: MealPack,
+        output: UserAgentOutput,
+    ) -> UserAgentOutput:
+        output.preference_profile.likes = list(user_profile.likes)
+        output.preference_profile.dislikes = list(user_profile.dislikes)
+        output.preference_profile.allergies = list(user_profile.allergies)
+        output.preference_profile.diet_rules = list(user_profile.diet_rules)
+        output.preference_profile.equipment = list(user_profile.equipment)
+        output.preference_profile.soft_preferences = list(user_profile.soft_preferences)
+
+        valid_ids = {meal.id for meal in meal_pack.meals}
+        output.preference_review.findings = [
+            finding
+            for finding in output.preference_review.findings
+            if any(item in valid_ids for item in finding.affected_items)
+        ]
+        output.preference_review.status = (
+            "warn" if output.preference_review.findings else "pass"
+        )
+        output.preference_review.fit_score = max(
+            0.0, min(1.0, output.preference_review.fit_score)
+        )
+        return output
 
     def _review_taste_fit(
         self, preference_profile: PreferenceProfile, meal_pack: MealPack
@@ -215,7 +285,86 @@ class ConstraintAgent:
 class AdapterAgent:
     agent_name = "adapter"
 
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
     def run(
+        self,
+        original_meal_pack: MealPack,
+        user_agent_output: UserAgentOutput,
+        reviews: list[AgentReview],
+        trace: RunTrace | None = None,
+    ) -> AdapterOutput:
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                "You are ForkFit AdapterAgent. Create a personalized fork of a "
+                "community meal pack using minimal necessary changes. Return only "
+                "JSON matching the schema. You must fix high-severity hard blocks "
+                "before soft preferences, preserve the original theme, and explain "
+                "each change with source_agent."
+            ),
+            user=json.dumps(
+                {
+                    "task": "Return AdapterOutput JSON.",
+                    "schema": {
+                        "forked_meal_pack": original_meal_pack.to_dict(),
+                        "change_log": [
+                            {
+                                "affected_item": "meal id",
+                                "from_value": "string",
+                                "to_value": "string",
+                                "reason": "string",
+                                "source_agent": "constraint | user | nutrition | budget | pantry",
+                            }
+                        ],
+                        "unresolved_items": [],
+                        "summary": "string",
+                    },
+                    "rules": [
+                        "Do not fully rewrite the meal pack.",
+                        "Keep meal ids stable.",
+                        "Every change must trace to user_agent_output or reviews.",
+                        "If a high-severity hard block cannot be fixed, put that finding in unresolved_items.",
+                        "Remove blocked allergy/diet terms from ingredients, name, tags, and notes.",
+                    ],
+                    "original_meal_pack": original_meal_pack.to_dict(),
+                    "user_agent_output": asdict(user_agent_output),
+                    "reviews": [asdict(review) for review in reviews],
+                },
+                ensure_ascii=True,
+            ),
+            trace=trace,
+        )
+        output = adapter_output_from_dict(payload)
+        return self._guard_adapter_output(
+            original_meal_pack, user_agent_output, reviews, output
+        )
+
+    def _guard_adapter_output(
+        self,
+        original_meal_pack: MealPack,
+        user_agent_output: UserAgentOutput,
+        reviews: list[AgentReview],
+        output: AdapterOutput,
+    ) -> AdapterOutput:
+        original_ids = {meal.id for meal in original_meal_pack.meals}
+        forked_ids = {meal.id for meal in output.forked_meal_pack.meals}
+        if original_ids != forked_ids:
+            return self._deterministic_repair(original_meal_pack, user_agent_output, reviews)
+
+        constrained = ConstraintAgent().review(
+            output.forked_meal_pack,
+            user_agent_output.preference_profile.to_constraints(
+                _profile_from_preference(user_agent_output.preference_profile)
+            ),
+        )
+        if constrained.status == "block" and not output.unresolved_items:
+            return self._deterministic_repair(original_meal_pack, user_agent_output, reviews)
+
+        return output
+
+    def _deterministic_repair(
         self,
         original_meal_pack: MealPack,
         user_agent_output: UserAgentOutput,
@@ -490,3 +639,17 @@ def _append_note(existing: str, note: str) -> str:
     if note in existing:
         return existing
     return f"{existing} {note}"
+
+
+def _profile_from_preference(preference_profile: PreferenceProfile) -> UserProfile:
+    return UserProfile(
+        people_count=1,
+        budget=10_000,
+        likes=list(preference_profile.likes),
+        dislikes=list(preference_profile.dislikes),
+        allergies=list(preference_profile.allergies),
+        diet_rules=list(preference_profile.diet_rules),
+        equipment=list(preference_profile.equipment),
+        max_cook_time_minutes=24 * 60,
+        soft_preferences=list(preference_profile.soft_preferences),
+    )

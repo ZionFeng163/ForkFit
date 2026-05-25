@@ -20,10 +20,16 @@ Run tests:
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-Run the demo:
+Run the demo. This calls the configured Bailian model through the LangGraph flow:
 
 ```bash
 PYTHONPATH=src python3 examples/run_demo.py
+```
+
+Run the real LangGraph + Bailian flow:
+
+```bash
+python3 scripts/run_real_langgraph.py
 ```
 
 ## Local API config
@@ -34,8 +40,13 @@ Copy `.env.example` to `.env` and set:
 - `BAILIAN_MODEL`
 - `BAILIAN_BASE_URL`
 
-The current agent core is deterministic. These variables are reserved for the
-future LLM-backed agent implementation.
+`UserAgent` and `AdapterAgent` use the configured Bailian model. `ConstraintAgent`
+and final validation remain deterministic guardrails.
+
+Each workflow result includes a trace:
+
+- `trace.steps`: LangGraph node duration and status.
+- `trace.llm_calls`: model, agent name, duration, token usage, and status.
 
 Run a real Bailian smoke test:
 

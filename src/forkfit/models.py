@@ -162,6 +162,40 @@ class ForkFitResult:
     reviews: list[AgentReview]
     adapter_output: AdapterOutput
     final_review: AgentReview
+    trace: "RunTrace | None" = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass(slots=True)
+class LLMCallTrace:
+    agent: str
+    model: str
+    duration_ms: float
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    status: Literal["success", "error"]
+    error: str = ""
+
+
+@dataclass(slots=True)
+class StepTrace:
+    node: str
+    duration_ms: float
+    status: Literal["success", "error"]
+    error: str = ""
+
+
+@dataclass(slots=True)
+class RunTrace:
+    steps: list[StepTrace] = field(default_factory=list)
+    llm_calls: list[LLMCallTrace] = field(default_factory=list)
+
+    @property
+    def llm_call_count(self) -> int:
+        return len(self.llm_calls)
+
+    @property
+    def total_duration_ms(self) -> float:
+        return round(sum(step.duration_ms for step in self.steps), 2)

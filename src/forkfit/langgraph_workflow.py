@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict
+import time
+from typing import Any, Callable, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
 from .agents import AdapterAgent, ConstraintAgent, ReviewerAgent, UserAgent
+from .llm import BailianLLMClient, LLMClient
 from .models import (
     AdapterOutput,
     AgentReview,
     ConstraintSet,
     ForkFitResult,
     MealPack,
+    RunTrace,
+    StepTrace,
     UserAgentOutput,
     UserProfile,
 )
@@ -25,6 +29,7 @@ class ForkFitGraphState(TypedDict, total=False):
     adapter_output: AdapterOutput
     final_review: AgentReview
     success: bool
+    trace: RunTrace
 
 
 class ForkFitLangGraphWorkflow:
@@ -35,10 +40,12 @@ class ForkFitLangGraphWorkflow:
         user_agent: UserAgent | None = None,
         reviewer_agents: list[ReviewerAgent] | None = None,
         adapter_agent: AdapterAgent | None = None,
+        llm_client: LLMClient | None = None,
     ) -> None:
-        self.user_agent = user_agent or UserAgent()
+        llm_client = llm_client or BailianLLMClient()
+        self.user_agent = user_agent or UserAgent(llm_client)
         self.reviewer_agents = reviewer_agents or [ConstraintAgent()]
-        self.adapter_agent = adapter_agent or AdapterAgent()
+        self.adapter_agent = adapter_agent or AdapterAgent(llm_client)
         self.final_constraint_agent = ConstraintAgent()
         self.graph = self._build_graph()
 
@@ -47,6 +54,7 @@ class ForkFitLangGraphWorkflow:
             {
                 "user_profile": user_profile,
                 "meal_pack": meal_pack,
+                "trace": RunTrace(),
             }
         )
         return ForkFitResult(
@@ -55,15 +63,24 @@ class ForkFitLangGraphWorkflow:
             reviews=state["reviews"],
             adapter_output=state["adapter_output"],
             final_review=state["final_review"],
+            trace=state["trace"],
         )
 
     def _build_graph(self) -> Any:
         graph = StateGraph(ForkFitGraphState)
-        graph.add_node("load_input", self._load_input)
-        graph.add_node("user_agent", self._run_user_agent)
-        graph.add_node("reviewer_agents", self._run_reviewer_agents)
-        graph.add_node("adapter_agent", self._run_adapter_agent)
-        graph.add_node("final_validation", self._run_final_validation)
+        graph.add_node("load_input", self._traced_node("load_input", self._load_input))
+        graph.add_node("user_agent", self._traced_node("user_agent", self._run_user_agent))
+        graph.add_node(
+            "reviewer_agents",
+            self._traced_node("reviewer_agents", self._run_reviewer_agents),
+        )
+        graph.add_node(
+            "adapter_agent", self._traced_node("adapter_agent", self._run_adapter_agent)
+        )
+        graph.add_node(
+            "final_validation",
+            self._traced_node("final_validation", self._run_final_validation),
+        )
 
         graph.add_edge(START, "load_input")
         graph.add_edge("load_input", "user_agent")
@@ -79,7 +96,9 @@ class ForkFitLangGraphWorkflow:
         return {}
 
     def _run_user_agent(self, state: ForkFitGraphState) -> ForkFitGraphState:
-        user_output = self.user_agent.run(state["user_profile"], state["meal_pack"])
+        user_output = self.user_agent.run(
+            state["user_profile"], state["meal_pack"], state["trace"]
+        )
         constraints = user_output.preference_profile.to_constraints(state["user_profile"])
         return {
             "user_agent_output": user_output,
@@ -98,6 +117,7 @@ class ForkFitLangGraphWorkflow:
             state["meal_pack"],
             state["user_agent_output"],
             state["reviews"],
+            state["trace"],
         )
         return {"adapter_output": adapter_output}
 
@@ -111,3 +131,38 @@ class ForkFitLangGraphWorkflow:
             "final_review": final_review,
             "success": success,
         }
+
+    def _traced_node(
+        self,
+        node_name: str,
+        fn: Callable[[ForkFitGraphState], ForkFitGraphState],
+    ) -> Callable[[ForkFitGraphState], ForkFitGraphState]:
+        def wrapped(state: ForkFitGraphState) -> ForkFitGraphState:
+            started = time.perf_counter()
+            trace = state["trace"]
+            try:
+                output = fn(state)
+                trace.steps.append(
+                    StepTrace(
+                        node=node_name,
+                        duration_ms=_elapsed_ms(started),
+                        status="success",
+                    )
+                )
+                return output
+            except Exception as exc:
+                trace.steps.append(
+                    StepTrace(
+                        node=node_name,
+                        duration_ms=_elapsed_ms(started),
+                        status="error",
+                        error=str(exc),
+                    )
+                )
+                raise
+
+        return wrapped
+
+
+def _elapsed_ms(started: float) -> float:
+    return round((time.perf_counter() - started) * 1000, 2)
