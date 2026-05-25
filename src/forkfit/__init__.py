@@ -13,7 +13,6 @@ from .models import (
     UserAgentOutput,
     UserProfile,
 )
-from .workflow import ForkFitWorkflow
 from .langgraph_workflow import ForkFitLangGraphWorkflow
 
 __all__ = [
@@ -26,7 +25,6 @@ __all__ = [
     "ConstraintSet",
     "ForkFitResult",
     "ForkFitLangGraphWorkflow",
-    "ForkFitWorkflow",
     "Meal",
     "MealPack",
     "PreferenceProfile",

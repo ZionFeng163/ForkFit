@@ -5,7 +5,6 @@ from forkfit import (
     AgentReview,
     ConstraintAgent,
     ForkFitLangGraphWorkflow,
-    ForkFitWorkflow,
     Meal,
     MealPack,
     UserAgent,
@@ -65,7 +64,7 @@ class ForkFitAgentTests(unittest.TestCase):
             )
         )
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertTrue(result.success)
         forked_text = result.adapter_output.forked_meal_pack.meals[0].searchable_text()
@@ -85,7 +84,7 @@ class ForkFitAgentTests(unittest.TestCase):
             )
         )
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertTrue(result.success)
         self.assertEqual(result.adapter_output.forked_meal_pack.meals[0].equipment, ["air fryer"])
@@ -100,7 +99,7 @@ class ForkFitAgentTests(unittest.TestCase):
             )
         )
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertTrue(result.success)
         self.assertEqual(result.user_agent_output.preference_review.status, "warn")
@@ -121,7 +120,7 @@ class ForkFitAgentTests(unittest.TestCase):
             )
         )
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertTrue(result.success)
         self.assertEqual(result.reviews[0].status, "warn")
@@ -131,7 +130,7 @@ class ForkFitAgentTests(unittest.TestCase):
         user = base_user()
         source = pack_with(meal())
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertTrue(result.success)
         self.assertEqual(result.adapter_output.change_log, [])
@@ -148,7 +147,7 @@ class ForkFitAgentTests(unittest.TestCase):
             )
         )
 
-        result = ForkFitWorkflow().run(user, source)
+        result = ForkFitLangGraphWorkflow().run(user, source)
 
         self.assertFalse(result.success)
         self.assertTrue(result.adapter_output.unresolved_items)
@@ -188,7 +187,9 @@ class ForkFitAgentTests(unittest.TestCase):
         user = base_user()
         source = pack_with(meal())
 
-        result = ForkFitWorkflow(reviewer_agents=[ConstraintAgent(), MockNutritionAgent()]).run(
+        result = ForkFitLangGraphWorkflow(
+            reviewer_agents=[ConstraintAgent(), MockNutritionAgent()]
+        ).run(
             user, source
         )
 

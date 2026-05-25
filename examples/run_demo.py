@@ -1,4 +1,4 @@
-from forkfit import ForkFitWorkflow, Meal, MealPack, UserProfile
+from forkfit import ForkFitLangGraphWorkflow, Meal, MealPack, UserProfile
 
 
 user = UserProfile(
@@ -31,7 +31,7 @@ pack = MealPack(
     ],
 )
 
-result = ForkFitWorkflow().run(user, pack)
+result = ForkFitLangGraphWorkflow().run(user, pack)
 
 print("success:", result.success)
 print("user review:", result.user_agent_output.preference_review.status)
