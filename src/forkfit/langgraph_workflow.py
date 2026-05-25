@@ -1,0 +1,113 @@
+from __future__ import annotations
+
+from typing import Any, TypedDict
+
+from langgraph.graph import END, START, StateGraph
+
+from .agents import AdapterAgent, ConstraintAgent, ReviewerAgent, UserAgent
+from .models import (
+    AdapterOutput,
+    AgentReview,
+    ConstraintSet,
+    ForkFitResult,
+    MealPack,
+    UserAgentOutput,
+    UserProfile,
+)
+
+
+class ForkFitGraphState(TypedDict, total=False):
+    user_profile: UserProfile
+    meal_pack: MealPack
+    user_agent_output: UserAgentOutput
+    constraints: ConstraintSet
+    reviews: list[AgentReview]
+    adapter_output: AdapterOutput
+    final_review: AgentReview
+    success: bool
+
+
+class ForkFitLangGraphWorkflow:
+    """LangGraph implementation of the ForkFit three-agent workflow."""
+
+    def __init__(
+        self,
+        user_agent: UserAgent | None = None,
+        reviewer_agents: list[ReviewerAgent] | None = None,
+        adapter_agent: AdapterAgent | None = None,
+    ) -> None:
+        self.user_agent = user_agent or UserAgent()
+        self.reviewer_agents = reviewer_agents or [ConstraintAgent()]
+        self.adapter_agent = adapter_agent or AdapterAgent()
+        self.final_constraint_agent = ConstraintAgent()
+        self.graph = self._build_graph()
+
+    def run(self, user_profile: UserProfile, meal_pack: MealPack) -> ForkFitResult:
+        state = self.graph.invoke(
+            {
+                "user_profile": user_profile,
+                "meal_pack": meal_pack,
+            }
+        )
+        return ForkFitResult(
+            success=state["success"],
+            user_agent_output=state["user_agent_output"],
+            reviews=state["reviews"],
+            adapter_output=state["adapter_output"],
+            final_review=state["final_review"],
+        )
+
+    def _build_graph(self) -> Any:
+        graph = StateGraph(ForkFitGraphState)
+        graph.add_node("load_input", self._load_input)
+        graph.add_node("user_agent", self._run_user_agent)
+        graph.add_node("reviewer_agents", self._run_reviewer_agents)
+        graph.add_node("adapter_agent", self._run_adapter_agent)
+        graph.add_node("final_validation", self._run_final_validation)
+
+        graph.add_edge(START, "load_input")
+        graph.add_edge("load_input", "user_agent")
+        graph.add_edge("user_agent", "reviewer_agents")
+        graph.add_edge("reviewer_agents", "adapter_agent")
+        graph.add_edge("adapter_agent", "final_validation")
+        graph.add_edge("final_validation", END)
+        return graph.compile()
+
+    def _load_input(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        if "user_profile" not in state or "meal_pack" not in state:
+            raise ValueError("ForkFit graph requires user_profile and meal_pack.")
+        return {}
+
+    def _run_user_agent(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        user_output = self.user_agent.run(state["user_profile"], state["meal_pack"])
+        constraints = user_output.preference_profile.to_constraints(state["user_profile"])
+        return {
+            "user_agent_output": user_output,
+            "constraints": constraints,
+        }
+
+    def _run_reviewer_agents(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        reviews = [
+            reviewer.review(state["meal_pack"], state["constraints"])
+            for reviewer in self.reviewer_agents
+        ]
+        return {"reviews": reviews}
+
+    def _run_adapter_agent(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        adapter_output = self.adapter_agent.run(
+            state["meal_pack"],
+            state["user_agent_output"],
+            state["reviews"],
+        )
+        return {"adapter_output": adapter_output}
+
+    def _run_final_validation(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        final_review = self.final_constraint_agent.review(
+            state["adapter_output"].forked_meal_pack,
+            state["constraints"],
+        )
+        success = not state["adapter_output"].unresolved_items and final_review.status != "block"
+        return {
+            "final_review": final_review,
+            "success": success,
+        }
