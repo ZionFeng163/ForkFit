@@ -11,6 +11,8 @@ class Settings:
     max_global_concurrent_runs: int = 3
     max_user_concurrent_runs: int = 1
     llm_timeout_seconds: int = 60
+    database_url: str = "sqlite:///./forkfit.db"
+    redis_url: str = "redis://localhost:6379/0"
 
 
 def get_settings() -> Settings:
@@ -20,4 +22,6 @@ def get_settings() -> Settings:
         max_global_concurrent_runs=int(os.getenv("MAX_GLOBAL_CONCURRENT_RUNS", "3")),
         max_user_concurrent_runs=int(os.getenv("MAX_USER_CONCURRENT_RUNS", "1")),
         llm_timeout_seconds=int(os.getenv("LLM_TIMEOUT_SECONDS", "60")),
+        database_url=os.getenv("DATABASE_URL", "sqlite:///./forkfit.db"),
+        redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
     )
