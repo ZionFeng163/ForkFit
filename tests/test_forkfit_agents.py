@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import Mock, patch
 
 from forkfit import (
     AgentFinding,
@@ -17,7 +18,7 @@ from forkfit.serialization import normalize_source_agent
 class FakeLLMClient:
     model = "fake-qwen"
 
-    def complete_json(self, *, agent, system, user, trace=None):
+    def complete_json(self, *, agent, system, user, trace=None, max_tokens=None):
         import json
 
         request = json.loads(user)
@@ -582,6 +583,20 @@ class ForkFitAgentTests(unittest.TestCase):
             [call.agent for call in result.trace.llm_calls],
             ["user", "constraint", "adapter"],
         )
+
+    def test_langgraph_auto_tracing_is_disabled_for_workflow_run(self):
+        context = Mock()
+        context.__enter__ = Mock(return_value=None)
+        context.__exit__ = Mock(return_value=None)
+
+        with patch(
+            "forkfit.langgraph_workflow.tracing_context", return_value=context
+        ) as tracing_context:
+            workflow().run(base_user(), pack_with(meal()))
+
+        tracing_context.assert_called_once_with(enabled=False)
+        context.__enter__.assert_called_once()
+        context.__exit__.assert_called_once()
 
     def test_final_validation_is_guard_not_agent(self):
         user = base_user(allergies=["peanut"])

@@ -8,13 +8,19 @@ from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.executors import RedisJobExecutor
 from forkfit.services import RunService
-from forkfit.stores import PostgresRunStore
+from forkfit.stores import PostgresPostStore, PostgresRunStore
 
 
 @lru_cache(maxsize=1)
 def get_run_store() -> PostgresRunStore:
     settings = get_settings()
     return PostgresRunStore(make_session_factory(settings.database_url))
+
+
+@lru_cache(maxsize=1)
+def get_post_store() -> PostgresPostStore:
+    settings = get_settings()
+    return PostgresPostStore(make_session_factory(settings.database_url))
 
 
 @lru_cache(maxsize=1)

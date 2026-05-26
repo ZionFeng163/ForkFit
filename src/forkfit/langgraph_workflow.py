@@ -4,6 +4,7 @@ import time
 from typing import Any, Callable, TypedDict
 
 from langgraph.graph import END, START, StateGraph
+from langsmith import tracing_context
 
 from .agents import AdapterAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, UserAgent
 from .llm import BailianLLMClient, LLMClient
@@ -50,13 +51,14 @@ class ForkFitLangGraphWorkflow:
         self.graph = self._build_graph()
 
     def run(self, user_profile: UserProfile, meal_pack: MealPack) -> ForkFitResult:
-        state = self.graph.invoke(
-            {
-                "user_profile": user_profile,
-                "meal_pack": meal_pack,
-                "trace": RunTrace(),
-            }
-        )
+        with tracing_context(enabled=False):
+            state = self.graph.invoke(
+                {
+                    "user_profile": user_profile,
+                    "meal_pack": meal_pack,
+                    "trace": RunTrace(),
+                }
+            )
         return ForkFitResult(
             success=state["success"],
             user_agent_output=state["user_agent_output"],

@@ -23,6 +23,30 @@ class CreateRunRequest(BaseModel):
     meal_pack: MealPack
 
 
+class CreatePostRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    theme: str = Field(min_length=1, max_length=120)
+    location: str = Field(min_length=1, max_length=120)
+    image_urls: list[str] = Field(min_length=1, max_length=8)
+    description: str = Field(min_length=1, max_length=1200)
+    recipe: Meal
+
+
+class PostResponse(BaseModel):
+    id: str
+    user_id: str
+    author: str
+    title: str
+    theme: str
+    location: str
+    image_urls: list[str]
+    description: str
+    recipe: Meal
+    saves: int
+    forks: int
+    created_at: str
+
+
 class CreateRunResponse(BaseModel):
     run_id: str
     status: RunStatus

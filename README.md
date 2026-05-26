@@ -12,9 +12,9 @@ The MVP implements three bounded agents:
 - `ConstraintGuard`: deterministic final validation. It is a guardrail, not an
   Agent.
 
-The design intentionally keeps frontend, backend, database, and recommendation
-systems out of scope. The goal is to make the agent boundaries, review protocol,
-and extension points concrete and testable.
+The first web MVP lives in `apps/web`. It provides a seeded community meal-pack
+feed, pack details, a Fork form, and a run result page that talks to the backend
+API.
 
 Run tests:
 
@@ -44,6 +44,8 @@ Copy `.env.example` to `.env` and set:
 
 `UserAgent`, `ConstraintAgent`, and `AdapterAgent` use the configured Bailian
 model. Final validation uses `ConstraintGuard`, a deterministic safety guardrail.
+ForkFit sends `enable_thinking=false` and per-agent `max_tokens` caps for Qwen
+JSON calls to avoid slow, high-token reasoning output.
 
 Each workflow result includes a trace:
 
@@ -77,6 +79,19 @@ python3 scripts/run_worker.py
 Do not use SQLite or in-memory stores for API operation. Install and run
 Postgres and Redis before using the backend API.
 
+## Web app
+
+The frontend is a Next.js app in `apps/web`:
+
+```bash
+cd apps/web
+npm run dev
+```
+
+Open `http://127.0.0.1:3000`. Frontend requests to `/api/backend/*` are proxied
+to `http://127.0.0.1:8000/*` by default. Use `FORKFIT_API_BASE_URL` when the API
+is on another port.
+
 ## LangSmith tracing
 
 ForkFit keeps its local trace in Postgres and can also export summary metrics to
@@ -90,4 +105,6 @@ LANGSMITH_PROJECT=forkfit
 
 The exporter sends run status, total duration, LLM call count, per-node
 durations, and per-agent token/duration metrics. It does not send full prompts
-or raw user profiles.
+or raw user profiles. ForkFit disables LangGraph's automatic LangSmith tracing
+around workflow execution, so enabled tracing only uploads the sanitized
+`forkfit.workflow` summary run.

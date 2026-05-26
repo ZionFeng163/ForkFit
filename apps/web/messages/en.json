@@ -1,0 +1,112 @@
+{
+  "Meta": {
+    "description": "Community dishes forked to fit your constraints."
+  },
+  "Nav": {
+    "discover": "Discover",
+    "newPost": "Post",
+    "profile": "Profile"
+  },
+  "Home": {
+    "title": "Discover dishes",
+    "description": "Browse community recipe posts, then fork one against your allergies, equipment, budget, and cooking time.",
+    "postCount": "{count, plural, one {# post} other {# posts}}"
+  },
+  "Pack": {
+    "back": "Discover",
+    "minutes": "{count} min",
+    "ingredients": "Ingredients",
+    "equipment": "Equipment",
+    "none": "none",
+    "forkTitle": "Fork this dish",
+    "forkDescription": "Adapt it to a user profile with the ForkFit worker.",
+    "author": "Author",
+    "theme": "Theme",
+    "forks": "Forks",
+    "startFork": "Start Fork"
+  },
+  "Fork": {
+    "back": "Recipe details",
+    "title": "Fork {title}",
+    "description": "ForkFit uses your saved profile here. You can still adjust it for this run.",
+    "profileNote": "Using your saved profile for this fork.",
+    "editProfile": "Edit profile",
+    "resetToProfile": "Reset edits",
+    "runFork": "Run Fork"
+  },
+  "Profile": {
+    "title": "Profile",
+    "description": "Save your usual constraints and preferences. Fork pages use this as the starting point.",
+    "save": "Save profile",
+    "reset": "Reset defaults",
+    "saved": "Saved"
+  },
+  "ProfileFields": {
+    "people": "People",
+    "budget": "Budget",
+    "likes": "Likes",
+    "dislikes": "Dislikes",
+    "allergies": "Allergies",
+    "dietRules": "Diet rules",
+    "equipment": "Equipment",
+    "maxCookTime": "Max cook time",
+    "softPreferences": "Soft preferences"
+  },
+  "NewPost": {
+    "title": "Create post",
+    "description": "Write the dish like a normal post. Details can stay empty for now.",
+    "submit": "Publish",
+    "titleLabel": "Title",
+    "theme": "Theme",
+    "location": "Location",
+    "imageUrls": "Image URLs",
+    "descriptionLabel": "Description",
+    "recipeName": "Dish name",
+    "ingredients": "Ingredients",
+    "equipment": "Equipment",
+    "cookTime": "Cook time",
+    "cost": "Estimated cost",
+    "tags": "Tags",
+    "notes": "Notes",
+    "imageHelp": "One URL per line. The first image becomes the cover.",
+    "listHelp": "Separate items with commas.",
+    "mainSection": "Content",
+    "detailsSection": "More details",
+    "detailsHelp": "Optional for now. Later this can be inferred from the description.",
+    "publishHelp": "Published posts appear in Discover and can be forked by other users.",
+    "titlePlaceholder": "e.g. Weekend tomato beef hotpot",
+    "descriptionPlaceholder": "Describe the dish, method, taste, serving context, and substitutions like a normal post.",
+    "imagePlaceholder": "https://...\nhttps://...",
+    "themePlaceholder": "e.g. family dinner",
+    "locationPlaceholder": "e.g. Chengdu",
+    "recipeNamePlaceholder": "Defaults to title",
+    "ingredientsPlaceholder": "tomato broth, beef slices, greens",
+    "equipmentPlaceholder": "stovetop, air fryer",
+    "tagsPlaceholder": "family dinner, hotpot",
+    "notesPlaceholder": "Any extra notes",
+    "failed": "Could not publish this post."
+  },
+  "Run": {
+    "back": "Discover",
+    "title": "Fork result",
+    "loading": "Loading run",
+    "couldNotLoad": "Could not load run",
+    "queued": "Queued",
+    "running": "Running",
+    "workerMessage": "The worker is adapting this dish.",
+    "failed": "Fork failed",
+    "failedFallback": "The run failed.",
+    "adaptedPack": "Adapted dish",
+    "equipment": "Equipment",
+    "none": "none",
+    "changeLog": "Change log",
+    "noChanges": "No changes were needed.",
+    "finalReview": "Final review",
+    "traceSummary": "{llmCalls} LLM calls · {steps} graph steps"
+  },
+  "Language": {
+    "english": "English",
+    "chinese": "中文",
+    "label": "Language"
+  }
+}

@@ -72,7 +72,8 @@ class UserAgent:
                 "You are ForkFit UserAgent. Interpret the explicit user profile "
                 "and review taste fit for a community meal pack. Return only JSON "
                 "matching the requested schema. Do not modify the meal pack and do "
-                "not decide hard feasibility."
+                "not decide hard feasibility. Keep all strings concise. Do not "
+                "include markdown, explanation, or hidden reasoning."
             ),
             user=json.dumps(
                 {
@@ -111,9 +112,10 @@ class UserAgent:
                     "user_profile": asdict(user_profile),
                     "meal_pack": meal_pack.to_dict(),
                 },
-                ensure_ascii=True,
+                ensure_ascii=False,
             ),
             trace=trace,
+            max_tokens=700,
         )
         output = user_agent_output_from_dict(payload)
         return self._normalize_output(user_profile, meal_pack, output)
@@ -162,7 +164,9 @@ class ConstraintAgent:
             system=(
                 "You are ForkFit ConstraintAgent. Audit hard feasibility for a "
                 "community meal pack against the provided constraints. Return only "
-                "JSON matching AgentReview. Do not modify the meal pack."
+                "JSON matching AgentReview. Do not modify the meal pack. Keep all "
+                "strings concise. Do not include markdown, explanation, or hidden "
+                "reasoning."
             ),
             user=json.dumps(
                 {
@@ -192,9 +196,10 @@ class ConstraintAgent:
                     "meal_pack": meal_pack.to_dict(),
                     "constraints": asdict(constraints),
                 },
-                ensure_ascii=True,
+                ensure_ascii=False,
             ),
             trace=trace,
+            max_tokens=700,
         )
         review = agent_review_from_dict(payload)
         return self._normalize_review(meal_pack, review)
@@ -345,7 +350,8 @@ class AdapterAgent:
                 "community meal pack using minimal necessary changes. Return only "
                 "JSON matching the schema. You must fix high-severity hard blocks "
                 "before soft preferences, preserve the original theme, and explain "
-                "each change with source_agent."
+                "each change with source_agent. Keep summary, reasons, and notes "
+                "concise. Do not include markdown, explanation, or hidden reasoning."
             ),
             user=json.dumps(
                 {
@@ -375,9 +381,10 @@ class AdapterAgent:
                     "user_agent_output": asdict(user_agent_output),
                     "reviews": [asdict(review) for review in reviews],
                 },
-                ensure_ascii=True,
+                ensure_ascii=False,
             ),
             trace=trace,
+            max_tokens=1400,
         )
         output = adapter_output_from_dict(payload)
         return self._guard_adapter_output(

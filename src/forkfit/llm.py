@@ -21,6 +21,7 @@ class LLMClient(Protocol):
         system: str,
         user: str,
         trace: RunTrace | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         ...
 
@@ -54,6 +55,7 @@ class BailianLLMClient:
         system: str,
         user: str,
         trace: RunTrace | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         started = time.perf_counter()
         payload = {
@@ -63,7 +65,9 @@ class BailianLLMClient:
                 {"role": "user", "content": user},
             ],
             "temperature": 0,
+            "max_tokens": max_tokens or _default_max_tokens(agent),
             "response_format": {"type": "json_object"},
+            "enable_thinking": False,
         }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
@@ -120,3 +124,11 @@ class BailianLLMClient:
 
 def _elapsed_ms(started: float) -> float:
     return round((time.perf_counter() - started) * 1000, 2)
+
+
+def _default_max_tokens(agent: str) -> int:
+    return {
+        "user": 700,
+        "constraint": 700,
+        "adapter": 1400,
+    }.get(agent, 900)
