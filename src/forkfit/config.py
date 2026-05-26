@@ -14,6 +14,10 @@ class Settings:
     llm_timeout_seconds: int = 60
     database_url: str = ""
     redis_url: str = "redis://localhost:6379/0"
+    langsmith_tracing: bool = False
+    langsmith_api_key: str = ""
+    langsmith_project: str = "forkfit"
+    langsmith_endpoint: str = ""
 
 
 def get_settings() -> Settings:
@@ -29,6 +33,10 @@ def get_settings() -> Settings:
         llm_timeout_seconds=int(os.getenv("LLM_TIMEOUT_SECONDS", "60")),
         database_url=database_url,
         redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+        langsmith_tracing=parse_bool(os.getenv("LANGSMITH_TRACING", "false")),
+        langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
+        langsmith_project=os.getenv("LANGSMITH_PROJECT", "forkfit"),
+        langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", ""),
     )
 
 
@@ -48,3 +56,7 @@ def require_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"{name} is required.")
     return value
+
+
+def parse_bool(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "on"}

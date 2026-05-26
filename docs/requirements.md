@@ -536,6 +536,13 @@ data: {"agent":"adapter","duration_ms":23175.8,"status":"success"}
 - Guard block rate。
 - 每次 run 平均 token 用量。
 
+第一版使用两层观测：
+
+- Postgres `trace_payload`：本地持久化完整结构化 trace。
+- LangSmith：上传摘要指标，包括 run 状态、总耗时、LLM 调用次数、每个 LangGraph 节点耗时、每个 Agent 的模型/token/耗时。
+
+默认不向 LangSmith 上传完整 prompt、原始用户画像或完整饭包内容。只有配置 `LANGSMITH_TRACING=true` 和 `LANGSMITH_API_KEY` 时才上传。
+
 ## 13. 失败处理
 
 ### 13.1 LLM 调用失败

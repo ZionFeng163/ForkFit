@@ -423,6 +423,7 @@ GET /runs/{run_id}/events
 - Worker。
 - 真实 Bailian LangGraph flow。
 - result/trace 持久化。
+- LangSmith 摘要指标上报。
 - Guard 安全响应。
 
 价值：

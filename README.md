@@ -76,3 +76,18 @@ python3 scripts/run_worker.py
 
 Do not use SQLite or in-memory stores for API operation. Install and run
 Postgres and Redis before using the backend API.
+
+## LangSmith tracing
+
+ForkFit keeps its local trace in Postgres and can also export summary metrics to
+LangSmith. Set these values in `.env` to enable upload:
+
+```bash
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your-langsmith-key
+LANGSMITH_PROJECT=forkfit
+```
+
+The exporter sends run status, total duration, LLM call count, per-node
+durations, and per-agent token/duration metrics. It does not send full prompts
+or raw user profiles.
