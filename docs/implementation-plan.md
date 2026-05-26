@@ -91,13 +91,11 @@ src/forkfit/
   stores/
     __init__.py
     base.py
-    memory.py
     postgres.py
 
   executors/
     __init__.py
     base.py
-    memory.py
     redis.py
 
   workers/
@@ -128,10 +126,11 @@ scripts/
 ```text
 tests/
   test_forkfit_agents.py
-  test_api_runs.py
-  test_run_service.py
-  test_executors.py
-  test_stores.py
+  test_api_runs_integration.py
+  test_api_schemas.py
+  test_demo_auth.py
+  test_postgres_run_store.py
+  test_redis_executor.py
 ```
 
 ## 4. 分阶段实现
@@ -193,14 +192,14 @@ tests/
 - `POST /runs` 创建的 run 带有 `user_id=demo_user`。
 - 后续替换真实登录时不需要改 run service。
 
-### 阶段 3：RunStore 抽象与内存实现
+### 阶段 3：RunStore 抽象与 Postgres 实现
 
 依赖：阶段 1、2。
 
 实现内容：
 
 - 定义 `RunStore` 接口。
-- 实现 `InMemoryRunStore`。
+- 实现 `PostgresRunStore`。
 - 定义 run 状态：
   - `queued`
   - `running`
@@ -217,31 +216,28 @@ tests/
 
 验收：
 
-- 不接 Redis/Postgres 也能跑通 API 层状态流转。
-- 单测覆盖状态更新和非法状态。
+- 必须连接真实 Postgres。
+- `DATABASE_URL` 缺失或指向 SQLite 时直接失败。
+- 测试覆盖状态更新、失败记录、结果和 trace 读取。
 
-### 阶段 4：JobExecutor 抽象与内存执行器
+### 阶段 4：JobExecutor 抽象与 Redis 执行器
 
 依赖：阶段 3。
 
 实现内容：
 
 - 定义 `JobExecutor` 接口。
-- 实现 `InMemoryJobExecutor`。
-- 使用 `asyncio.Semaphore` 控制并发。
-- 使用 `asyncio.to_thread` 执行当前同步 LangGraph workflow。
-- 后台任务更新 RunStore 状态。
+- 实现 `RedisJobExecutor`。
+- 使用 Redis/RQ 提交后台任务。
+- worker 调用当前同步 LangGraph workflow。
+- worker 更新 Postgres run 状态。
 
 验收：
 
 - `POST /runs` 立即返回。
-- 后台任务可完成并写入结果。
-- 并发限制生效。
-- 失败能写入 error。
-
-说明：
-
-这一阶段用于本地开发和测试，不是最终线上执行器。
+- 任务必须进入真实 Redis 队列。
+- worker 可完成任务并写入结果。
+- 失败能写入安全 error。
 
 ### 阶段 5：FastAPI Run API
 
@@ -369,7 +365,7 @@ GET /runs/{run_id}/events
 
 实现内容：
 
-- 保留单元测试使用 fake LLM。
+- 允许纯单元测试使用 stub LLM 只验证结构化解析和边界。
 - 新增真实集成测试脚本。
 - 测试完整链路：
   - API 创建 run。
@@ -391,11 +387,11 @@ GET /runs/{run_id}/events
 ```text
 阶段 1 配置/Schema
   -> 阶段 2 伪登录用户
-  -> 阶段 3 RunStore 抽象
-  -> 阶段 4 内存执行器
+  -> 阶段 3 PostgresRunStore
+  -> 阶段 4 RedisJobExecutor + Worker
   -> 阶段 5 FastAPI Run API
-  -> 阶段 6 PostgresRunStore
-  -> 阶段 7 RedisJobExecutor + Worker
+  -> 阶段 6 结果/trace 持久化
+  -> 阶段 7 真实 API + Worker 集成验证
   -> 阶段 8 Guard 拦截策略
   -> 阶段 9 并发与背压
   -> 阶段 10 真实集成测试
@@ -405,32 +401,29 @@ GET /runs/{run_id}/events
 
 ## 6. 第一版推荐交付切片
 
-为了避免一次性做太大，建议分两个 PR 或两个提交阶段：
+为了避免一次性做太大，按真实上线依赖拆小步实现：
 
-### 切片 A：本地可跑后端
+### 切片 A：真实持久化 API 骨架
 
 - FastAPI。
 - 伪登录用户。
-- InMemoryRunStore。
-- InMemoryJobExecutor。
+- `PostgresRunStore`。
 - `POST /runs`。
 - `GET /runs/{run_id}`。
-- 单测。
+- 真实 Postgres 集成测试。
 
 价值：
 
-- 快速验证 API 形状。
-- 不需要先部署 Redis/Postgres。
+- API 形状和用户边界先固定。
+- 不引入内存或 SQLite 平替，避免后续迁移误差。
 
-### 切片 B：上线形态
+### 切片 B：真实后台执行
 
-- PostgresRunStore。
-- RedisJobExecutor。
+- `RedisJobExecutor`。
 - Worker。
-- SSE events。
-- 并发限制。
+- 真实 Bailian LangGraph flow。
+- result/trace 持久化。
 - Guard 安全响应。
-- docker-compose。
 
 价值：
 
@@ -472,16 +465,12 @@ Kafka 会增加部署和开发复杂度。MVP 阶段 Redis 队列足够。
 
 ## 9. 当前结论
 
-第一版后端应先做：
+第一版后端直接采用真实上线依赖：
 
 ```text
-FastAPI + 伪登录用户 + RunStore/JobExecutor 抽象 + 内存执行器
+FastAPI + 伪登录用户 + Postgres + Redis Queue + Worker
 ```
 
-然后升级为：
-
-```text
-FastAPI + Postgres + Redis Queue + Worker
-```
+如果 Postgres 或 Redis 未安装/未启动，测试和服务应直接失败并提示安装或启动。
 
 暂时不需要 Kafka。

@@ -1,4 +1,4 @@
 from .base import JobExecutor, WorkflowRunner
-from .memory import InMemoryJobExecutor
+from .redis import RedisJobExecutor
 
-__all__ = ["InMemoryJobExecutor", "JobExecutor", "WorkflowRunner"]
+__all__ = ["JobExecutor", "RedisJobExecutor", "WorkflowRunner"]

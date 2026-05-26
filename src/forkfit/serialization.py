@@ -5,11 +5,15 @@ from .models import (
     AgentFinding,
     AgentReview,
     ChangeLogEntry,
+    LLMCallTrace,
     Meal,
     MealPack,
     PreferenceProfile,
     PreferenceReview,
+    RunTrace,
+    StepTrace,
     UserAgentOutput,
+    UserProfile,
 )
 
 
@@ -20,6 +24,38 @@ def meal_pack_from_dict(data: dict) -> MealPack:
         theme=data["theme"],
         meals=[meal_from_dict(item) for item in data["meals"]],
     )
+
+
+def meal_pack_to_dict(meal_pack: MealPack) -> dict:
+    return meal_pack.to_dict()
+
+
+def user_profile_from_dict(data: dict) -> UserProfile:
+    return UserProfile(
+        people_count=int(data["people_count"]),
+        budget=float(data["budget"]),
+        likes=list(data.get("likes", [])),
+        dislikes=list(data.get("dislikes", [])),
+        allergies=list(data.get("allergies", [])),
+        diet_rules=list(data.get("diet_rules", [])),
+        equipment=list(data.get("equipment", [])),
+        max_cook_time_minutes=int(data.get("max_cook_time_minutes", 30)),
+        soft_preferences=list(data.get("soft_preferences", [])),
+    )
+
+
+def user_profile_to_dict(user_profile: UserProfile) -> dict:
+    return {
+        "people_count": user_profile.people_count,
+        "budget": user_profile.budget,
+        "likes": list(user_profile.likes),
+        "dislikes": list(user_profile.dislikes),
+        "allergies": list(user_profile.allergies),
+        "diet_rules": list(user_profile.diet_rules),
+        "equipment": list(user_profile.equipment),
+        "max_cook_time_minutes": user_profile.max_cook_time_minutes,
+        "soft_preferences": list(user_profile.soft_preferences),
+    }
 
 
 def meal_from_dict(data: dict) -> Meal:
@@ -83,6 +119,34 @@ def agent_review_from_dict(data: dict) -> AgentReview:
         status=data["status"],
         findings=[finding_from_dict(item) for item in data.get("findings", [])],
         scores={key: float(value) for key, value in data.get("scores", {}).items()},
+    )
+
+
+def run_trace_from_dict(data: dict | None) -> RunTrace | None:
+    if data is None:
+        return None
+    return RunTrace(
+        steps=[
+            StepTrace(
+                node=item["node"],
+                duration_ms=float(item["duration_ms"]),
+                status=item["status"],
+                error=item.get("error", ""),
+            )
+            for item in data.get("steps", [])
+        ],
+        llm_calls=[
+            LLMCallTrace(
+                agent=item["agent"],
+                model=item["model"],
+                duration_ms=float(item["duration_ms"]),
+                prompt_tokens=item.get("prompt_tokens"),
+                completion_tokens=item.get("completion_tokens"),
+                status=item["status"],
+                error=item.get("error", ""),
+            )
+            for item in data.get("llm_calls", [])
+        ],
     )
 
 

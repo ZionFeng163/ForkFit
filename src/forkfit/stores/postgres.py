@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from forkfit.api.schemas import PublicRunError, RunResultPayload
 from forkfit.db.models import RunEventRow, RunRow
 from forkfit.models import MealPack, RunTrace
-from forkfit.serialization import meal_pack_from_dict
+from forkfit.serialization import meal_pack_from_dict, run_trace_from_dict
 from forkfit.stores.base import RunRecord, utc_now
 
 
@@ -110,9 +110,9 @@ def _record_from_row(row: RunRow, events: list[dict]) -> RunRecord:
         status=row.status,
         input_payload=row.input_payload,
         original_meal_pack=meal_pack_from_dict(row.original_meal_pack),
-        result=None,
+        result=RunResultPayload(**row.result_payload) if row.result_payload else None,
         error=PublicRunError(**row.error_payload) if row.error_payload else None,
-        trace=None,
+        trace=run_trace_from_dict(row.trace_payload),
         events=events,
         created_at=row.created_at,
         started_at=row.started_at,

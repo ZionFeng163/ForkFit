@@ -5,9 +5,9 @@ import os
 import time
 import urllib.error
 import urllib.request
-from pathlib import Path
 from typing import Any, Protocol
 
+from .config import load_env
 from .models import LLMCallTrace, RunTrace
 
 
@@ -23,17 +23,6 @@ class LLMClient(Protocol):
         trace: RunTrace | None = None,
     ) -> dict[str, Any]:
         ...
-
-
-def load_env(path: Path = Path(".env")) -> None:
-    if not path.exists():
-        return
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 class BailianLLMClient:

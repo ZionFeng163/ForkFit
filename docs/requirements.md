@@ -321,15 +321,12 @@ class JobExecutor:
     submit(run_id, payload)
 ```
 
-线上 MVP 推荐实现：
+MVP 直接实现：
 
 - `PostgresRunStore`
 - `RedisJobExecutor`
 
-本地开发可提供：
-
-- `InMemoryRunStore`
-- `InMemoryJobExecutor`
+不提供 SQLite 或内存平替作为 API 运行路径。Postgres 或 Redis 不可用时，服务和集成测试必须明确失败，提示安装或启动真实依赖。
 
 这样以后从 Redis 迁移到 Celery、Dramatiq、Kafka 或其他执行系统时，不需要重写 API 路由。
 

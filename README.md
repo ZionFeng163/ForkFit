@@ -55,3 +55,24 @@ Run a real Bailian smoke test:
 ```bash
 python3 scripts/smoke_bailian.py
 ```
+
+## Backend API
+
+The backend API requires real Postgres and Redis:
+
+```bash
+DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/forkfit \
+REDIS_URL=redis://localhost:6379/0 \
+python3 scripts/run_api.py
+```
+
+Start a worker in a separate process:
+
+```bash
+DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/forkfit \
+REDIS_URL=redis://localhost:6379/0 \
+python3 scripts/run_worker.py
+```
+
+Do not use SQLite or in-memory stores for API operation. Install and run
+Postgres and Redis before using the backend API.
