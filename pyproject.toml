@@ -5,7 +5,9 @@ description = "Three-agent meal-pack personalization core for community meal pla
 requires-python = ">=3.12"
 readme = "README.md"
 dependencies = [
+    "fastapi>=0.115",
     "langgraph>=0.2",
+    "uvicorn>=0.30",
 ]
 
 [build-system]
