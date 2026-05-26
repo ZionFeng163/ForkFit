@@ -4,13 +4,48 @@ from dataclasses import asdict
 
 from fastapi.testclient import TestClient
 
+from forkfit.api.deps import get_run_service
 from forkfit.api.app import create_app
+from forkfit.executors import InMemoryJobExecutor
 from forkfit.fixtures import demo_meal_pack, demo_user_profile
+from forkfit.models import AdapterOutput, AgentReview, ForkFitResult
+from forkfit.services import RunService
+from forkfit.stores import InMemoryRunStore
+
+
+class TestWorkflow:
+    def run(self, user_profile, meal_pack):
+        return ForkFitResult(
+            success=True,
+            user_agent_output=None,
+            reviews=[],
+            adapter_output=AdapterOutput(
+                forked_meal_pack=meal_pack,
+                change_log=[],
+                unresolved_items=[],
+                summary="Test workflow completed.",
+            ),
+            final_review=AgentReview(agent="constraint_guard", status="pass"),
+            trace=None,
+        )
+
+
+def build_test_run_service() -> RunService:
+    store = InMemoryRunStore()
+    executor = InMemoryJobExecutor(
+        store=store,
+        workflow=TestWorkflow(),
+        max_concurrent_runs=1,
+    )
+    return RunService(store=store, executor=executor)
 
 
 class RunApiTests(unittest.TestCase):
     def test_create_and_get_run(self):
-        client = TestClient(create_app())
+        app = create_app()
+        service = build_test_run_service()
+        app.dependency_overrides[get_run_service] = lambda: service
+        client = TestClient(app)
 
         response = client.post(
             "/runs",
@@ -36,10 +71,13 @@ class RunApiTests(unittest.TestCase):
 
         self.assertEqual(payload["status"], "succeeded")
         self.assertEqual(payload["user_id"], "demo_user")
-        self.assertEqual(payload["result"]["summary"], "Demo workflow completed.")
+        self.assertEqual(payload["result"]["summary"], "Test workflow completed.")
 
     def test_get_unknown_run_returns_404(self):
-        client = TestClient(create_app())
+        app = create_app()
+        service = build_test_run_service()
+        app.dependency_overrides[get_run_service] = lambda: service
+        client = TestClient(app)
 
         response = client.get("/runs/run_missing")
 
