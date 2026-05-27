@@ -19,3 +19,4 @@ node_modules/
 # Test artifacts
 test_*.png
 test_browser.mjs
+test_layout.mjs

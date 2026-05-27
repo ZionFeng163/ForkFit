@@ -5,7 +5,19 @@
   "Nav": {
     "discover": "发现",
     "newPost": "发帖",
+    "myPosts": "我的帖子",
     "profile": "个人"
+  },
+  "MyPosts": {
+    "title": "我的帖子",
+    "empty": "暂无帖子。",
+    "deleteConfirm": "确定删除这篇帖子？",
+    "deleted": "帖子已删除。",
+    "cancel": "取消",
+    "confirm": "删除",
+    "edit": "编辑",
+    "delete": "删除",
+    "createdAt": "创建时间"
   },
   "Home": {
     "title": "发现菜谱",

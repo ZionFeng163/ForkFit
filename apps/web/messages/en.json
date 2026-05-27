@@ -4,8 +4,20 @@
   },
   "Nav": {
     "discover": "Discover",
-    "newPost": "Post",
+    "newPost": "New Post",
+    "myPosts": "My Posts",
     "profile": "Profile"
+  },
+  "MyPosts": {
+    "title": "My Posts",
+    "empty": "No posts yet.",
+    "deleteConfirm": "Delete this post?",
+    "deleted": "Post deleted.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "edit": "Edit",
+    "delete": "Delete",
+    "createdAt": "Created"
   },
   "Home": {
     "title": "Discover dishes",
