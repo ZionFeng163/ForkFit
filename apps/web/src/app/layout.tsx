@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ForkFit",
   description: "Community dishes forked to fit your constraints.",
+  icons: {
+    icon: "/logo_en.png",
+  },
 };
 
 export default function RootLayout({

@@ -23,8 +23,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[#e7e2db] bg-white">
         <div className="px-5 pt-6 pb-4">
-          <Link href="/" className="text-lg font-semibold">
-            ForkFit
+          <Link href="/" className="block">
+            <img
+              src={locale === "zh" ? "/logo_zh.png" : "/logo_en.png"}
+              alt={locale === "zh" ? "吃什么" : "ForkFit"}
+              className="h-16 w-auto"
+            />
           </Link>
         </div>
 
