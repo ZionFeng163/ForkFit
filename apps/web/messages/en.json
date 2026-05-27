@@ -23,7 +23,10 @@
     "author": "Author",
     "theme": "Theme",
     "forks": "Forks",
-    "startFork": "Start Fork"
+    "startFork": "Start Fork",
+    "edit": "Edit",
+    "tags": "Tags",
+    "notes": "Notes"
   },
   "Fork": {
     "back": "Recipe details",
@@ -54,8 +57,12 @@
   },
   "NewPost": {
     "title": "Create post",
+    "editTitle": "Edit post",
     "description": "Write the dish like a normal post. Details can stay empty for now.",
     "submit": "Publish",
+    "save": "Save",
+    "saveAndExtract": "Save and re-extract",
+    "extracting": "Extracting",
     "titleLabel": "Title",
     "theme": "Theme",
     "location": "Location",

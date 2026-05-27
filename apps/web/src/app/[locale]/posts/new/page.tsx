@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { NewPostForm } from "./post-form";
+import { NewPostForm } from "./post-editor-form";
 
 export default function NewPostPage() {
   return (

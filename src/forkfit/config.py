@@ -18,6 +18,7 @@ class Settings:
     langsmith_api_key: str = ""
     langsmith_project: str = "forkfit"
     langsmith_endpoint: str = ""
+    post_extraction_model: str = "deepseek-v4-flash"
 
 
 def get_settings() -> Settings:
@@ -37,6 +38,7 @@ def get_settings() -> Settings:
         langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
         langsmith_project=os.getenv("LANGSMITH_PROJECT", "forkfit"),
         langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", ""),
+        post_extraction_model=os.getenv("POST_EXTRACTION_MODEL", "deepseek-v4-flash"),
     )
 
 

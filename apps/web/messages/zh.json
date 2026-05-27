@@ -23,7 +23,10 @@
     "author": "作者",
     "theme": "主题",
     "forks": "Fork 数",
-    "startFork": "开始 Fork"
+    "startFork": "开始 Fork",
+    "edit": "编辑",
+    "tags": "标签",
+    "notes": "备注"
   },
   "Fork": {
     "back": "菜谱详情",
@@ -54,8 +57,12 @@
   },
   "NewPost": {
     "title": "发布菜谱",
+    "editTitle": "编辑菜谱",
     "description": "写清楚这道菜适合谁、怎么吃。详细食材和时间可以先不填。",
     "submit": "发布",
+    "save": "保存",
+    "saveAndExtract": "保存并重新识别",
+    "extracting": "识别中",
     "titleLabel": "标题",
     "theme": "主题",
     "location": "地点",

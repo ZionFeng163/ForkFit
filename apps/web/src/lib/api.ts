@@ -4,6 +4,7 @@ import type {
   MealPack,
   RecipePost,
   RunStatusResponse,
+  UpdatePostInput,
   UserProfile,
 } from "@/types/forkfit";
 
@@ -60,5 +61,18 @@ export function createPost(input: CreatePostInput) {
   return request<RecipePost>("/posts", {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+export function updatePost(postId: string, input: UpdatePostInput) {
+  return request<RecipePost>(`/posts/${postId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export function extractPost(postId: string) {
+  return request<RecipePost>(`/posts/${postId}/extract`, {
+    method: "POST",
   });
 }

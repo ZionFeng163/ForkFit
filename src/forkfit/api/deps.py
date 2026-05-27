@@ -7,6 +7,7 @@ from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.executors import RedisJobExecutor
+from forkfit.llm import BailianLLMClient
 from forkfit.services import RunService
 from forkfit.stores import PostgresPostStore, PostgresRunStore
 
@@ -21,6 +22,15 @@ def get_run_store() -> PostgresRunStore:
 def get_post_store() -> PostgresPostStore:
     settings = get_settings()
     return PostgresPostStore(make_session_factory(settings.database_url))
+
+
+@lru_cache(maxsize=1)
+def get_post_extraction_llm() -> BailianLLMClient:
+    settings = get_settings()
+    return BailianLLMClient(
+        model=settings.post_extraction_model,
+        timeout_seconds=settings.llm_timeout_seconds,
+    )
 
 
 @lru_cache(maxsize=1)

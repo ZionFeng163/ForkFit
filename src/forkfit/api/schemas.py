@@ -32,6 +32,10 @@ class CreatePostRequest(BaseModel):
     recipe: Meal
 
 
+class UpdatePostRequest(CreatePostRequest):
+    pass
+
+
 class PostResponse(BaseModel):
     id: str
     user_id: str

@@ -9,7 +9,7 @@ from uuid import uuid4
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from forkfit.api.schemas import CreatePostRequest
+from forkfit.api.schemas import CreatePostRequest, UpdatePostRequest
 from forkfit.db.models import PostRow
 from forkfit.models import Meal
 from forkfit.preset_posts import PRESET_POSTS
@@ -69,6 +69,21 @@ class PostgresPostStore:
                 recipe_payload=asdict(request.recipe),
             )
             session.add(row)
+            session.commit()
+            session.refresh(row)
+            return _record_from_row(row)
+
+    def update_post(self, *, post_id: str, request: UpdatePostRequest) -> PostRecord:
+        with self.session_factory() as session:
+            row = session.get(PostRow, post_id)
+            if row is None:
+                raise KeyError(f"Unknown post_id: {post_id}")
+            row.title = request.title.strip()
+            row.theme = request.theme.strip()
+            row.location = request.location.strip()
+            row.image_urls = [url.strip() for url in request.image_urls if url.strip()]
+            row.description = request.description.strip()
+            row.recipe_payload = asdict(request.recipe)
             session.commit()
             session.refresh(row)
             return _record_from_row(row)

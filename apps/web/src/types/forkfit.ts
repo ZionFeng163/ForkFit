@@ -122,3 +122,5 @@ export type CreatePostInput = {
   description: string;
   recipe: Meal;
 };
+
+export type UpdatePostInput = CreatePostInput;

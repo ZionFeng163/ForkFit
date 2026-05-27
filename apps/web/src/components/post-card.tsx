@@ -1,22 +1,23 @@
 import { Clock, DollarSign, GitFork, Heart } from "lucide-react";
-import Image from "next/image";
 
+import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
 import type { RecipePost } from "@/types/forkfit";
 
 export function PostCard({ post }: { post: RecipePost }) {
+  const tags = post.recipe.tags.slice(0, 3);
+  const showMeta = isMeaningfulRecipe(post);
+
   return (
     <Link
       href={`/packs/${post.id}`}
       className="mb-4 block overflow-hidden rounded-lg border border-[#e4ded6] bg-white transition-colors hover:border-[#cfc5b8]"
     >
       <div className="relative aspect-[4/5] bg-[#eee9e2]">
-        <Image
+        <RemoteImage
           src={post.image_urls[0]}
           alt={post.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover"
+          className="h-full w-full object-cover"
         />
       </div>
       <div className="space-y-3 p-3">
@@ -28,10 +29,9 @@ export function PostCard({ post }: { post: RecipePost }) {
             {post.description}
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {post.recipe.tags
-            .slice(0, 3)
-            .map((tag) => (
+        {tags.length ? (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
               <span
                 key={tag}
                 className="rounded-md border border-[#e5ded5] px-1.5 py-0.5 text-[12px] text-[#625b52]"
@@ -39,21 +39,24 @@ export function PostCard({ post }: { post: RecipePost }) {
                 {tag}
               </span>
             ))}
-        </div>
-        <div className="grid grid-cols-3 gap-2 border-t border-[#eee8df] pt-3 text-[12px] text-[#625b52]">
-          <span className="flex items-center gap-1">
-            <Clock size={14} />
-            {post.recipe.cook_time_minutes}m
-          </span>
-          <span className="flex items-center gap-1">
-            <DollarSign size={14} />
-            {post.recipe.estimated_cost.toFixed(0)}
-          </span>
-          <span className="flex items-center gap-1">
-            <GitFork size={14} />
-            {post.forks}
-          </span>
-        </div>
+          </div>
+        ) : null}
+        {showMeta ? (
+          <div className="grid grid-cols-3 gap-2 border-t border-[#eee8df] pt-3 text-[12px] text-[#625b52]">
+            <span className="flex items-center gap-1">
+              <Clock size={14} />
+              {post.recipe.cook_time_minutes}m
+            </span>
+            <span className="flex items-center gap-1">
+              <DollarSign size={14} />
+              {post.recipe.estimated_cost.toFixed(0)}
+            </span>
+            <span className="flex items-center gap-1">
+              <GitFork size={14} />
+              {post.forks}
+            </span>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between text-[13px] text-[#6f6a61]">
           <span>{post.author}</span>
           <span className="flex items-center gap-1">
@@ -63,5 +66,20 @@ export function PostCard({ post }: { post: RecipePost }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+function isMeaningfulRecipe(post: RecipePost) {
+  const recipe = post.recipe;
+  const hasRealIngredients = !(
+    recipe.ingredients.length === 1 && recipe.ingredients[0] === post.title
+  );
+  return (
+    hasRealIngredients ||
+    recipe.equipment.length > 0 ||
+    recipe.tags.length > 0 ||
+    Boolean(recipe.notes) ||
+    recipe.cook_time_minutes !== 30 ||
+    recipe.estimated_cost !== 10
   );
 }
