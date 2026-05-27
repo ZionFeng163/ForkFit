@@ -32,8 +32,17 @@ export function MyPostsList({ posts }: { posts: RecipePost[] }) {
       {items.map((post) => (
         <div
           key={post.id}
-          className="flex items-center justify-between gap-4 rounded-lg border border-[#e7e2db] bg-white px-4 py-3"
+          className="flex items-center gap-4 rounded-lg border border-[#e7e2db] bg-white px-4 py-3"
         >
+          {post.image_urls && post.image_urls.length > 0 ? (
+            <img
+              src={post.image_urls[0]}
+              alt={post.title}
+              className="h-16 w-16 shrink-0 rounded-md object-cover"
+            />
+          ) : (
+            <div className="h-16 w-16 shrink-0 rounded-md bg-[#f5f0ea]" />
+          )}
           <div className="min-w-0 flex-1">
             <Link
               href={`/packs/${post.id}`}
@@ -50,14 +59,14 @@ export function MyPostsList({ posts }: { posts: RecipePost[] }) {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href={`/packs/${post.id}/edit`}
-              className="rounded-md border border-[#e7e2db] px-3 py-1.5 text-xs text-[#5f5a52] hover:bg-[#f9f6f2]"
+              className="inline-flex items-center rounded-md border border-[#e7e2db] px-3 py-1.5 text-xs text-[#5f5a52] hover:bg-[#f9f6f2]"
             >
               {t("edit")}
             </Link>
             <button
               onClick={() => handleDelete(post.id)}
               disabled={deleting === post.id}
-              className="rounded-md border border-[#e7e2db] px-3 py-1.5 text-xs text-[#5f5a52] hover:bg-[#f9f6f2] disabled:opacity-50"
+              className="inline-flex items-center rounded-md border border-[#e8a9a0] px-3 py-1.5 text-xs text-[#9e3a2b] hover:bg-[#fdf0ee] disabled:opacity-50"
             >
               {deleting === post.id ? "..." : t("delete")}
             </button>

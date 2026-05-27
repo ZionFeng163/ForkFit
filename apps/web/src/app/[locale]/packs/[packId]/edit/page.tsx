@@ -18,7 +18,7 @@ export default async function EditPostPage({ params }: PageProps) {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+      <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <PostEditorForm post={post} />
       </section>
     </AppShell>

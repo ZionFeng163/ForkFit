@@ -89,18 +89,19 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-      <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-0">
-            {isEditing ? t("editTitle") : t("title")}
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-[#625b52]">
-            {t("description")}
-          </p>
-        </div>
+    <form onSubmit={submit}>
+      <div className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-0">
+          {isEditing ? t("editTitle") : t("title")}
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-[#625b52]">
+          {t("description")}
+        </p>
+      </div>
 
-        <section className="space-y-4 rounded-lg border border-[#e4ded6] bg-white p-5">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="space-y-5">
+          <section className="space-y-4 rounded-lg border border-[#e4ded6] bg-white p-5">
           <h2 className="text-base font-semibold">{t("mainSection")}</h2>
           <Field label={t("titleLabel")} htmlFor="title">
             <input
@@ -233,7 +234,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
         </details>
       </div>
 
-      <aside className="h-fit rounded-lg border border-[#e4ded6] bg-white p-5">
+      <aside className="h-fit rounded-lg border border-[#e4ded6] bg-white p-5 lg:sticky lg:top-6">
         <p className="text-sm leading-6 text-[#625b52]">{t("publishHelp")}</p>
         {mutation.error || extractMutation.error ? (
           <p className="mt-4 rounded-md border border-[#e1b7a9] bg-[#fff8f5] p-3 text-sm text-[#7f3525]">
@@ -259,6 +260,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
           </button>
         ) : null}
       </aside>
+      </div>
     </form>
   );
 }

@@ -8,9 +8,9 @@ export default function Loading() {
           <div className="h-7 w-48 animate-pulse rounded bg-[#e8e1d8]" />
           <div className="mt-2 h-4 w-96 max-w-full animate-pulse rounded bg-[#ede8e0]" />
         </div>
-        <div className="columns-2 gap-4 md:columns-3 lg:columns-4">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="mb-4 break-inside-avoid overflow-hidden rounded-lg border border-[#e4ded6] bg-white">
+            <div key={i} className="overflow-hidden rounded-lg border border-[#e4ded6] bg-white">
               <div className="aspect-[4/5] animate-pulse bg-[#ede8e0]" />
               <div className="space-y-3 p-3">
                 <div className="h-4 w-3/4 animate-pulse rounded bg-[#ede8e0]" />

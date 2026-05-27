@@ -20,3 +20,6 @@ node_modules/
 test_*.png
 test_browser.mjs
 test_layout.mjs
+
+# Local dev process state
+.forkfit-dev/

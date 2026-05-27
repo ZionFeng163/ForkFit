@@ -79,6 +79,39 @@ python3 scripts/run_worker.py
 Do not use SQLite or in-memory stores for API operation. Install and run
 Postgres and Redis before using the backend API.
 
+## One-command local dev
+
+Use the fixed local startup script for normal development:
+
+```bash
+bash scripts/dev_start.sh
+```
+
+It starts the app in this order:
+
+- Postgres on `localhost:5432`
+- Redis on `localhost:6379`
+- API on `http://127.0.0.1:8000`
+- Worker for the `forkfit-runs` queue
+- Web app on `http://127.0.0.1:3000/en`
+
+The script uses the `forkfit-agent` conda environment by default. Override it
+when needed:
+
+```bash
+CONDA_ENV=your-env bash scripts/dev_start.sh
+```
+
+Check or stop the tracked app processes:
+
+```bash
+bash scripts/dev_status.sh
+bash scripts/dev_stop.sh
+```
+
+Logs and PID files live under `.forkfit-dev/`. The stop script leaves Postgres
+and Redis running because they are shared local services.
+
 ## Web app
 
 The frontend is a Next.js app in `apps/web`:

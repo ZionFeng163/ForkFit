@@ -76,6 +76,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
+        {/* Top bar with language switcher */}
+        <header className="flex items-center justify-end border-b border-[#e7e2db] bg-white px-4 py-2 md:px-6">
+          <div className="flex items-center gap-2">
+            <Link
+              href={pathname}
+              locale="en"
+              className={`text-xs ${locale === "en" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
+            >
+              EN
+            </Link>
+            <span className="text-xs text-[#d0c9c0]">/</span>
+            <Link
+              href={pathname}
+              locale="zh"
+              className={`text-xs ${locale === "zh" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
+            >
+              中文
+            </Link>
+          </div>
+        </header>
         <main className="flex-1 pb-20 md:pb-0">{children}</main>
       </div>
 

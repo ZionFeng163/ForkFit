@@ -3,9 +3,9 @@ import type { RecipePost } from "@/types/forkfit";
 
 export function PostGrid({ posts }: { posts: RecipePost[] }) {
   return (
-    <div className="columns-2 gap-4 md:columns-3 lg:columns-4">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
       {posts.map((post) => (
-        <div key={post.id} className="break-inside-avoid">
+        <div key={post.id}>
           <PostCard post={post} />
         </div>
       ))}

@@ -4,7 +4,7 @@ import { NewPostForm } from "./post-editor-form";
 export default function NewPostPage() {
   return (
     <AppShell>
-      <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+      <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
         <NewPostForm />
       </section>
     </AppShell>
