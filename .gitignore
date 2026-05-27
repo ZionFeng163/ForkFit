@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+
+# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -9,3 +11,11 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
+
+# Node
+node_modules/
+.next/
+
+# Test artifacts
+test_*.png
+test_browser.mjs

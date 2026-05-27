@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import uuid4
 
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -36,15 +37,18 @@ class PostgresPostStore:
     def __init__(self, session_factory: sessionmaker[Session]) -> None:
         self.session_factory = session_factory
 
-    def list_posts(self) -> list[PostRecord]:
+    def list_posts(self, limit: int = 20, offset: int = 0) -> tuple[list[PostRecord], int]:
         self.ensure_preset_posts()
         with self.session_factory() as session:
+            total = session.query(func.count(PostRow.id)).scalar()
             rows = (
                 session.query(PostRow)
                 .order_by(PostRow.created_at.desc(), PostRow.id.desc())
+                .offset(offset)
+                .limit(limit)
                 .all()
             )
-            return [_record_from_row(row) for row in rows]
+            return [_record_from_row(row) for row in rows], total
 
     def get_post(self, post_id: str) -> PostRecord | None:
         self.ensure_preset_posts()
@@ -87,6 +91,14 @@ class PostgresPostStore:
             session.commit()
             session.refresh(row)
             return _record_from_row(row)
+
+    def delete_post(self, post_id: str) -> None:
+        with self.session_factory() as session:
+            row = session.get(PostRow, post_id)
+            if row is None:
+                raise KeyError(f"Unknown post_id: {post_id}")
+            session.delete(row)
+            session.commit()
 
     def ensure_preset_posts(self) -> None:
         with self.session_factory() as session:

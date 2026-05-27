@@ -10,7 +10,9 @@
   "Home": {
     "title": "Discover dishes",
     "description": "Browse community recipe posts, then fork one against your allergies, equipment, budget, and cooking time.",
-    "postCount": "{count, plural, one {# post} other {# posts}}"
+    "postCount": "{count, plural, one {# post} other {# posts}}",
+    "loadMore": "Load more",
+    "loading": "Loading..."
   },
   "Pack": {
     "back": "Discover",
@@ -108,6 +110,8 @@
     "none": "none",
     "changeLog": "Change log",
     "noChanges": "No changes were needed.",
+    "unresolvedItems": "Unresolved items",
+    "suggestedAction": "Suggested",
     "finalReview": "Final review",
     "traceSummary": "{llmCalls} LLM calls · {steps} graph steps"
   },

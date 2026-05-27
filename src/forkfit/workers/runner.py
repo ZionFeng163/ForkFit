@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
+
+logger = logging.getLogger(__name__)
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
@@ -35,6 +39,7 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
             )
         exporter.export_run(record)
     except Exception:
+        logger.exception("Run %s failed", run_id)
         record = store.mark_failed(
             run_id,
             error=PublicRunError(message="运行失败，请稍后重试。"),

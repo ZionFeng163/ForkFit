@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/routing";
@@ -122,6 +122,27 @@ export function RunView({ runId }: { runId: string }) {
                 )}
               </div>
             </section>
+
+            {run.result.unresolved_items.length > 0 ? (
+              <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
+                <h2 className="text-lg font-semibold">{t("unresolvedItems")}</h2>
+                <div className="mt-4 space-y-3">
+                  {run.result.unresolved_items.map((item, index) => (
+                    <div key={`${item.affected_items.join(",")}-${index}`} className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle size={14} className="text-[#b8860b]" />
+                        <span className="font-medium">{item.message}</span>
+                      </div>
+                      {item.suggested_action ? (
+                        <p className="mt-1 ml-5 leading-6 text-[#7a7167]">
+                          {t("suggestedAction")}: {item.suggested_action}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
               <h2 className="text-lg font-semibold">{t("finalReview")}</h2>

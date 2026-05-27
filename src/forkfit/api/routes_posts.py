@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 import logging
 
@@ -17,9 +17,14 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=list[PostResponse])
 async def list_posts(
+    response: Response,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> list[PostResponse]:
-    return [_post_response(post) for post in store.list_posts()]
+    posts, total = store.list_posts(limit=limit, offset=offset)
+    response.headers["X-Total-Count"] = str(total)
+    return [_post_response(post) for post in posts]
 
 
 @router.post("", response_model=PostResponse)
@@ -64,6 +69,16 @@ async def update_post(
     post = _require_owned_post(post_id, user=user, store=store)
     updated = store.update_post(post_id=post.id, request=request)
     return _post_response(updated)
+
+
+@router.delete("/{post_id}", status_code=204)
+async def delete_post(
+    post_id: str,
+    user: CurrentUser = Depends(current_user),
+    store: PostgresPostStore = Depends(get_post_store),
+) -> None:
+    _require_owned_post(post_id, user=user, store=store)
+    store.delete_post(post_id)
 
 
 @router.post("/{post_id}/extract", response_model=PostResponse)

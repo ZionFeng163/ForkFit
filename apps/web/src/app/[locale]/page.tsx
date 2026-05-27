@@ -1,13 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app-shell";
-import { PostGrid } from "@/components/post-grid";
+import { PostGridPaginated } from "@/components/post-grid-paginated";
 import { loadPosts } from "@/lib/posts";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Home" });
-  const posts = await loadPosts();
+  const { posts, total } = await loadPosts();
 
   return (
     <AppShell>
@@ -20,10 +20,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             </p>
           </div>
           <div className="hidden text-sm text-[#6f6a61] sm:block">
-            {t("postCount", { count: posts.length })}
+            {t("postCount", { count: total })}
           </div>
         </div>
-        <PostGrid posts={posts} />
+        <PostGridPaginated initialPosts={posts} totalCount={total} />
       </section>
     </AppShell>
   );

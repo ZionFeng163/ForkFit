@@ -10,7 +10,9 @@
   "Home": {
     "title": "发现菜谱",
     "description": "浏览社区菜谱帖子，再按过敏、厨具、预算和烹饪时间做个性化 Fork。",
-    "postCount": "{count} 个帖子"
+    "postCount": "{count} 个帖子",
+    "loadMore": "加载更多",
+    "loading": "加载中..."
   },
   "Pack": {
     "back": "发现",
@@ -108,6 +110,8 @@
     "none": "无",
     "changeLog": "改动记录",
     "noChanges": "无需改动。",
+    "unresolvedItems": "未解决项",
+    "suggestedAction": "建议",
     "finalReview": "最终校验",
     "traceSummary": "{llmCalls} 次 LLM 调用 · {steps} 个图节点"
   },

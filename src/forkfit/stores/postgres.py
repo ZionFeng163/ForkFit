@@ -4,6 +4,7 @@ from dataclasses import asdict
 from datetime import datetime
 from uuid import uuid4
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, sessionmaker
 
 from forkfit.api.schemas import PublicRunError, RunResultPayload
@@ -94,6 +95,29 @@ class PostgresRunStore:
                 RunEventRow(run_id=run_id, event_type=event_type, payload=payload)
             )
             session.commit()
+
+    def count_active_runs_for_user(self, user_id: str) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(RunRow.id)).filter(
+                RunRow.user_id == user_id,
+                RunRow.status.in_(["queued", "running"]),
+            ).scalar()
+
+    def count_global_active_runs(self) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(RunRow.id)).filter(
+                RunRow.status.in_(["queued", "running"]),
+            ).scalar()
+
+    def list_runs_for_user(self, user_id: str) -> list[RunRecord]:
+        with self.session_factory() as session:
+            rows = (
+                session.query(RunRow)
+                .filter(RunRow.user_id == user_id)
+                .order_by(RunRow.created_at.desc())
+                .all()
+            )
+            return [_record_from_row(row, []) for row in rows]
 
 
 def _require_row(session: Session, run_id: str) -> RunRow:

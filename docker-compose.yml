@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: forkfit
+      POSTGRES_PASSWORD: forkfit
+      POSTGRES_DB: forkfit
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://forkfit:forkfit@postgres:5432/forkfit
+      REDIS_URL: redis://redis:6379/0
+      BAILIAN_API_KEY: ${BAILIAN_API_KEY}
+      BAILIAN_MODEL: ${BAILIAN_MODEL:-qwen3.6-flash}
+      BAILIAN_BASE_URL: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-forkfit}
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    command: python scripts/run_worker.py
+    environment:
+      DATABASE_URL: postgresql+psycopg://forkfit:forkfit@postgres:5432/forkfit
+      REDIS_URL: redis://redis:6379/0
+      BAILIAN_API_KEY: ${BAILIAN_API_KEY}
+      BAILIAN_MODEL: ${BAILIAN_MODEL:-qwen3.6-flash}
+      BAILIAN_BASE_URL: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-forkfit}
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build: ./apps/web
+    ports:
+      - "3000:3000"
+    environment:
+      FORKFIT_API_BASE_URL: http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

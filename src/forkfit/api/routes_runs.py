@@ -11,6 +11,15 @@ from forkfit.stores.base import RunRecord
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
+@router.get("", response_model=list[RunStatusResponse])
+async def list_runs(
+    user: CurrentUser = Depends(current_user),
+    service: RunService = Depends(get_run_service),
+) -> list[RunStatusResponse]:
+    runs = service.store.list_runs_for_user(user.id)
+    return [_run_response(run) for run in runs]
+
+
 @router.post("", response_model=CreateRunResponse)
 async def create_run(
     request: CreateRunRequest,

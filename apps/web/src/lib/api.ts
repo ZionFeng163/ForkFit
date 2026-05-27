@@ -49,8 +49,12 @@ export function getRun(runId: string) {
   return request<RunStatusResponse>(`/runs/${runId}`);
 }
 
-export function listPosts() {
-  return request<RecipePost[]>("/posts");
+export function listRuns() {
+  return request<RunStatusResponse[]>("/runs");
+}
+
+export function listPosts(limit = 20, offset = 0) {
+  return request<RecipePost[]>(`/posts?limit=${limit}&offset=${offset}`);
 }
 
 export function getPost(postId: string) {
@@ -75,4 +79,14 @@ export function extractPost(postId: string) {
   return request<RecipePost>(`/posts/${postId}/extract`, {
     method: "POST",
   });
+}
+
+export async function deletePost(postId: string): Promise<void> {
+  const response = await fetch(apiUrl(`/posts/${postId}`), {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed with ${response.status}`);
+  }
 }

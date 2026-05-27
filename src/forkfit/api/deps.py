@@ -38,7 +38,7 @@ def get_run_service() -> RunService:
     settings = get_settings()
     store = get_run_store()
     executor = RedisJobExecutor(redis_url=settings.redis_url)
-    return RunService(store=store, executor=executor)
+    return RunService(store=store, executor=executor, settings=settings)
 
 
 def current_user() -> CurrentUser:
