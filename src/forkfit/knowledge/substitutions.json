@@ -1,0 +1,473 @@
+[
+  {
+    "id": "dairy_milk",
+    "original": "cow milk",
+    "aliases": ["whole milk", "dairy milk", "milk"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "liquid", "beverage", "baking"],
+    "substitutes": [
+      {"name": "oat milk", "reason": "Creamy texture, neutral taste, works in most recipes", "allergens_free": ["milk", "soy", "nuts"], "category": "plant milk", "taste_profile": "mild, slightly sweet", "ratio": "1:1"},
+      {"name": "soy milk", "reason": "High protein, similar consistency to cow milk", "allergens_free": ["milk", "nuts"], "category": "plant milk", "taste_profile": "neutral, beany", "ratio": "1:1"},
+      {"name": "almond milk", "reason": "Light, low calorie, good for cereals", "allergens_free": ["milk", "soy"], "category": "plant milk", "taste_profile": "mild, nutty", "ratio": "1:1"},
+      {"name": "coconut milk", "reason": "Rich and creamy, good for curries and desserts", "allergens_free": ["milk", "soy", "nuts"], "category": "plant milk", "taste_profile": "sweet, coconut", "ratio": "1:1"},
+      {"name": "rice milk", "reason": "Hypoallergenic, mild flavor", "allergens_free": ["milk", "soy", "nuts"], "category": "plant milk", "taste_profile": "very mild, slightly sweet", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "dairy_butter",
+    "original": "butter",
+    "aliases": ["unsalted butter", "dairy butter"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "fat", "baking", "cooking"],
+    "substitutes": [
+      {"name": "olive oil", "reason": "Healthy fat, good for cooking and dressing", "allergens_free": ["milk", "soy", "nuts"], "category": "oil", "taste_profile": "fruity, peppery", "ratio": "3/4 cup per 1 cup butter"},
+      {"name": "coconut oil", "reason": "Solid at room temp, similar to butter in baking", "allergens_free": ["milk", "soy", "nuts"], "category": "oil", "taste_profile": "mild coconut", "ratio": "1:1"},
+      {"name": "avocado", "reason": "Creamy texture, healthy fats, good for baking", "allergens_free": ["milk", "soy", "nuts", "gluten"], "category": "fruit", "taste_profile": "mild, creamy", "ratio": "1/2 cup per 1 cup butter"},
+      {"name": "olive oil spread", "reason": "Designed as butter replacement, similar behavior", "allergens_free": ["milk"], "category": "spread", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "applesauce", "reason": "Reduces fat, adds moisture in baking", "allergens_free": ["milk", "soy", "nuts", "gluten", "eggs"], "category": "fruit puree", "taste_profile": "sweet, fruity", "ratio": "1/2 cup per 1 cup butter"}
+    ]
+  },
+  {
+    "id": "dairy_cheese",
+    "original": "cheese",
+    "aliases": ["cheddar", "mozzarella", "parmesan", "cream cheese", "dairy cheese"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "protein", "topping"],
+    "substitutes": [
+      {"name": "nutritional yeast", "reason": "Cheesy flavor, good for sauces and toppings", "allergens_free": ["milk", "soy", "nuts", "gluten"], "category": "seasoning", "taste_profile": "umami, cheesy", "ratio": "2 tbsp per 1/4 cup cheese"},
+      {"name": "cashew cheese", "reason": "Creamy, melts well, nut-based", "allergens_free": ["milk", "soy"], "category": "plant cheese", "taste_profile": "mild, creamy", "ratio": "1:1"},
+      {"name": "tofu (silken)", "reason": "Creamy texture for sauces and dressings", "allergens_free": ["milk", "nuts", "gluten"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1 for cream cheese"},
+      {"name": "coconut cream", "reason": "Rich and creamy for cooking", "allergens_free": ["milk", "soy", "nuts"], "category": "plant cream", "taste_profile": "sweet, coconut", "ratio": "1:1 for cream cheese"}
+    ]
+  },
+  {
+    "id": "dairy_yogurt",
+    "original": "yogurt",
+    "aliases": ["greek yogurt", "dairy yogurt", "plain yogurt"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "fermented", "breakfast", "baking"],
+    "substitutes": [
+      {"name": "coconut yogurt", "reason": "Creamy, fermented, similar tang", "allergens_free": ["milk", "soy", "nuts"], "category": "plant yogurt", "taste_profile": "tangy, coconut", "ratio": "1:1"},
+      {"name": "soy yogurt", "reason": "High protein, fermented, similar texture", "allergens_free": ["milk", "nuts"], "category": "plant yogurt", "taste_profile": "tangy, neutral", "ratio": "1:1"},
+      {"name": "oat yogurt", "reason": "Creamy, mild flavor", "allergens_free": ["milk", "soy", "nuts"], "category": "plant yogurt", "taste_profile": "mild, slightly sweet", "ratio": "1:1"},
+      {"name": "sour cream", "reason": "Similar tang and texture for dipping", "allergens_free": ["soy", "nuts", "gluten"], "category": "dairy", "taste_profile": "tangy, rich", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "dairy_cream",
+    "original": "heavy cream",
+    "aliases": ["cream", "whipping cream", "heavy whipping cream", "double cream"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "fat", "cooking", "dessert"],
+    "substitutes": [
+      {"name": "coconut cream", "reason": "High fat content, whips well, rich texture", "allergens_free": ["milk", "soy", "nuts"], "category": "plant cream", "taste_profile": "sweet, coconut", "ratio": "1:1"},
+      {"name": "cashew cream", "reason": "Creamy and neutral, good for sauces", "allergens_free": ["milk", "soy"], "category": "nut cream", "taste_profile": "mild, creamy", "ratio": "1:1"},
+      {"name": "silken tofu blended", "reason": "High protein, creamy when blended", "allergens_free": ["milk", "nuts", "gluten"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "evaporated milk", "reason": "Richer than regular milk, similar to cream", "allergens_free": ["soy", "nuts", "gluten"], "category": "dairy", "taste_profile": "creamy, caramelized", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "eggs_whole",
+    "original": "eggs",
+    "aliases": ["chicken eggs", "egg", "whole egg"],
+    "common_allergens": ["eggs"],
+    "tags": ["protein", "baking", "binding", "breakfast"],
+    "substitutes": [
+      {"name": "flax egg", "reason": "Good binder in baking, omega-3 rich", "allergens_free": ["eggs", "milk", "nuts", "soy", "gluten"], "category": "seed binder", "taste_profile": "mild, nutty", "ratio": "1 tbsp ground flax + 3 tbsp water per egg"},
+      {"name": "chia egg", "reason": "Similar to flax egg, good binding", "allergens_free": ["eggs", "milk", "nuts", "soy", "gluten"], "category": "seed binder", "taste_profile": "neutral", "ratio": "1 tbsp chia seeds + 3 tbsp water per egg"},
+      {"name": "applesauce", "reason": "Adds moisture and binding in baking", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "fruit puree", "taste_profile": "sweet", "ratio": "1/4 cup per egg"},
+      {"name": "mashed banana", "reason": "Binding and moisture in baking", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "fruit puree", "taste_profile": "sweet, banana", "ratio": "1/4 cup per egg"},
+      {"name": "aquafaba", "reason": "Chickpea water, whips like egg whites", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "legume liquid", "taste_profile": "neutral", "ratio": "3 tbsp per egg"},
+      {"name": "silken tofu", "reason": "Good for quiches and custards", "allergens_free": ["eggs", "milk", "nuts", "gluten"], "category": "soy product", "taste_profile": "neutral", "ratio": "1/4 cup per egg"}
+    ]
+  },
+  {
+    "id": "eggs_baking",
+    "original": "egg (baking)",
+    "aliases": ["egg for baking", "egg wash"],
+    "common_allergens": ["eggs"],
+    "tags": ["baking", "binding"],
+    "substitutes": [
+      {"name": "flax egg", "reason": "Best all-purpose egg replacer for baking", "allergens_free": ["eggs", "milk", "nuts", "soy", "gluten"], "category": "seed binder", "taste_profile": "mild", "ratio": "1 tbsp ground flax + 3 tbsp water per egg"},
+      {"name": "commercial egg replacer", "reason": "Designed for baking, consistent results", "allergens_free": ["eggs", "milk"], "category": "baking ingredient", "taste_profile": "neutral", "ratio": "follows package directions"},
+      {"name": "applesauce", "reason": "Adds moisture, good for cakes and muffins", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "fruit puree", "taste_profile": "sweet", "ratio": "1/4 cup per egg"},
+      {"name": "mashed banana", "reason": "Adds moisture and binding", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "fruit puree", "taste_profile": "sweet, banana", "ratio": "1/4 cup per egg"}
+    ]
+  },
+  {
+    "id": "wheat_flour",
+    "original": "wheat flour",
+    "aliases": ["all-purpose flour", "plain flour", "flour", "bread flour"],
+    "common_allergens": ["gluten"],
+    "tags": ["grain", "baking", "thickener"],
+    "substitutes": [
+      {"name": "rice flour", "reason": "Neutral flavor, good for thickening and baking", "allergens_free": ["gluten", "nuts", "soy", "eggs", "milk"], "category": "GF flour", "taste_profile": "neutral", "ratio": "7/8 cup per 1 cup wheat flour"},
+      {"name": "oat flour", "reason": "Mild flavor, good texture in baking", "allergens_free": ["nuts", "soy", "eggs", "milk"], "category": "GF flour", "taste_profile": "mild, slightly sweet", "ratio": "7/8 cup per 1 cup wheat flour"},
+      {"name": "almond flour", "reason": "High protein, moist texture in baking", "allergens_free": ["gluten", "soy", "eggs", "milk"], "category": "GF flour", "taste_profile": "nutty", "ratio": "1:1 but denser"},
+      {"name": "coconut flour", "reason": "High fiber, very absorbent", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF flour", "taste_profile": "mild coconut", "ratio": "1/4 to 1/3 cup per 1 cup wheat flour"},
+      {"name": "chickpea flour", "reason": "High protein, good for savory dishes", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF flour", "taste_profile": "beany, earthy", "ratio": "1:1"},
+      {"name": "tapioca starch", "reason": "Good for thickening and chewy textures", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "starch", "taste_profile": "neutral", "ratio": "2 tbsp per 1 cup wheat flour"}
+    ]
+  },
+  {
+    "id": "wheat_pasta",
+    "original": "wheat pasta",
+    "aliases": ["pasta", "spaghetti", "noodles", "penne"],
+    "common_allergens": ["gluten"],
+    "tags": ["grain", "pasta", "main"],
+    "substitutes": [
+      {"name": "rice noodles", "reason": "Gluten-free, neutral flavor, cooks quickly", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF pasta", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "zucchini noodles", "reason": "Low carb, vegetable-based, light", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "vegetable noodle", "taste_profile": "mild, fresh", "ratio": "1:1"},
+      {"name": "chickpea pasta", "reason": "High protein, gluten-free", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF pasta", "taste_profile": "mild beany", "ratio": "1:1"},
+      {"name": "sweet potato noodles", "reason": "Colorful, slightly sweet, nutritious", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF pasta", "taste_profile": "sweet, earthy", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "soy_sauce",
+    "original": "soy sauce",
+    "aliases": ["light soy sauce", "dark soy sauce", "shoyu"],
+    "common_allergens": ["soy"],
+    "tags": ["condiment", "umami", "Asian"],
+    "substitutes": [
+      {"name": "coconut aminos", "reason": "Soy-free, slightly sweet, similar umami", "allergens_free": ["soy", "gluten", "nuts"], "category": "condiment", "taste_profile": "sweet, umami", "ratio": "1:1"},
+      {"name": "tamari", "reason": "Gluten-free soy sauce, same flavor", "allergens_free": ["gluten"], "category": "condiment", "taste_profile": "salty, umami", "ratio": "1:1"},
+      {"name": "fish sauce", "reason": "Strong umami, different but works in many dishes", "allergens_free": ["soy", "gluten", "nuts"], "category": "condiment", "taste_profile": "salty, fishy, umami", "ratio": "1/2 to 1:1"},
+      {"name": "Worcestershire sauce", "reason": "Complex umami flavor", "allergens_free": ["soy", "nuts"], "category": "condiment", "taste_profile": "tangy, umami", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "peanut_butter",
+    "original": "peanut butter",
+    "aliases": ["peanuts", "peanut sauce", "peanut"],
+    "common_allergens": ["peanuts"],
+    "tags": ["nut butter", "protein", "spread", "sauce"],
+    "substitutes": [
+      {"name": "sunflower seed butter", "reason": "Similar creamy texture, completely nut-free", "allergens_free": ["peanuts", "tree nuts"], "category": "seed butter", "taste_profile": "mild, slightly sweet", "ratio": "1:1"},
+      {"name": "tahini", "reason": "Similar fat content and creaminess, sesame-based", "allergens_free": ["peanuts", "tree nuts"], "category": "seed paste", "taste_profile": "nutty, earthy", "ratio": "1:1"},
+      {"name": "soy nut butter", "reason": "Similar spreadable texture, nut-free", "allergens_free": ["peanuts", "tree nuts"], "category": "soy product", "taste_profile": "mild, slightly sweet", "ratio": "1:1"},
+      {"name": "cookie butter", "reason": "Sweet, spreadable, different but delicious", "allergens_free": ["peanuts", "tree nuts"], "category": "spread", "taste_profile": "sweet, spiced", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "tree_nuts_almonds",
+    "original": "almonds",
+    "aliases": ["almond flour", "almond milk", "almond butter", "sliced almonds", "almond"],
+    "common_allergens": ["tree nuts"],
+    "tags": ["nut", "protein", "baking", "snack"],
+    "substitutes": [
+      {"name": "sunflower seeds", "reason": "Similar crunch, completely nut-free", "allergens_free": ["peanuts", "tree nuts"], "category": "seed", "taste_profile": "mild, nutty", "ratio": "1:1"},
+      {"name": "pumpkin seeds", "reason": "Nutritious, good crunch in salads and baking", "allergens_free": ["peanuts", "tree nuts"], "category": "seed", "taste_profile": "mild, earthy", "ratio": "1:1"},
+      {"name": "oat flour", "reason": "For baking replacement of almond flour", "allergens_free": ["peanuts", "tree nuts", "soy"], "category": "flour", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "coconut flakes", "reason": "For topping and texture replacement", "allergens_free": ["peanuts", "tree nuts"], "category": "coconut", "taste_profile": "sweet, coconut", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "tree_nuts_walnuts",
+    "original": "walnuts",
+    "aliases": ["walnut", "walnut pieces"],
+    "common_allergens": ["tree nuts"],
+    "tags": ["nut", "protein", "baking", "salad"],
+    "substitutes": [
+      {"name": "sunflower seeds", "reason": "Similar crunch and healthy fats", "allergens_free": ["peanuts", "tree nuts"], "category": "seed", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "roasted chickpeas", "reason": "Crunchy, protein-rich, great in salads", "allergens_free": ["peanuts", "tree nuts", "soy", "milk", "eggs"], "category": "legume", "taste_profile": "earthy, crunchy", "ratio": "1:1"},
+      {"name": "pumpkin seeds", "reason": "Similar texture in baking and salads", "allergens_free": ["peanuts", "tree nuts"], "category": "seed", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "tree_nuts_cashews",
+    "original": "cashews",
+    "aliases": ["cashew", "cashew butter", "cashew cream"],
+    "common_allergens": ["tree nuts"],
+    "tags": ["nut", "cream", "cooking"],
+    "substitutes": [
+      {"name": "sunflower seeds", "reason": "Can be blended into cream, nut-free", "allergens_free": ["peanuts", "tree nuts"], "category": "seed", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "white beans", "reason": "Creamy when blended, good for sauces", "allergens_free": ["peanuts", "tree nuts", "soy", "milk", "eggs"], "category": "legume", "taste_profile": "neutral, mild", "ratio": "1:1"},
+      {"name": "sunflower seed cream", "reason": "Blended sunflower seeds, creamy texture", "allergens_free": ["peanuts", "tree nuts"], "category": "seed cream", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "fish_salmon",
+    "original": "salmon",
+    "aliases": ["salmon fillet", "fresh salmon"],
+    "common_allergens": ["fish"],
+    "tags": ["fish", "protein", "omega-3"],
+    "substitutes": [
+      {"name": "tofu (firm)", "reason": "Good protein source, absorbs flavors well", "allergens_free": ["fish", "milk", "eggs", "nuts"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "tempeh", "reason": "Firm texture, fermented, high protein", "allergens_free": ["fish", "milk", "eggs", "nuts"], "category": "soy product", "taste_profile": "nutty, earthy", "ratio": "1:1"},
+      {"name": "heart of palm", "reason": "Flaky texture similar to fish", "allergens_free": ["fish", "soy", "milk", "eggs", "nuts", "gluten"], "category": "vegetable", "taste_profile": "mild, slightly sweet", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "shellfish_shrimp",
+    "original": "shrimp",
+    "aliases": ["prawns", "shrimp meat"],
+    "common_allergens": ["shellfish"],
+    "tags": ["seafood", "protein"],
+    "substitutes": [
+      {"name": "hearts of palm", "reason": "Similar texture when sliced, mild flavor", "allergens_free": ["shellfish", "fish", "soy", "milk", "eggs", "nuts"], "category": "vegetable", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "king oyster mushroom", "reason": "Chewy texture, umami flavor", "allergens_free": ["shellfish", "fish", "soy", "milk", "eggs", "nuts"], "category": "mushroom", "taste_profile": "umami, meaty", "ratio": "1:1"},
+      {"name": "tofu (extra firm)", "reason": "Can be cubed and seasoned to mimic shrimp", "allergens_free": ["shellfish", "fish", "milk", "eggs", "nuts"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "sesame_tahini",
+    "original": "tahini",
+    "aliases": ["sesame paste", "sesame butter"],
+    "common_allergens": ["sesame"],
+    "tags": ["seed paste", "sauce", "Middle Eastern"],
+    "substitutes": [
+      {"name": "sunflower seed butter", "reason": "Similar creamy texture, nut and seed free", "allergens_free": ["sesame", "peanuts", "tree nuts"], "category": "seed butter", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "cashew butter", "reason": "Creamy, mild flavor for sauces", "allergens_free": ["sesame"], "category": "nut butter", "taste_profile": "mild, sweet", "ratio": "1:1"},
+      {"name": "almond butter", "reason": "Similar consistency for dressings", "allergens_free": ["sesame"], "category": "nut butter", "taste_profile": "nutty", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "sugar_white",
+    "original": "white sugar",
+    "aliases": ["granulated sugar", "table sugar", "sucrose"],
+    "common_allergens": [],
+    "tags": ["sweetener", "baking"],
+    "substitutes": [
+      {"name": "honey", "reason": "Natural sweetener, adds moisture", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "natural sweetener", "taste_profile": "sweet, floral", "ratio": "3/4 cup per 1 cup sugar"},
+      {"name": "maple syrup", "reason": "Rich flavor, natural sweetener", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "natural sweetener", "taste_profile": "sweet, caramel", "ratio": "3/4 cup per 1 cup sugar"},
+      {"name": "coconut sugar", "reason": "Lower glycemic index, caramel flavor", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "natural sweetener", "taste_profile": "sweet, caramel", "ratio": "1:1"},
+      {"name": "stevia", "reason": "Zero calorie, very sweet", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "artificial sweetener", "taste_profile": "sweet, slightly bitter", "ratio": "1 tsp per 1 cup sugar"},
+      {"name": "applesauce", "reason": "Adds sweetness and moisture in baking", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "fruit puree", "taste_profile": "sweet, fruity", "ratio": "1/2 cup per 1 cup sugar"}
+    ]
+  },
+  {
+    "id": "oil_vegetable",
+    "original": "vegetable oil",
+    "aliases": ["cooking oil", "canola oil", "sunflower oil", "corn oil"],
+    "common_allergens": [],
+    "tags": ["fat", "cooking", "frying"],
+    "substitutes": [
+      {"name": "olive oil", "reason": "Healthier fat, good for medium-heat cooking", "allergens_free": ["nuts", "soy", "milk"], "category": "oil", "taste_profile": "fruity", "ratio": "1:1"},
+      {"name": "avocado oil", "reason": "High smoke point, neutral flavor", "allergens_free": ["nuts", "soy", "milk"], "category": "oil", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "coconut oil", "reason": "Good for baking and medium-heat cooking", "allergens_free": ["nuts", "soy", "milk"], "category": "oil", "taste_profile": "mild coconut", "ratio": "1:1"},
+      {"name": "butter", "reason": "Rich flavor for baking and sautéing", "allergens_free": ["soy", "nuts", "gluten"], "category": "dairy fat", "taste_profile": "rich, creamy", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "honey",
+    "original": "honey",
+    "aliases": ["raw honey", "bee honey"],
+    "common_allergens": [],
+    "tags": ["sweetener", "vegan concern"],
+    "substitutes": [
+      {"name": "maple syrup", "reason": "Vegan, similar viscosity and sweetness", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "syrup", "taste_profile": "sweet, caramel", "ratio": "1:1"},
+      {"name": "agave nectar", "reason": "Vegan, mild flavor, good for drinks", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "syrup", "taste_profile": "sweet, mild", "ratio": "2/3 cup per 1 cup honey"},
+      {"name": "brown rice syrup", "reason": "Vegan, less sweet, good for baking", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "syrup", "taste_profile": "mild, nutty", "ratio": "1 1/4 cup per 1 cup honey"},
+      {"name": "date syrup", "reason": "Vegan, rich caramel flavor", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "syrup", "taste_profile": "sweet, caramel", "ratio": "2/3 cup per 1 cup honey"}
+    ]
+  },
+  {
+    "id": "chicken",
+    "original": "chicken",
+    "aliases": ["chicken breast", "chicken thigh", "chicken meat"],
+    "common_allergens": [],
+    "tags": ["poultry", "protein"],
+    "substitutes": [
+      {"name": "tofu (extra firm)", "reason": "High protein, absorbs marinades well", "allergens_free": ["milk", "eggs", "nuts", "gluten"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "tempeh", "reason": "Firm, fermented, nutty flavor", "allergens_free": ["milk", "eggs", "nuts", "gluten"], "category": "soy product", "taste_profile": "nutty, earthy", "ratio": "1:1"},
+      {"name": "jackfruit", "reason": "Shredded texture similar to pulled chicken", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "fruit", "taste_profile": "mild, slightly sweet", "ratio": "1:1"},
+      {"name": "seitan", "reason": "Wheat gluten, chewy texture like chicken", "allergens_free": ["milk", "eggs", "soy", "nuts"], "category": "wheat protein", "taste_profile": "neutral, savory", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "beef",
+    "original": "beef",
+    "aliases": ["beef steak", "ground beef", "beef meat"],
+    "common_allergens": [],
+    "tags": ["meat", "protein"],
+    "substitutes": [
+      {"name": "lentils", "reason": "Hearty texture, high protein, great in stews", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "legume", "taste_profile": "earthy", "ratio": "1 cup cooked per 1 cup beef"},
+      {"name": "mushrooms (portobello)", "reason": "Meaty texture, umami flavor", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "mushroom", "taste_profile": "umami, earthy", "ratio": "1:1"},
+      {"name": "black beans", "reason": "Hearty, protein-rich, good in tacos and bowls", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "legume", "taste_profile": "earthy, mild", "ratio": "1:1"},
+      {"name": "textured vegetable protein", "reason": "Ground meat texture, high protein", "allergens_free": ["milk", "eggs", "nuts", "gluten"], "category": "soy product", "taste_profile": "neutral", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "rice",
+    "original": "white rice",
+    "aliases": ["rice", "jasmine rice", "basmati rice", "white rice"],
+    "common_allergens": [],
+    "tags": ["grain", "carb", "staple"],
+    "substitutes": [
+      {"name": "quinoa", "reason": "Complete protein, similar fluffy texture", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "grain", "taste_profile": "mild, nutty", "ratio": "1:1"},
+      {"name": "cauliflower rice", "reason": "Low carb, light, good for stir-fries", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "vegetable", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "brown rice", "reason": "More fiber and nutrients, similar texture", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "grain", "taste_profile": "nutty, chewy", "ratio": "1:1"},
+      {"name": "couscous", "reason": "Quick cooking, light and fluffy", "allergens_free": ["soy", "eggs", "milk", "nuts"], "category": "grain", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "soy_tofu",
+    "original": "tofu",
+    "aliases": ["firm tofu", "soft tofu", "silken tofu"],
+    "common_allergens": ["soy"],
+    "tags": ["soy", "protein", "plant-based"],
+    "substitutes": [
+      {"name": "chickpea tofu (besan)", "reason": "Made from chickpea flour, soy-free", "allergens_free": ["soy", "milk", "eggs", "nuts"], "category": "legume product", "taste_profile": "mild, beany", "ratio": "1:1"},
+      {"name": "paneer", "reason": "Firm, holds shape in curries (not vegan)", "allergens_free": ["soy"], "category": "dairy", "taste_profile": "mild, milky", "ratio": "1:1"},
+      {"name": "jackfruit", "reason": "Shredded texture for savory dishes", "allergens_free": ["soy", "milk", "eggs", "nuts", "gluten"], "category": "fruit", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "soy_edamame",
+    "original": "edamame",
+    "aliases": ["soybeans", "green soybeans"],
+    "common_allergens": ["soy"],
+    "tags": ["soy", "protein", "snack"],
+    "substitutes": [
+      {"name": "green peas", "reason": "Similar size, sweet flavor, protein", "allergens_free": ["soy", "milk", "eggs", "nuts", "gluten"], "category": "legume", "taste_profile": "sweet", "ratio": "1:1"},
+      {"name": "broad beans (fava)", "reason": "Similar texture and protein content", "allergens_free": ["soy", "milk", "eggs", "nuts"], "category": "legume", "taste_profile": "earthy", "ratio": "1:1"},
+      {"name": "chickpeas", "reason": "Good protein, works in similar dishes", "allergens_free": ["soy", "milk", "eggs", "nuts", "gluten"], "category": "legume", "taste_profile": "mild, nutty", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "wheat_bread",
+    "original": "wheat bread",
+    "aliases": ["bread", "sandwich bread", "toast"],
+    "common_allergens": ["gluten"],
+    "tags": ["grain", "bread", "staple"],
+    "substitutes": [
+      {"name": "rice bread", "reason": "Gluten-free, mild flavor", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "GF bread", "taste_profile": "mild", "ratio": "1:1"},
+      {"name": "lettuce wraps", "reason": "Low carb, fresh, good for wraps", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "vegetable wrap", "taste_profile": "fresh, crisp", "ratio": "1 leaf per slice"},
+      {"name": "sweet potato toast", "reason": "Gluten-free, nutritious, colorful", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "vegetable", "taste_profile": "sweet, earthy", "ratio": "1 slice per slice"},
+      {"name": "corn tortilla", "reason": "Gluten-free, good for tacos and wraps", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "flatbread", "taste_profile": "mild, corn", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "ginger",
+    "original": "fresh ginger",
+    "aliases": ["ginger", "ginger root"],
+    "common_allergens": [],
+    "tags": ["spice", "Asian", "baking"],
+    "substitutes": [
+      {"name": "ground ginger", "reason": "Same flavor, more concentrated", "allergens_free": [], "category": "spice", "taste_profile": "spicy, warm", "ratio": "1/4 tsp per 1 tbsp fresh"},
+      {"name": "galangal", "reason": "Similar but more citrusy, used in Thai cooking", "allergens_free": [], "category": "root spice", "taste_profile": "spicy, citrusy", "ratio": "1:1"},
+      {"name": "ginger paste", "reason": "Convenient, same flavor", "allergens_free": [], "category": "paste", "taste_profile": "spicy, warm", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "garlic",
+    "original": "fresh garlic",
+    "aliases": ["garlic", "garlic clove"],
+    "common_allergens": [],
+    "tags": ["spice", "aromatic"],
+    "substitutes": [
+      {"name": "garlic powder", "reason": "Convenient, same flavor", "allergens_free": [], "category": "spice", "taste_profile": "pungent, savory", "ratio": "1/8 tsp per clove"},
+      {"name": "garlic paste", "reason": "Pre-minced, same flavor", "allergens_free": [], "category": "paste", "taste_profile": "pungent, savory", "ratio": "1/2 tsp per clove"},
+      {"name": "shallots", "reason": "Milder, similar aromatic quality", "allergens_free": [], "category": "aromatic", "taste_profile": "mild, sweet", "ratio": "1 small shallot per clove"}
+    ]
+  },
+  {
+    "id": "butter_cooking",
+    "original": "cooking butter",
+    "aliases": ["ghee", "clarified butter"],
+    "common_allergens": ["milk"],
+    "tags": ["dairy", "fat", "cooking"],
+    "substitutes": [
+      {"name": "ghee", "reason": "Clarified, higher smoke point, casein-free", "allergens_free": ["casein"], "category": "dairy fat", "taste_profile": "rich, nutty", "ratio": "1:1"},
+      {"name": "coconut oil", "reason": "Good for high-heat cooking", "allergens_free": ["milk", "soy", "nuts"], "category": "oil", "taste_profile": "mild coconut", "ratio": "1:1"},
+      {"name": "avocado oil", "reason": "High smoke point, neutral flavor", "allergens_free": ["milk", "soy", "nuts"], "category": "oil", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "cornstarch",
+    "original": "cornstarch",
+    "aliases": ["corn flour", "corn starch"],
+    "common_allergens": [],
+    "tags": ["thickener", "baking", "GF"],
+    "substitutes": [
+      {"name": "arrowroot powder", "reason": "Same thickening power, clear finish", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "starch", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "tapioca starch", "reason": "Good thickener, slightly chewy", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "starch", "taste_profile": "neutral", "ratio": "2 tbsp per 1 tbsp cornstarch"},
+      {"name": "potato starch", "reason": "Good thickener for sauces and soups", "allergens_free": ["gluten", "soy", "eggs", "milk", "nuts"], "category": "starch", "taste_profile": "neutral", "ratio": "1:1"},
+      {"name": "flour", "reason": "Common thickener, slightly different texture", "allergens_free": ["soy", "eggs", "milk", "nuts"], "category": "flour", "taste_profile": "neutral", "ratio": "2 tbsp per 1 tbsp cornstarch"}
+    ]
+  },
+  {
+    "id": "mayonnaise",
+    "original": "mayonnaise",
+    "aliases": ["mayo", "egg mayo"],
+    "common_allergens": ["eggs"],
+    "tags": ["condiment", "sauce", "spread"],
+    "substitutes": [
+      {"name": "vegan mayonnaise", "reason": "Egg-free, similar creamy texture", "allergens_free": ["eggs"], "category": "condiment", "taste_profile": "tangy, creamy", "ratio": "1:1"},
+      {"name": "mashed avocado", "reason": "Creamy, healthy fats, good for sandwiches", "allergens_free": ["eggs", "milk", "soy", "nuts", "gluten"], "category": "fruit", "taste_profile": "mild, creamy", "ratio": "1:1"},
+      {"name": "hummus", "reason": "Creamy, protein-rich, good spread", "allergens_free": ["eggs", "milk", "nuts"], "category": "legume spread", "taste_profile": "tangy, garlicky", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "worcestershire",
+    "original": "Worcestershire sauce",
+    "aliases": ["worcestershire", "Worcester sauce"],
+    "common_allergens": ["fish"],
+    "tags": ["condiment", "umami"],
+    "substitutes": [
+      {"name": "soy sauce", "reason": "Salty umami, similar depth", "allergens_free": ["fish"], "category": "condiment", "taste_profile": "salty, umami", "ratio": "1:1"},
+      {"name": "balsamic vinegar", "reason": "Tangy and complex, good in marinades", "allergens_free": ["fish", "soy", "nuts"], "category": "vinegar", "taste_profile": "tangy, sweet", "ratio": "1:1"},
+      {"name": "coconut aminos", "reason": "Soy-free umami alternative", "allergens_free": ["fish", "soy"], "category": "condiment", "taste_profile": "sweet, umami", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "maple_syrup",
+    "original": "maple syrup",
+    "aliases": ["pure maple syrup", "real maple syrup"],
+    "common_allergens": [],
+    "tags": ["sweetener", "vegan"],
+    "substitutes": [
+      {"name": "honey", "reason": "Similar viscosity and sweetness", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "sweetener", "taste_profile": "sweet, floral", "ratio": "1:1"},
+      {"name": "agave nectar", "reason": "Mild flavor, similar consistency", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "sweetener", "taste_profile": "sweet, mild", "ratio": "1:1"},
+      {"name": "date syrup", "reason": "Rich caramel flavor, natural sweetener", "allergens_free": ["milk", "eggs", "soy", "nuts", "gluten"], "category": "sweetener", "taste_profile": "sweet, caramel", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "coconut_milk_canned",
+    "original": "coconut milk (canned)",
+    "aliases": ["coconut milk", "full-fat coconut milk"],
+    "common_allergens": [],
+    "tags": ["plant milk", "cooking", "curry"],
+    "substitutes": [
+      {"name": "cashew cream", "reason": "Rich and creamy, neutral flavor", "allergens_free": ["coconut"], "category": "nut cream", "taste_profile": "mild, creamy", "ratio": "1:1"},
+      {"name": "heavy cream", "reason": "Rich and creamy for curries", "allergens_free": ["coconut", "soy", "nuts"], "category": "dairy", "taste_profile": "rich, creamy", "ratio": "1:1"},
+      {"name": "oat cream", "reason": "Creamy, neutral, plant-based", "allergens_free": ["coconut", "soy", "nuts"], "category": "plant cream", "taste_profile": "mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "cinnamon",
+    "original": "cinnamon",
+    "aliases": ["ground cinnamon", "cinnamon powder"],
+    "common_allergens": [],
+    "tags": ["spice", "baking", "warm"],
+    "substitutes": [
+      {"name": "nutmeg", "reason": "Warm spice, good in baking", "allergens_free": [], "category": "spice", "taste_profile": "warm, sweet", "ratio": "1/2 tsp per 1 tsp cinnamon"},
+      {"name": "allspice", "reason": "Similar warm flavor profile", "allergens_free": [], "category": "spice", "taste_profile": "warm, complex", "ratio": "1/2 tsp per 1 tsp cinnamon"},
+      {"name": "pumpkin pie spice", "reason": "Contains cinnamon plus complementary spices", "allergens_free": [], "category": "spice blend", "taste_profile": "warm, sweet", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "basil",
+    "original": "fresh basil",
+    "aliases": ["basil", "sweet basil"],
+    "common_allergens": [],
+    "tags": ["herb", "Italian", "fresh"],
+    "substitutes": [
+      {"name": "dried basil", "reason": "Same flavor, more concentrated", "allergens_free": [], "category": "herb", "taste_profile": "aromatic, sweet", "ratio": "1/3 tsp per tbsp fresh"},
+      {"name": "fresh mint", "reason": "Similar fresh herb quality in some dishes", "allergens_free": [], "category": "herb", "taste_profile": "cool, fresh", "ratio": "1:1"},
+      {"name": "fresh oregano", "reason": "Similar Mediterranean herb profile", "allergens_free": [], "category": "herb", "taste_profile": "earthy, aromatic", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "cilantro",
+    "original": "cilantro",
+    "aliases": ["coriander leaves", "fresh cilantro"],
+    "common_allergens": [],
+    "tags": ["herb", "Asian", "Mexican", "fresh"],
+    "substitutes": [
+      {"name": "fresh parsley", "reason": "Similar fresh green herb appearance", "allergens_free": [], "category": "herb", "taste_profile": "fresh, mild", "ratio": "1:1"},
+      {"name": "fresh mint", "reason": "Fresh and bright, works in some Asian dishes", "allergens_free": [], "category": "herb", "taste_profile": "cool, fresh", "ratio": "1:1"},
+      {"name": "basil", "reason": "Aromatic herb, works in some contexts", "allergens_free": [], "category": "herb", "taste_profile": "sweet, aromatic", "ratio": "1:1"}
+    ]
+  }
+]

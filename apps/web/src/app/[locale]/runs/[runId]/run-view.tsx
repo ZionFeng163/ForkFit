@@ -73,9 +73,12 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
   const forked = result.forked_meal_pack;
   const firstMeal = forked.meals[0];
 
-  // Editable state
+  // Editable state — use meal data, not workflow summary
   const [title, setTitle] = useState(forked.title || firstMeal?.name || "");
-  const [description, setDescription] = useState(result.summary || "");
+  const mealDesc = firstMeal
+    ? [firstMeal.name, firstMeal.ingredients.slice(0, 5).join(" "), firstMeal.notes].filter(Boolean).join(" — ")
+    : "";
+  const [description, setDescription] = useState(mealDesc || result.summary || "");
   const [ingredients, setIngredients] = useState(firstMeal?.ingredients.join(", ") || "");
   const [equipment, setEquipment] = useState(firstMeal?.equipment.join(", ") || "");
   const [cookTime, setCookTime] = useState(String(firstMeal?.cook_time_minutes || 30));
@@ -199,7 +202,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
                 <tbody>
                   {result.change_log.map((c, i) => (
                     <tr key={i} className="border-t border-[#f0ebe4]">
-                      <td className="px-3 py-2 font-medium">{c.affected_item}</td>
+                      <td className="px-3 py-2 font-medium">{t(`field.${c.affected_item}`, { defaultValue: c.affected_item })}</td>
                       <td className="px-3 py-2 text-[#9f9890] line-through">{c.from_value}</td>
                       <td className="px-3 py-2 text-[#2f2a24]">{c.to_value}</td>
                     </tr>

@@ -157,7 +157,16 @@
     "fieldCost": "费用（$）",
     "fieldTags": "标签",
     "fieldNotes": "烹饪备注",
-    "commaSeparated": "用逗号分隔。"
+    "commaSeparated": "用逗号分隔。",
+    "field": {
+      "meal name": "菜品名称",
+      "ingredients": "食材",
+      "equipment": "厨具",
+      "cook_time_minutes": "烹饪时间",
+      "estimated_cost": "费用",
+      "tags": "标签",
+      "notes": "备注"
+    }
   },
   "Auth": {
     "loginTitle": "登录",

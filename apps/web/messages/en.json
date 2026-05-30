@@ -157,7 +157,16 @@
     "fieldCost": "Cost ($)",
     "fieldTags": "Tags",
     "fieldNotes": "Cooking notes",
-    "commaSeparated": "Separate with commas."
+    "commaSeparated": "Separate with commas.",
+    "field": {
+      "meal name": "Meal name",
+      "ingredients": "Ingredients",
+      "equipment": "Equipment",
+      "cook_time_minutes": "Cook time",
+      "estimated_cost": "Cost",
+      "tags": "Tags",
+      "notes": "Notes"
+    }
   },
   "Auth": {
     "loginTitle": "Log in",

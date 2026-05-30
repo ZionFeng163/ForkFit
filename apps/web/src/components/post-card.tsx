@@ -94,9 +94,12 @@ export function PostCard({ post }: { post: RecipePost }) {
         </div>
       </Link>
       <div className="flex items-center justify-between border-t border-[#eee8df] px-3 py-2.5 text-[13px] text-[#6f6a61]">
-        <Link href={`/users/${post.user_id}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
-          {post.author}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href={`/users/${post.user_id}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>
+            {post.author}
+          </Link>
+          {post.created_at ? <span className="text-[#9f9890]">· {timeAgo(post.created_at)}</span> : null}
+        </div>
         <div className="flex items-center gap-1">
           <button onClick={handleLike} className="flex items-center gap-1 rounded p-1 transition-colors hover:bg-[#fdf0ee] hover:text-[#c0524a]">
             <Heart size={16} className={liked ? "fill-[#c0524a] text-[#c0524a]" : ""} />
@@ -131,4 +134,20 @@ function isMeaningfulRecipe(post: RecipePost) {
     recipe.cook_time_minutes !== 30 ||
     recipe.estimated_cost !== 10
   );
+}
+
+function timeAgo(dateStr: string) {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo`;
+  return `${Math.floor(months / 12)}y`;
 }

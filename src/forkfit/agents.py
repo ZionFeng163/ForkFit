@@ -333,8 +333,9 @@ class ConstraintGuard:
 class AdapterAgent:
     agent_name = "adapter"
 
-    def __init__(self, llm_client: LLMClient) -> None:
+    def __init__(self, llm_client: LLMClient, substitution_tool: "SubstitutionTool | None" = None) -> None:
         self.llm_client = llm_client
+        self.substitution_tool = substitution_tool
 
     def run(
         self,
@@ -345,6 +346,54 @@ class AdapterAgent:
         locale: str = "en",
     ) -> AdapterOutput:
         lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
+
+        # Pre-fetch substitution suggestions using the tool
+        substitution_context = ""
+        if self.substitution_tool:
+            # Collect all ingredients from all meals
+            all_ingredients = []
+            for meal in original_meal_pack.meals:
+                all_ingredients.extend(meal.ingredients)
+            # Collect allergens to exclude
+            allergies = user_agent_output.preference_profile.allergies
+            diet_rules = user_agent_output.preference_profile.diet_rules
+            exclude = allergies + [d.replace("no ", "", 1).strip() for d in diet_rules]
+            substitution_context = self.substitution_tool.get_substitution_context(
+                all_ingredients, exclude_allergens=exclude
+            )
+
+        user_message = {
+            "task": "Return AdapterOutput JSON.",
+            "schema": {
+                "forked_meal_pack": original_meal_pack.to_dict(),
+                "change_log": [
+                    {
+                        "affected_item": "meal id",
+                        "from_value": "string",
+                        "to_value": "string",
+                        "reason": "string",
+                        "source_agent": "constraint | user | nutrition | budget | pantry | knowledge_base",
+                    }
+                ],
+                "unresolved_items": [],
+                "summary": "string",
+            },
+            "rules": [
+                "Do not fully rewrite the meal pack.",
+                "Keep meal ids stable.",
+                "Every change must trace to user_agent_output or reviews.",
+                "If a high-severity hard block cannot be fixed, put that finding in unresolved_items.",
+                "Remove blocked allergy/diet terms from ingredients, name, tags, and notes.",
+                "When substitution_suggestions are provided, prefer them over your own guesses.",
+            ],
+            "original_meal_pack": original_meal_pack.to_dict(),
+            "user_agent_output": asdict(user_agent_output),
+            "reviews": [asdict(review) for review in reviews],
+        }
+
+        if substitution_context:
+            user_message["substitution_suggestions"] = substitution_context
+
         payload = self.llm_client.complete_json(
             agent=self.agent_name,
             system=(
@@ -357,36 +406,7 @@ class AdapterAgent:
                 f"IMPORTANT: All text fields (name, ingredients, equipment, tags, notes, summary, "
                 f"reasons) MUST be written in {lang_hint}."
             ),
-            user=json.dumps(
-                {
-                    "task": "Return AdapterOutput JSON.",
-                    "schema": {
-                        "forked_meal_pack": original_meal_pack.to_dict(),
-                        "change_log": [
-                            {
-                                "affected_item": "meal id",
-                                "from_value": "string",
-                                "to_value": "string",
-                                "reason": "string",
-                                "source_agent": "constraint | user | nutrition | budget | pantry",
-                            }
-                        ],
-                        "unresolved_items": [],
-                        "summary": "string",
-                    },
-                    "rules": [
-                        "Do not fully rewrite the meal pack.",
-                        "Keep meal ids stable.",
-                        "Every change must trace to user_agent_output or reviews.",
-                        "If a high-severity hard block cannot be fixed, put that finding in unresolved_items.",
-                        "Remove blocked allergy/diet terms from ingredients, name, tags, and notes.",
-                    ],
-                    "original_meal_pack": original_meal_pack.to_dict(),
-                    "user_agent_output": asdict(user_agent_output),
-                    "reviews": [asdict(review) for review in reviews],
-                },
-                ensure_ascii=False,
-            ),
+            user=json.dumps(user_message, ensure_ascii=False),
             trace=trace,
             max_tokens=1400,
         )

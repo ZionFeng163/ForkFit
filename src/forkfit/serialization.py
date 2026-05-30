@@ -152,7 +152,7 @@ def run_trace_from_dict(data: dict | None) -> RunTrace | None:
 
 def normalize_source_agent(value: str) -> str:
     normalized = value.lower()
-    for candidate in ("constraint", "user", "nutrition", "budget", "pantry"):
+    for candidate in ("constraint", "user", "nutrition", "budget", "pantry", "knowledge_base"):
         if candidate in normalized:
             return candidate
     return value.strip() or "unknown"

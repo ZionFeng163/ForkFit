@@ -45,9 +45,23 @@ class ForkFitLangGraphWorkflow:
         llm_client: LLMClient | None = None,
     ) -> None:
         llm_client = llm_client or BailianLLMClient()
+
+        # Lazy-load substitution tool
+        substitution_tool = None
+        try:
+            from forkfit.knowledge.store import SubstitutionStore
+            from forkfit.knowledge.embeddings import EmbeddingClient
+            from forkfit.tools.substitution import SubstitutionTool
+            store = SubstitutionStore()
+            embedding_client = EmbeddingClient()
+            store.load(embedding_client)
+            substitution_tool = SubstitutionTool(store)
+        except Exception:
+            pass  # Substitution tool is optional
+
         self.user_agent = user_agent or UserAgent(llm_client)
         self.reviewer_agents = reviewer_agents or [ConstraintAgent(llm_client)]
-        self.adapter_agent = adapter_agent or AdapterAgent(llm_client)
+        self.adapter_agent = adapter_agent or AdapterAgent(llm_client, substitution_tool=substitution_tool)
         self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
