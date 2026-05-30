@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
   const t = useTranslations("Fork");
   const fields = useTranslations("ProfileFields");
   const router = useRouter();
+  const locale = useLocale();
   const [savedProfile] = useState<UserProfileForm>(() => loadUserProfileForm());
   const [form, setForm] = useState<UserProfileForm>(() => loadUserProfileForm());
 
@@ -43,6 +44,7 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
     mutation.mutate({
       user_profile: profileFormToUserProfile(form),
       meal_pack: mealPack,
+      locale,
     });
   }
 

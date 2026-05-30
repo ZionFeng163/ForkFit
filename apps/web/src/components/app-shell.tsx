@@ -1,8 +1,9 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { FileText, Home, Plus, User } from "lucide-react";
+import { FileText, Home, LogOut, Plus, User } from "lucide-react";
 
+import { useAuth } from "@/components/auth-provider";
 import { Link, usePathname } from "@/i18n/routing";
 
 const NAV_ITEMS = [
@@ -14,14 +15,14 @@ const NAV_ITEMS = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("Nav");
-  const language = useTranslations("Language");
   const locale = useLocale();
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-[#fafafa] text-[#1f1f1f]">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[#e7e2db] bg-white">
+      {/* Desktop sidebar — fixed to viewport height */}
+      <aside className="hidden md:flex h-screen sticky top-0 w-60 shrink-0 flex-col border-r border-[#e7e2db] bg-white">
         <div className="px-5 pt-6 pb-4">
           <Link href="/" className="block">
             <img
@@ -53,30 +54,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="border-t border-[#e7e2db] px-3 py-4">
-          <div className="flex items-center gap-2 px-3 pb-3">
-            <Link
-              href={pathname}
-              locale="en"
-              className={`text-xs ${locale === "en" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
-            >
-              EN
+          {user ? (
+            <div className="flex items-center gap-2 px-3">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e4ded6] text-xs font-medium text-[#6f6a61]">
+                  {(user.display_name || user.username || "?")[0].toUpperCase()}
+                </div>
+              )}
+              <span className="min-w-0 flex-1 truncate text-xs text-[#5f5a52]">
+                {user.display_name || user.username}
+              </span>
+              <button
+                onClick={logout}
+                className="shrink-0 rounded p-1 text-[#9f9890] hover:bg-[#f5f0ea] hover:text-[#5f5a52]"
+                title="Logout"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="block px-3 py-2 text-xs text-[#5f5a52] hover:text-[#1f1f1f]">
+              登录 / Login
             </Link>
-            <span className="text-xs text-[#d0c9c0]">/</span>
-            <Link
-              href={pathname}
-              locale="zh"
-              className={`text-xs ${locale === "zh" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
-            >
-              中文
-            </Link>
-          </div>
-          <div className="px-3 text-xs text-[#9f9890]">demo_user</div>
+          )}
         </div>
       </aside>
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        {/* Top bar with language switcher */}
+        {/* Top bar — language switcher on the right */}
         <header className="flex items-center justify-end border-b border-[#e7e2db] bg-white px-4 py-2 md:px-6">
           <div className="flex items-center gap-2">
             <Link

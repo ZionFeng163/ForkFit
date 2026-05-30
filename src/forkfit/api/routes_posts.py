@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 import logging
 
-from forkfit.api.deps import current_user, get_post_extraction_llm, get_post_store
+from forkfit.api.deps import current_user, get_comment_store, get_post_extraction_llm, get_post_store, optional_current_user
 from forkfit.api.schemas import CreatePostRequest, PostResponse, UpdatePostRequest
 from forkfit.auth.models import CurrentUser
 from forkfit.llm import LLMClient
@@ -20,11 +20,22 @@ async def list_posts(
     response: Response,
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    q: str = Query(default="", max_length=200),
+    tag: str = Query(default="", max_length=100),
+    user: CurrentUser | None = Depends(optional_current_user),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> list[PostResponse]:
-    posts, total = store.list_posts(limit=limit, offset=offset)
+    posts, total = store.list_posts(limit=limit, offset=offset, search=q, tag=tag)
     response.headers["X-Total-Count"] = str(total)
-    return [_post_response(post) for post in posts]
+    interactions = _get_interactions(store, user, [p.id for p in posts])
+    comment_store = get_comment_store()
+    counts = comment_store.get_comment_counts([p.id for p in posts])
+    return [_post_response(post, interactions.get(post.id), counts.get(post.id, 0)) for post in posts]
+
+
+@router.get("/tags")
+async def list_tags(store: PostgresPostStore = Depends(get_post_store)) -> list[str]:
+    return store.list_tags()
 
 
 @router.post("", response_model=PostResponse)
@@ -48,15 +59,41 @@ async def create_post(
     return _post_response(post)
 
 
+@router.get("/liked/me")
+async def list_liked_posts(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    user: CurrentUser = Depends(current_user),
+    store: PostgresPostStore = Depends(get_post_store),
+) -> list[PostResponse]:
+    posts, _ = store.list_liked_posts(user.id, limit=limit, offset=offset)
+    return [_post_response(post, (True, False)) for post in posts]
+
+
+@router.get("/saved/me")
+async def list_saved_posts(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    user: CurrentUser = Depends(current_user),
+    store: PostgresPostStore = Depends(get_post_store),
+) -> list[PostResponse]:
+    posts, _ = store.list_saved_posts(user.id, limit=limit, offset=offset)
+    return [_post_response(post, (False, True)) for post in posts]
+
+
 @router.get("/{post_id}", response_model=PostResponse)
 async def get_post(
     post_id: str,
+    user: CurrentUser | None = Depends(optional_current_user),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> PostResponse:
     post = store.get_post(post_id)
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found.")
-    return _post_response(post)
+    interactions = _get_interactions(store, user, [post.id])
+    comment_store = get_comment_store()
+    count = comment_store.get_comment_count(post.id)
+    return _post_response(post, interactions.get(post.id), count)
 
 
 @router.patch("/{post_id}", response_model=PostResponse)
@@ -116,7 +153,8 @@ def _require_owned_post(
     return post
 
 
-def _post_response(post: PostRecord) -> PostResponse:
+def _post_response(post: PostRecord, interaction: tuple[bool, bool] | None = None, comment_count: int = 0) -> PostResponse:
+    liked, saved = interaction if interaction else (False, False)
     return PostResponse(
         id=post.id,
         user_id=post.user_id,
@@ -130,4 +168,41 @@ def _post_response(post: PostRecord) -> PostResponse:
         saves=post.saves,
         forks=post.forks,
         created_at=post.created_at.isoformat(),
+        liked=liked,
+        saved=saved,
+        comment_count=comment_count,
     )
+
+
+def _get_interactions(
+    store: PostgresPostStore, user: CurrentUser | None, post_ids: list[str]
+) -> dict[str, tuple[bool, bool]]:
+    if not user or not post_ids:
+        return {}
+    return store.get_user_interactions(user.id, post_ids)
+
+
+@router.post("/{post_id}/like")
+async def toggle_like(
+    post_id: str,
+    user: CurrentUser = Depends(current_user),
+    store: PostgresPostStore = Depends(get_post_store),
+) -> dict:
+    try:
+        liked, saves = store.toggle_like(user.id, post_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    return {"liked": liked, "saves": saves}
+
+
+@router.post("/{post_id}/save")
+async def toggle_save(
+    post_id: str,
+    user: CurrentUser = Depends(current_user),
+    store: PostgresPostStore = Depends(get_post_store),
+) -> dict:
+    try:
+        saved, saves = store.toggle_save(user.id, post_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    return {"saved": saved, "saves": saves}

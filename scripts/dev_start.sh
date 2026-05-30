@@ -120,6 +120,13 @@ start_frontend() {
     return 0
   fi
 
+  log "building frontend (production)"
+  (
+    cd "$WEB_DIR"
+    FORKFIT_API_BASE_URL="${FORKFIT_API_BASE_URL:-http://127.0.0.1:$API_PORT}" \
+    npx next build
+  ) >>"$log_file" 2>&1
+
   log "starting frontend"
   (
     cd "$WEB_DIR"
@@ -127,7 +134,7 @@ start_frontend() {
       FORKFIT_API_BASE_URL="${FORKFIT_API_BASE_URL:-http://127.0.0.1:$API_PORT}" \
       NO_PROXY="${NO_PROXY:-localhost,127.0.0.1,::1}" \
       no_proxy="${no_proxy:-localhost,127.0.0.1,::1}" \
-      npx next dev --webpack
+      npx next start -p "$WEB_PORT"
   ) >"$log_file" 2>&1 &
   echo "$!" >"$pid_file"
 }

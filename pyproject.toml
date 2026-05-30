@@ -5,10 +5,12 @@ description = "Three-agent meal-pack personalization core for community meal pla
 requires-python = ">=3.12"
 readme = "README.md"
 dependencies = [
+    "bcrypt>=4.0",
     "fastapi>=0.115",
     "langgraph>=0.2",
     "langsmith>=0.8",
     "psycopg[binary]>=3.2",
+    "PyJWT>=2.8",
     "redis>=5.0",
     "rq>=2.0",
     "sqlalchemy>=2.0",

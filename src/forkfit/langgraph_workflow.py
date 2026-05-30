@@ -24,6 +24,7 @@ from .models import (
 class ForkFitGraphState(TypedDict, total=False):
     user_profile: UserProfile
     meal_pack: MealPack
+    locale: str
     user_agent_output: UserAgentOutput
     constraints: ConstraintSet
     reviews: list[AgentReview]
@@ -50,12 +51,13 @@ class ForkFitLangGraphWorkflow:
         self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
-    def run(self, user_profile: UserProfile, meal_pack: MealPack) -> ForkFitResult:
+    def run(self, user_profile: UserProfile, meal_pack: MealPack, locale: str = "en") -> ForkFitResult:
         with tracing_context(enabled=False):
             state = self.graph.invoke(
                 {
                     "user_profile": user_profile,
                     "meal_pack": meal_pack,
+                    "locale": locale,
                     "trace": RunTrace(),
                 }
             )
@@ -120,6 +122,7 @@ class ForkFitLangGraphWorkflow:
             state["user_agent_output"],
             state["reviews"],
             state["trace"],
+            locale=state.get("locale", "en"),
         )
         return {"adapter_output": adapter_output}
 

@@ -1,10 +1,11 @@
-import { ArrowLeft, Clock, DollarSign, GitFork, MapPin } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { CommentSection } from "@/components/comment-section";
 import { RemoteImage } from "@/components/remote-image";
-import { Button } from "@/components/ui/button";
+import { PostSidebar } from "@/components/post-sidebar";
 import { Link } from "@/i18n/routing";
 import { loadPost } from "@/lib/posts";
 import type { RecipePost } from "@/types/forkfit";
@@ -28,7 +29,6 @@ export default async function PackDetailPage({ params }: PageProps) {
   const usefulNotes = getUsefulNotes(post);
   const hasTheme = post.theme !== "community recipe";
   const hasLocation = post.location !== "unknown";
-  const canEdit = post.user_id === "demo_user";
 
   return (
     <AppShell>
@@ -110,45 +110,20 @@ export default async function PackDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          <aside className="h-fit rounded-lg border border-[#e4ded6] bg-white p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold">{t("forkTitle")}</h2>
-                <p className="mt-1 text-sm leading-6 text-[#625b52]">
-                  {t("forkDescription")}
-                </p>
-              </div>
-              <GitFork size={20} />
-            </div>
-            <dl className="mt-5 space-y-3 border-y border-[#eee8df] py-4 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-[#6f6a61]">{t("author")}</dt>
-                <dd>{post.author}</dd>
-              </div>
-              {hasTheme ? (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-[#6f6a61]">{t("theme")}</dt>
-                  <dd>{post.theme}</dd>
-                </div>
-              ) : null}
-              <div className="flex justify-between gap-4">
-                <dt className="text-[#6f6a61]">{t("forks")}</dt>
-                <dd>{post.forks}</dd>
-              </div>
-            </dl>
-            <Button asChild className="mt-5 w-full">
-              <Link href={`/packs/${post.id}/fork`}>{t("startFork")}</Link>
-            </Button>
-            {canEdit ? (
-              <Link
-                href={`/packs/${post.id}/edit`}
-                className="mt-3 flex h-10 items-center justify-center rounded-md border border-[#d8d0c6] bg-white px-4 text-sm font-medium text-[#625b52] hover:text-[#1f1f1f]"
-              >
-                {t("edit")}
-              </Link>
-            ) : null}
-          </aside>
+          <PostSidebar
+            post={post}
+            hasTheme={hasTheme}
+            forkLabel={t("forkTitle")}
+            forkDescription={t("forkDescription")}
+            authorLabel={t("author")}
+            themeLabel={t("theme")}
+            forksLabel={t("forks")}
+            startForkLabel={t("startFork")}
+            editLabel={t("edit")}
+          />
         </div>
+
+        <CommentSection postId={post.id} />
       </section>
     </AppShell>
   );

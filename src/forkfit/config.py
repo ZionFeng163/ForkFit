@@ -19,6 +19,10 @@ class Settings:
     langsmith_project: str = "forkfit"
     langsmith_endpoint: str = ""
     post_extraction_model: str = "deepseek-v4-flash"
+    jwt_secret: str = "dev-only-change-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_days: int = 7
+    cookie_secure: bool = False
 
 
 def get_settings() -> Settings:
@@ -39,6 +43,10 @@ def get_settings() -> Settings:
         langsmith_project=os.getenv("LANGSMITH_PROJECT", "forkfit"),
         langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", ""),
         post_extraction_model=os.getenv("POST_EXTRACTION_MODEL", "deepseek-v4-flash"),
+        jwt_secret=os.getenv("JWT_SECRET", "dev-only-change-in-production"),
+        jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
+        jwt_expire_days=int(os.getenv("JWT_EXPIRE_DAYS", "7")),
+        cookie_secure=parse_bool(os.getenv("COOKIE_SECURE", "false")),
     )
 
 

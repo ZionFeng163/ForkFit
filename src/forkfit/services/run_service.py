@@ -19,7 +19,7 @@ class RunService:
         self.settings = settings
 
     async def create_run(
-        self, *, user_id: str, user_profile: UserProfile, meal_pack: MealPack
+        self, *, user_id: str, user_profile: UserProfile, meal_pack: MealPack, locale: str = "en"
     ) -> RunRecord:
         user_active = self.store.count_active_runs_for_user(user_id)
         if user_active >= self.settings.max_user_concurrent_runs:
@@ -47,6 +47,7 @@ class RunService:
             run_id=run.id,
             user_profile=user_profile,
             meal_pack=meal_pack,
+            locale=locale,
         )
         return run
 

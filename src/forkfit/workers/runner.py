@@ -13,7 +13,7 @@ from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
 from forkfit.stores import PostgresRunStore
 
 
-def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: dict) -> None:
+def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: dict, locale: str = "en") -> None:
     settings = get_settings()
     store = PostgresRunStore(make_session_factory(settings.database_url))
     meal_pack = meal_pack_from_dict(meal_pack_payload)
@@ -22,7 +22,7 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
     store.mark_running(run_id)
     exporter = LangSmithRunExporter(settings)
     try:
-        result = ForkFitLangGraphWorkflow().run(user_profile, meal_pack)
+        result = ForkFitLangGraphWorkflow().run(user_profile, meal_pack, locale=locale)
         if result.success:
             record = store.mark_succeeded(
                 run_id,

@@ -7,3 +7,6 @@ from dataclasses import dataclass
 class CurrentUser:
     id: str
     display_name: str
+    avatar_url: str | None = None
+    username: str = ""
+    role: str = "user"

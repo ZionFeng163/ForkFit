@@ -342,7 +342,9 @@ class AdapterAgent:
         user_agent_output: UserAgentOutput,
         reviews: list[AgentReview],
         trace: RunTrace | None = None,
+        locale: str = "en",
     ) -> AdapterOutput:
+        lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
         payload = self.llm_client.complete_json(
             agent=self.agent_name,
             system=(
@@ -351,7 +353,9 @@ class AdapterAgent:
                 "JSON matching the schema. You must fix high-severity hard blocks "
                 "before soft preferences, preserve the original theme, and explain "
                 "each change with source_agent. Keep summary, reasons, and notes "
-                "concise. Do not include markdown, explanation, or hidden reasoning."
+                "concise. Do not include markdown, explanation, or hidden reasoning. "
+                f"IMPORTANT: All text fields (name, ingredients, equipment, tags, notes, summary, "
+                f"reasons) MUST be written in {lang_hint}."
             ),
             user=json.dumps(
                 {

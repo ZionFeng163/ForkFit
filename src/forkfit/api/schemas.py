@@ -21,6 +21,7 @@ RunStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 class CreateRunRequest(BaseModel):
     user_profile: UserProfile
     meal_pack: MealPack
+    locale: str = "en"
 
 
 class CreatePostRequest(BaseModel):
@@ -49,6 +50,9 @@ class PostResponse(BaseModel):
     saves: int
     forks: int
     created_at: str
+    liked: bool = False
+    saved: bool = False
+    comment_count: int = 0
 
 
 class CreateRunResponse(BaseModel):

@@ -112,6 +112,9 @@ export type RecipePost = {
   description: string;
   recipe: Meal;
   created_at?: string;
+  liked?: boolean;
+  saved?: boolean;
+  comment_count?: number;
 };
 
 export type CreatePostInput = {
@@ -124,3 +127,40 @@ export type CreatePostInput = {
 };
 
 export type UpdatePostInput = CreatePostInput;
+
+export type UserInfoResponse = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: string;
+};
+
+export type AdminStats = {
+  user_count: number;
+  post_count: number;
+  active_runs: number;
+};
+
+export type AdminUser = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: string;
+  created_at: string;
+};
+
+export type AdminPost = {
+  id: string;
+  title: string;
+  author: string;
+  user_id: string;
+  created_at: string;
+};
+
+export type AuthResponse = {
+  access_token: string;
+  token_type: string;
+  user: UserInfoResponse;
+};

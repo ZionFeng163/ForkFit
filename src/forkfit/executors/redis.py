@@ -19,12 +19,14 @@ class RedisJobExecutor:
         run_id: str,
         user_profile: UserProfile,
         meal_pack: MealPack,
+        locale: str = "en",
     ) -> None:
         self.queue.enqueue(
             run_forkfit_job,
             run_id,
             user_profile_to_dict(user_profile),
             meal_pack_to_dict(meal_pack),
+            locale,
             job_id=run_id,
             result_ttl=3600,
             failure_ttl=86400,

@@ -119,6 +119,17 @@ class PostgresRunStore:
             )
             return [_record_from_row(row, []) for row in rows]
 
+    def list_all_runs(self, limit: int = 50, offset: int = 0) -> list[RunRecord]:
+        with self.session_factory() as session:
+            rows = (
+                session.query(RunRow)
+                .order_by(RunRow.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            return [_record_from_row(row, []) for row in rows]
+
 
 def _require_row(session: Session, run_id: str) -> RunRow:
     row = session.get(RunRow, run_id)

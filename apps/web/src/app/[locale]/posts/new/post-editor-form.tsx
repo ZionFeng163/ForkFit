@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/image-upload";
 import { useRouter } from "@/i18n/routing";
 import { createPost, extractPost, updatePost } from "@/lib/api";
 import type { CreatePostInput, RecipePost } from "@/types/forkfit";
@@ -14,7 +15,7 @@ type PostFormState = {
   title: string;
   theme: string;
   location: string;
-  image_urls: string;
+  image_urls: string[];
   description: string;
   recipe_name: string;
   ingredients: string;
@@ -29,7 +30,7 @@ const defaultForm: PostFormState = {
   title: "",
   theme: "",
   location: "",
-  image_urls: "",
+  image_urls: [],
   description: "",
   recipe_name: "",
   ingredients: "",
@@ -124,17 +125,14 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               className="textarea"
             />
           </Field>
-          <Field label={t("imageUrls")} htmlFor="image_urls" help={t("imageHelp")}>
-            <textarea
-              id="image_urls"
-              required
-              rows={4}
-              value={form.image_urls}
-              placeholder={t("imagePlaceholder")}
-              onChange={(event) => update("image_urls", event.target.value)}
-              className="textarea"
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t("imageUrls")}</label>
+            <span className="block text-xs text-[#7a7167]">{t("imageHelp")}</span>
+            <ImageUpload
+              images={form.image_urls}
+              onChange={(urls) => setForm((prev) => ({ ...prev, image_urls: urls }))}
             />
-          </Field>
+          </div>
         </section>
 
         <details className="rounded-lg border border-[#e4ded6] bg-white">
@@ -279,10 +277,7 @@ function buildInput(form: PostFormState): CreatePostInput {
       title,
       theme: form.theme.trim() || "community recipe",
       location: form.location.trim() || "unknown",
-      image_urls: form.image_urls
-        .split("\n")
-        .map((url) => url.trim())
-        .filter(Boolean),
+      image_urls: form.image_urls.filter(Boolean),
       description,
       recipe: {
         id: "main",
@@ -303,7 +298,7 @@ function formFromPost(post: RecipePost): PostFormState {
     title: post.title,
     theme: post.theme === "community recipe" ? "" : post.theme,
     location: post.location === "unknown" ? "" : post.location,
-    image_urls: post.image_urls.join("\n"),
+    image_urls: [...post.image_urls],
     description: post.description,
     recipe_name: post.recipe.name === post.title ? "" : post.recipe.name,
     ingredients:
