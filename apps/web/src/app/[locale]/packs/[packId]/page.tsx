@@ -43,20 +43,22 @@ export default async function PackDetailPage({ params }: PageProps) {
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="overflow-hidden rounded-lg border border-[#e4ded6] bg-white">
-            <div className="flex snap-x gap-3 overflow-x-auto bg-[#eee9e2] p-3">
-              {post.image_urls.map((imageUrl, index) => (
-                <div
-                  key={imageUrl}
-                  className="relative aspect-[16/11] w-full min-w-full snap-center overflow-hidden rounded-md bg-[#e5ded5]"
-                >
-                  <RemoteImage
-                    src={imageUrl}
-                    alt={`${post.title} ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            {post.image_urls.length > 0 && (
+              <div className="flex snap-x gap-3 overflow-x-auto bg-[#eee9e2] p-3">
+                {post.image_urls.map((imageUrl, index) => (
+                  <div
+                    key={imageUrl}
+                    className="relative aspect-[16/11] w-full min-w-full snap-center overflow-hidden rounded-md bg-[#e5ded5]"
+                  >
+                    <RemoteImage
+                      src={imageUrl}
+                      alt={`${post.title} ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="space-y-5 p-5">
               <div>
                 <h1 className="text-2xl font-semibold tracking-0">{post.title}</h1>

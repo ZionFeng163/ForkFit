@@ -289,6 +289,7 @@ function buildInput(form: PostFormState): CreatePostInput {
         estimated_cost: Number(form.estimated_cost) || 10,
         tags: splitList(form.tags),
         notes: form.notes.trim(),
+        steps: [],
       },
   };
 }

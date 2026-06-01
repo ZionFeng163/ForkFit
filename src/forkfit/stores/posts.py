@@ -133,12 +133,10 @@ class PostgresPostStore:
                 raise KeyError(f"Unknown post_id: {post_id}")
             if existing:
                 session.delete(existing)
-                post.saves = max(0, post.saves - 1)
                 session.commit()
                 return False, post.saves
             else:
                 session.add(PostLikeRow(user_id=user_id, post_id=post_id))
-                post.saves += 1
                 session.commit()
                 return True, post.saves
 
@@ -195,13 +193,6 @@ class PostgresPostStore:
                 .all()
             )
             return [_record_from_row(row) for row in rows], total
-
-    def increment_forks(self, post_id: str) -> None:
-        with self.session_factory() as session:
-            row = session.get(PostRow, post_id)
-            if row:
-                row.forks += 1
-                session.commit()
 
     def list_liked_posts(self, user_id: str, limit: int = 20, offset: int = 0) -> tuple[list[PostRecord], int]:
         with self.session_factory() as session:

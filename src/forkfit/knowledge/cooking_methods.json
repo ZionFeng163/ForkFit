@@ -1,0 +1,567 @@
+[
+  {
+    "id": "stir-fry",
+    "method": "stir-fry",
+    "aliases": ["炒", "stir fry", "quick fry", "爆炒", "清炒", "煸炒"],
+    "equipment": ["stovetop", "wok", "frying pan"],
+    "tags": ["quick", "high-heat", "asian", "chinese"],
+    "steps_template": [
+      "Prepare all ingredients: wash, cut, and measure. Keep within arm's reach.",
+      "Heat wok or pan over high heat until smoking. Add oil and swirl to coat.",
+      "Add aromatics (garlic, ginger, onion) and stir for 10-15 seconds until fragrant.",
+      "Add protein and stir-fry until just cooked through, about 2-3 minutes. Remove and set aside.",
+      "Add harder vegetables first (carrots, broccoli stems) and stir-fry 1-2 minutes.",
+      "Add softer vegetables (bell peppers, snow peas) and stir-fry 1 minute.",
+      "Return protein to pan. Add sauce and toss everything together for 30 seconds.",
+      "Serve immediately over rice or noodles."
+    ],
+    "tips": "Keep ingredients moving in the pan. Cut everything to similar size for even cooking."
+  },
+  {
+    "id": "quick-stir-fry",
+    "method": "quick stir-fry",
+    "aliases": ["快炒", "小炒"],
+    "equipment": ["stovetop", "wok"],
+    "tags": ["quick", "high-heat", "chinese", "homestyle"],
+    "steps_template": [
+      "Heat wok over highest heat until smoking.",
+      "Add oil, then immediately add protein or main ingredient.",
+      "Stir constantly for 1-2 minutes.",
+      "Add seasonings and sauce.",
+      "Toss for 30 seconds and serve immediately."
+    ],
+    "tips": "Everything must be prepped before turning on the heat. The whole cook takes under 3 minutes."
+  },
+  {
+    "id": "oven-bake",
+    "method": "oven bake",
+    "aliases": ["烤", "bake", "roast", "oven roast", "烘焙"],
+    "equipment": ["oven"],
+    "tags": ["hands-off", "even-cooking", "western"],
+    "steps_template": [
+      "Preheat oven to the required temperature.",
+      "Prepare ingredients: season protein, chop vegetables, and arrange on a baking sheet or in a dish.",
+      "Drizzle with oil and season with salt, pepper, and desired spices.",
+      "Place in the center rack of the preheated oven.",
+      "Bake for the specified time, flipping or stirring halfway through if needed.",
+      "Check doneness with a thermometer or by texture. Rest for 3-5 minutes before serving."
+    ],
+    "tips": "Use a light-colored baking sheet for more even browning. Line with parchment for easy cleanup."
+  },
+  {
+    "id": "air-fry",
+    "method": "air fry",
+    "aliases": ["空气炸", "air fryer", "crisp"],
+    "equipment": ["air fryer"],
+    "tags": ["quick", "crispy", "low-oil", "modern"],
+    "steps_template": [
+      "Preheat air fryer to the required temperature.",
+      "Pat ingredients dry with paper towels for maximum crispiness.",
+      "Lightly coat with oil using a spray or brush.",
+      "Arrange in a single layer in the basket. Do not overcrowd.",
+      "Air fry for the specified time, shaking or flipping halfway through.",
+      "Check for desired crispiness. Let rest 2 minutes before serving."
+    ],
+    "tips": "Shake the basket halfway for even crisping. A light oil spray gives better results than drizzling."
+  },
+  {
+    "id": "boil-simmer",
+    "method": "boil and simmer",
+    "aliases": ["煮", "boil", "simmer", "poach", "水煮", "白煮"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["soup", "pasta", "grain", "gentle"],
+    "steps_template": [
+      "Fill a pot with water or broth. Add a pinch of salt.",
+      "Bring to a rolling boil over high heat.",
+      "Add ingredients in order of cooking time: longest first, shortest last.",
+      "Reduce heat to maintain a gentle simmer (small bubbles breaking the surface).",
+      "Simmer for the specified time until ingredients are tender.",
+      "Taste and adjust seasoning. Serve hot."
+    ],
+    "tips": "Salt the water generously. Add delicate herbs at the very end."
+  },
+  {
+    "id": "steam",
+    "method": "steam",
+    "aliases": ["蒸", "steaming", "清蒸"],
+    "equipment": ["stovetop", "steamer", "pot"],
+    "tags": ["healthy", "gentle", "no-oil", "chinese"],
+    "steps_template": [
+      "Fill a pot with 1-2 inches of water. Bring to a boil.",
+      "Place steamer basket above the water level. Ensure water does not touch the basket.",
+      "Arrange ingredients in the steamer basket in a single layer.",
+      "Cover tightly and steam over medium heat for the specified time.",
+      "Check doneness by piercing with a fork or chopstick.",
+      "Remove carefully (watch for steam). Season and serve immediately."
+    ],
+    "tips": "Line the basket with cabbage leaves or parchment to prevent sticking. Keep the lid closed."
+  },
+  {
+    "id": "pan-sear",
+    "method": "pan sear",
+    "aliases": ["煎", "sear", "pan-fry", "煎制", "香煎"],
+    "equipment": ["stovetop", "frying pan"],
+    "tags": ["crispy-exterior", "quick", "golden"],
+    "steps_template": [
+      "Pat protein completely dry with paper towels. Season generously.",
+      "Heat a heavy-bottomed pan over medium-high heat until very hot.",
+      "Add a thin layer of high-smoke-point oil.",
+      "Place protein away from you into the pan. Do not move it.",
+      "Sear undisturbed for 3-4 minutes until a golden crust forms.",
+      "Flip once and sear the other side. Add butter, garlic, and herbs in the last minute for basting.",
+      "Rest for 3-5 minutes before slicing."
+    ],
+    "tips": "A dry surface is the key to a good sear. If the pan isn't hot enough, the protein will steam instead."
+  },
+  {
+    "id": "deep-fry",
+    "method": "deep fry",
+    "aliases": ["炸", "deep fry", "油炸", "酥炸"],
+    "equipment": ["stovetop", "pot", "deep fryer"],
+    "tags": ["crispy", "indulgent", "golden"],
+    "steps_template": [
+      "Fill a deep pot with oil to at least 3 inches deep. Heat to the required temperature.",
+      "Pat ingredients dry and coat with batter or breading if desired.",
+      "Carefully lower ingredients into the hot oil using a slotted spoon or spider.",
+      "Fry in small batches to maintain oil temperature.",
+      "Turn occasionally for even browning. Fry until golden and cooked through.",
+      "Remove with a slotted spoon and drain on paper towels. Season immediately."
+    ],
+    "tips": "Use a thermometer to maintain oil temperature. Too low = greasy. Too high = burnt outside, raw inside."
+  },
+  {
+    "id": "braise",
+    "method": "braise",
+    "aliases": ["焖", "braise", "红烧", "烧", "黄焖"],
+    "equipment": ["stovetop", "pot", "dutch oven"],
+    "tags": ["tender", "comfort-food", "slow", "chinese"],
+    "steps_template": [
+      "Season and sear protein in a hot pot until browned on all sides. Remove and set aside.",
+      "Sauté aromatics (onion, garlic, ginger, scallions) in the same pot until softened.",
+      "Add aromatics and spices (star anise, cinnamon, bay leaves) and toast for 30 seconds.",
+      "Deglaze with wine, soy sauce, or broth, scraping up browned bits.",
+      "Return protein to pot. Add enough liquid to come halfway up the protein.",
+      "Bring to a boil, then reduce to a very low simmer. Cover with a tight lid.",
+      "Cook for 1-3 hours (or until fork-tender), checking occasionally.",
+      "Adjust seasoning. Serve with the braising liquid as a sauce."
+    ],
+    "tips": "Low and slow is the rule. A tight lid is essential. The liquid should barely bubble."
+  },
+  {
+    "id": "slow-cook",
+    "method": "slow cook",
+    "aliases": ["炖", "slow cook", "stew", "煲"],
+    "equipment": ["stovetop", "pot", "slow cooker"],
+    "tags": ["tender", "hands-off", "comfort-food", "soup"],
+    "steps_template": [
+      "Brown protein in a hot pot. Remove and set aside.",
+      "Sauté aromatics in the same pot.",
+      "Return protein. Add liquid (broth, water, wine) to cover.",
+      "Bring to a boil, then reduce to lowest heat. Cover.",
+      "Cook for 2-4 hours until very tender.",
+      "Adjust seasoning. Serve hot."
+    ],
+    "tips": "Resist the urge to raise the heat. Check liquid level occasionally."
+  },
+  {
+    "id": "blanch-shock",
+    "method": "blanch and shock",
+    "aliases": ["焯水", "blanch", "parboil", "飞水"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["prep", "color-retention", "texture", "chinese"],
+    "steps_template": [
+      "Bring a large pot of heavily salted water to a rolling boil.",
+      "Prepare an ice bath in a large bowl nearby.",
+      "Add vegetables to the boiling water. Cook for 1-3 minutes until bright green and crisp-tender.",
+      "Immediately transfer to the ice bath using a slotted spoon or strainer.",
+      "Let cool completely in the ice bath (about 2 minutes).",
+      "Drain well and pat dry. Use immediately or store."
+    ],
+    "tips": "Don't overcrowd the pot. Ice bath stops cooking instantly."
+  },
+  {
+    "id": "rice-cooker",
+    "method": "rice cooker",
+    "aliases": ["电饭煲", "rice cooker", "煮饭"],
+    "equipment": ["rice cooker"],
+    "tags": ["grain", "set-and-forget", "asian"],
+    "steps_template": [
+      "Rinse rice in cold water until water runs clear (3-4 rinses).",
+      "Drain rice and add to the rice cooker bowl.",
+      "Add water in the correct ratio (1:1.2 for white rice, 1:1.5 for brown rice).",
+      "Optionally add a pinch of salt and a tiny drop of oil.",
+      "Close the lid and press the cook button.",
+      "When the cycle finishes, let it steam with the lid closed for 10 minutes.",
+      "Fluff with a rice paddle and serve."
+    ],
+    "tips": "Rinsing removes excess starch for fluffier rice. Letting it steam after cooking is essential."
+  },
+  {
+    "id": "no-cook-assembly",
+    "method": "no-cook assembly",
+    "aliases": ["免煮", "no cook", "assembly", "凉拌", "沙拉"],
+    "equipment": [],
+    "tags": ["quick", "no-heat", "raw", "salad"],
+    "steps_template": [
+      "Wash and prepare all fresh ingredients.",
+      "Cook any grains or proteins separately if needed.",
+      "Chop vegetables to desired size and shape.",
+      "Make the dressing or sauce by whisking together the ingredients.",
+      "Combine all components in a large bowl.",
+      "Toss gently with dressing just before serving.",
+      "Season with salt, pepper, and fresh herbs to taste."
+    ],
+    "tips": "Keep dressing separate until serving to prevent sogginess."
+  },
+  {
+    "id": "soup-stew",
+    "method": "soup and stew",
+    "aliases": ["汤", "soup", "stew", "煲汤", "炖汤"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["liquid", "comfort-food", "chinese", "nourishing"],
+    "steps_template": [
+      "Blanch meat bones in boiling water for 5 minutes. Drain and rinse.",
+      "Place blanched bones in a clean pot with fresh cold water.",
+      "Add aromatics (ginger, scallion, goji dates) and bring to a boil.",
+      "Reduce to a gentle simmer. Skim any foam that rises to the surface.",
+      "Simmer for 1-3 hours for bone broth, 30-60 minutes for vegetable soup.",
+      "Add vegetables in the last 15-20 minutes.",
+      "Season with salt just before serving."
+    ],
+    "tips": "Start with cold water for clearer broth. Never boil a soup you want clear."
+  },
+  {
+    "id": "cold-dish-liangban",
+    "method": "cold dish",
+    "aliases": ["凉拌", "cold dish", "liangban", "凉菜"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["cold", "appetizer", "chinese", "quick"],
+    "steps_template": [
+      "Blanch vegetables or protein in boiling water until just cooked.",
+      "Shock in ice water to stop cooking and keep crisp.",
+      "Drain thoroughly and cut into bite-sized pieces.",
+      "Prepare the dressing: mix soy sauce, vinegar, sesame oil, garlic, and chili oil.",
+      "Pour dressing over ingredients and toss well.",
+      "Garnish with sesame seeds, scallions, or cilantro.",
+      "Let sit for 5-10 minutes for flavors to meld before serving."
+    ],
+    "tips": "The key is the dressing ratio. Taste and adjust before tossing."
+  },
+  {
+    "id": "clay-pot",
+    "method": "clay pot cooking",
+    "aliases": ["砂锅", "clay pot", "煲仔", "砂锅菜"],
+    "equipment": ["stovetop", "clay pot"],
+    "tags": ["one-pot", "aromatic", "chinese", "comfort-food"],
+    "steps_template": [
+      "Soak clay pot in water for 15 minutes before first use.",
+      "Heat pot over medium heat with oil.",
+      "Add aromatics (ginger, garlic) and cook until fragrant.",
+      "Add main ingredients and pour in sauce/broth.",
+      "Bring to a boil, then reduce to low heat.",
+      "Cover and simmer for 15-25 minutes.",
+      "Serve directly in the clay pot — it retains heat beautifully."
+    ],
+    "tips": "Never put a cold clay pot on high heat — it will crack. Always start with medium."
+  },
+  {
+    "id": "hot-pot",
+    "method": "hot pot",
+    "aliases": ["火锅", "hot pot", "huoguo"],
+    "equipment": ["stovetop", "pot", "hot pot burner"],
+    "tags": ["interactive", "social", "chinese", "communal"],
+    "steps_template": [
+      "Prepare the broth: spicy (mala) or mild (bone broth) in a divided pot.",
+      "Bring broth to a boil at the table.",
+      "Prepare thinly sliced proteins, vegetables, tofu, and noodles on separate plates.",
+      "Each person cooks their own ingredients by dipping into the boiling broth.",
+      "Cook proteins for 10-30 seconds (thin slices) or 2-3 minutes (thicker pieces).",
+      "Dip cooked items in personal sauce (sesame paste, garlic soy, etc.).",
+      "Add noodles or rice to the broth at the end for a flavorful finish."
+    ],
+    "tips": "Thinly sliced meat cooks in seconds. Don't overload the pot — cook in small batches."
+  },
+  {
+    "id": "charcoal-grill",
+    "method": "charcoal grill",
+    "aliases": ["烧烤", "charcoal grill", "BBQ", "烤串"],
+    "equipment": ["grill", "charcoal"],
+    "tags": ["smoky", "outdoor", "social", "bbq"],
+    "steps_template": [
+      "Light charcoal and wait until coals are covered in white ash (15-20 min).",
+      "Clean and oil the grill grates.",
+      "Pat ingredients dry and season. Thread onto skewers if needed.",
+      "Place on grill over direct heat for searing, indirect heat for slower cooking.",
+      "Flip once halfway through. Don't press down on the food.",
+      "Baste with sauce in the last few minutes only (sugar burns).",
+      "Check internal temperature for doneness. Rest briefly before serving."
+    ],
+    "tips": "Two-zone fire (direct + indirect) gives you the most control."
+  },
+  {
+    "id": "oven-roast-vegetables",
+    "method": "oven roast vegetables",
+    "aliases": ["烤蔬菜", "roasted vegetables"],
+    "equipment": ["oven"],
+    "tags": ["vegetables", "caramelized", "side-dish"],
+    "steps_template": [
+      "Preheat oven to 425°F / 220°C.",
+      "Cut vegetables into uniform pieces (about 1-inch).",
+      "Toss with olive oil, salt, and pepper on a baking sheet.",
+      "Spread in a single layer — do not crowd.",
+      "Roast for 20-30 minutes, flipping halfway, until edges are golden and caramelized.",
+      "Finish with fresh herbs, a squeeze of lemon, or a drizzle of balsamic."
+    ],
+    "tips": "High heat and space between pieces = caramelization. Crowding = steaming."
+  },
+  {
+    "id": "sous-vide",
+    "method": "sous vide",
+    "aliases": ["低温慢煮", "sous vide"],
+    "equipment": ["sous vide", "pot"],
+    "tags": ["precise", "tender", "modern", "technique"],
+    "steps_template": [
+      "Set water bath to the target temperature using the sous vide circulator.",
+      "Season protein and place in a vacuum-sealed or zip-lock bag.",
+      "Remove air from the bag using water displacement or a vacuum sealer.",
+      "Submerge bag in the water bath for the specified time.",
+      "Remove from bag and pat dry thoroughly.",
+      "Sear in a very hot pan for 30-60 seconds per side for a golden crust."
+    ],
+    "tips": "The sear after sous vide is what gives the Maillard reaction. Don't skip it."
+  },
+  {
+    "id": "ferment-pickle",
+    "method": "ferment and pickle",
+    "aliases": ["腌制", "ferment", "pickle", "泡菜", "腌"],
+    "equipment": ["stovetop", "jar"],
+    "tags": ["preservation", "tangy", "probiotic", "korean", "chinese"],
+    "steps_template": [
+      "Prepare vegetables: wash, cut into desired shapes.",
+      "Make brine: dissolve salt in water (2-3 tbsp per quart).",
+      "Add flavorings: garlic, ginger, chili, sugar, vinegar as needed.",
+      "Pack vegetables into a clean jar. Pour brine over to cover completely.",
+      "Seal loosely (fermentation produces gas). Store at room temperature.",
+      "Ferment for 3-7 days (taste daily after day 2).",
+      "Transfer to refrigerator when desired tanginess is reached."
+    ],
+    "tips": "Keep everything submerged under the brine to prevent mold. Use clean utensils."
+  },
+  {
+    "id": "sauce-reduction",
+    "method": "sauce reduction",
+    "aliases": ["收汁", "reduce", "sauce reduction", "收浓"],
+    "equipment": ["stovetop", "pan"],
+    "tags": ["sauce", "concentrate", "finishing", "french"],
+    "steps_template": [
+      "Place sauce, broth, or liquid in a wide pan over medium-high heat.",
+      "Bring to a gentle boil.",
+      "Reduce heat to maintain a steady simmer.",
+      "Cook until liquid has reduced by half or more, stirring occasionally.",
+      "The sauce should coat the back of a spoon.",
+      "Season to taste. Strain if desired for a silky texture."
+    ],
+    "tips": "A wider pan = faster reduction. Taste as you go — flavors concentrate."
+  },
+  {
+    "id": "pressure-cook",
+    "method": "pressure cook",
+    "aliases": ["高压锅", "pressure cook", "instant pot"],
+    "equipment": ["pressure cooker"],
+    "tags": ["fast", "tender", "convenient"],
+    "steps_template": [
+      "Add ingredients and liquid to the pressure cooker. Do not fill past the max line.",
+      "Lock the lid and set the valve to 'sealing'.",
+      "Select the appropriate pressure level and time.",
+      "When time is up, release pressure naturally (10-15 min) or quick-release.",
+      "Open the lid carefully, tilting away from your face.",
+      "Stir and adjust seasoning before serving."
+    ],
+    "tips": "Natural release keeps proteins tender. Quick release is better for vegetables."
+  },
+  {
+    "id": "wok-hei",
+    "method": "wok hei",
+    "aliases": ["镬气", "wok hei", "breath of the wok"],
+    "equipment": ["stovetop", "wok"],
+    "tags": ["chinese", "high-heat", "smoky", "technique"],
+    "steps_template": [
+      "Heat wok over the highest possible flame until it starts to smoke.",
+      "Add a small amount of oil — just enough to coat.",
+      "Add ingredients in small batches. The wok must stay screaming hot.",
+      "Toss ingredients by flicking the wok (not stirring) to expose them to the flame.",
+      "The brief contact with open flame creates the signature smoky flavor.",
+      "Total cook time per batch: 30-60 seconds.",
+      "Remove immediately. Wok hei is lost if food sits."
+    ],
+    "tips": "Home stoves rarely get hot enough. Use the smallest wok you have and cook in tiny batches."
+  },
+  {
+    "id": "dry-pot",
+    "method": "dry pot",
+    "aliases": ["干锅", "dry pot", "gan guo"],
+    "equipment": ["stovetop", "wok", "dry pot"],
+    "tags": ["chinese", "spicy", "aromatic", "sichuan"],
+    "steps_template": [
+      "Pre-fry or blanch main ingredients (potatoes, cauliflower, meat).",
+      "Heat oil in a wok. Fry dried chilies and Sichuan peppercorns until fragrant.",
+      "Add aromatics (ginger, garlic, scallions) and stir-fry 30 seconds.",
+      "Return main ingredients to wok. Add doubanjiang (chili bean paste).",
+      "Stir-fry everything together over high heat for 2-3 minutes.",
+      "Season with soy sauce, sugar, and salt. Toss until everything is coated.",
+      "Serve in a dry pot with a small burner underneath to keep it sizzling."
+    ],
+    "tips": "The key is minimal sauce — everything should be coated, not swimming."
+  },
+  {
+    "id": "congee",
+    "method": "congee",
+    "aliases": ["粥", "congee", "jook", "稀饭"],
+    "equipment": ["stovetop", "pot", "rice cooker"],
+    "tags": ["breakfast", "comfort-food", "chinese", "nourishing"],
+    "steps_template": [
+      "Rinse 1 cup rice thoroughly. Optionally soak for 30 minutes.",
+      "Combine rice with 8-10 cups water in a large pot.",
+      "Bring to a boil, then reduce to a very low simmer.",
+      "Cook for 1.5-2 hours, stirring occasionally to prevent sticking.",
+      "The congee is ready when the rice has completely broken down and is creamy.",
+      "Season with salt, white pepper, and a drizzle of sesame oil.",
+      "Top with scallions, crispy shallots, or other desired toppings."
+    ],
+    "tips": "The ratio of water to rice determines thickness. More water = thinner congee."
+  },
+  {
+    "id": "wrap-roll",
+    "method": "wrap and roll",
+    "aliases": ["卷", "wrap", "roll", "春卷", "包"],
+    "equipment": ["stovetop", "pan"],
+    "tags": ["assembly", "handheld", "chinese", "vietnamese"],
+    "steps_template": [
+      "Prepare filling: cook and season protein and vegetables. Let cool slightly.",
+      "Lay out wrapper (rice paper, tortilla, or spring roll skin).",
+      "Place filling in the lower third of the wrapper.",
+      "Fold the bottom edge over the filling.",
+      "Fold in the sides. Roll tightly away from you.",
+      "Seal the edge with a dab of water or egg wash.",
+      "For spring rolls: deep fry until golden. For fresh rolls: serve immediately."
+    ],
+    "tips": "Don't overfill — it will burst. Keep wrappers moist with a damp towel."
+  },
+  {
+    "id": "stew-curry",
+    "method": "stew curry",
+    "aliases": ["咖喱", "curry", "stew curry"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["spicy", "aromatic", "indian", "thai", "japanese"],
+    "steps_template": [
+      "Heat oil in a pot. Add curry paste or powder and toast for 1 minute.",
+      "Add aromatics (onion, garlic, ginger) and cook until softened.",
+      "Add protein and brown on all sides.",
+      "Pour in coconut milk, broth, or water. Stir to combine.",
+      "Bring to a boil, then simmer for 20-40 minutes.",
+      "Add vegetables in the last 10-15 minutes.",
+      "Season with fish sauce, lime juice, or sugar to balance flavors.",
+      "Serve over rice or with bread."
+    ],
+    "tips": "Toast the curry paste first to bloom the spices. Coconut milk balances heat."
+  },
+  {
+    "id": "smoke",
+    "method": "smoke",
+    "aliases": ["烟熏", "smoke", "熏"],
+    "equipment": ["smoker", "stovetop"],
+    "tags": ["smoky", "preservation", "bbq", "technique"],
+    "steps_template": [
+      "Soak wood chips in water for 30 minutes.",
+      "Prepare a smoking setup: smoker box or foil packet with holes.",
+      "Season protein or fish generously.",
+      "Set up indirect heat at 225-275°F / 110-135°C.",
+      "Add soaked wood chips to the heat source.",
+      "Place food on the grate, close the lid.",
+      "Smoke for 1-4 hours depending on the protein, maintaining steady temperature.",
+      "The food is done when it reaches the target internal temperature."
+    ],
+    "tips": "Don't peek too often — each opening drops temperature and extends cook time."
+  },
+  {
+    "id": "poach-egg",
+    "method": "poach",
+    "aliases": ["水波蛋", "poach", "poached egg"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["egg", "gentle", "breakfast", "technique"],
+    "steps_template": [
+      "Fill a pot with 3-4 inches of water. Add a splash of vinegar.",
+      "Bring to a gentle simmer (small bubbles, not boiling).",
+      "Crack an egg into a small bowl.",
+      "Create a gentle whirlpool in the water with a spoon.",
+      "Slide the egg into the center of the whirlpool.",
+      "Cook for 3-4 minutes for a runny yolk.",
+      "Remove with a slotted spoon. Trim any wispy edges. Serve immediately."
+    ],
+    "tips": "Fresh eggs hold together better. The vinegar helps the white set. The whirlpool keeps it compact."
+  },
+  {
+    "id": "caramelize",
+    "method": "caramelize",
+    "aliases": ["焦糖化", "caramelize", "炒糖色"],
+    "equipment": ["stovetop", "pan"],
+    "tags": ["sweet", "color", "technique", "chinese"],
+    "steps_template": [
+      "Place sugar and a small amount of water in a clean, heavy-bottomed pan.",
+      "Heat over medium heat. Do not stir — swirl the pan instead.",
+      "Watch the color change: clear → pale gold → amber → deep caramel.",
+      "When it reaches the desired color, immediately remove from heat.",
+      "Carefully add hot water or other liquid (it will splatter).",
+      "Stir to dissolve any hardened caramel. Use immediately."
+    ],
+    "tips": "Caramel goes from perfect to burnt in seconds. Stay attentive. Have everything ready before you start."
+  },
+  {
+    "id": "roll-boil",
+    "method": "roll boil noodles",
+    "aliases": ["煮面", "boil noodles", "下面条"],
+    "equipment": ["stovetop", "pot"],
+    "tags": ["noodles", "quick", "chinese", "asian"],
+    "steps_template": [
+      "Bring a large pot of water to a rolling boil. Add salt.",
+      "Add noodles and stir immediately to prevent sticking.",
+      "Cook according to package directions, stirring occasionally.",
+      "For soup noodles: cook to just under al dente (they'll finish in the broth).",
+      "For dry noodles: drain when al dente. Rinse with cold water for chewier texture.",
+      "Toss with sauce or add to soup. Serve immediately."
+    ],
+    "tips": "Use plenty of water — at least 4 cups per serving. Noodles expand as they cook."
+  },
+  {
+    "id": "glaze",
+    "method": "glaze",
+    "aliases": ["上釉", "glaze", "刷酱"],
+    "equipment": ["stovetop", "pan", "oven"],
+    "tags": ["finishing", "shiny", "sweet-savory"],
+    "steps_template": [
+      "Prepare the glaze: combine sweetener (honey, maple, miso) with liquid (soy, vinegar).",
+      "Cook protein or vegetables using another method first.",
+      "Brush or spoon glaze over the surface in the last 2-3 minutes of cooking.",
+      "Let the glaze caramelize under heat (broiler or high stovetop).",
+      "Apply a second coat for extra shine and flavor.",
+      "Serve immediately — glaze is best when fresh and glossy."
+    ],
+    "tips": "Sugar-based glazes burn easily. Apply at the very end and watch closely."
+  },
+  {
+    "id": "dehydrate",
+    "method": "dehydrate",
+    "aliases": ["脱水", "dehydrate", "风干", "晒干"],
+    "equipment": ["oven", "dehydrator"],
+    "tags": ["preservation", "snack", "concentrate"],
+    "steps_template": [
+      "Prepare ingredients: slice thinly and uniformly.",
+      "Arrange on dehydrator trays or oven racks in a single layer.",
+      "Set temperature to 135-160°F / 57-71°C for fruits/vegetables, 160°F for jerky.",
+      "Dehydrate for 6-12 hours, checking periodically.",
+      "Food is done when it bends without breaking and has no moisture.",
+      "Cool completely before storing in airtight containers."
+    ],
+    "tips": "Slice everything the same thickness for even drying. Flip halfway if using an oven."
+  }
+]

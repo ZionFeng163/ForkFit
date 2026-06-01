@@ -469,5 +469,185 @@
       {"name": "fresh mint", "reason": "Fresh and bright, works in some Asian dishes", "allergens_free": [], "category": "herb", "taste_profile": "cool, fresh", "ratio": "1:1"},
       {"name": "basil", "reason": "Aromatic herb, works in some contexts", "allergens_free": [], "category": "herb", "taste_profile": "sweet, aromatic", "ratio": "1:1"}
     ]
+  },
+  {
+    "id": "doubanjiang",
+    "original": "doubanjiang",
+    "aliases": ["豆瓣酱", "douban", "chili bean paste", "fermented bean paste"],
+    "common_allergens": ["soy"],
+    "tags": ["chinese", "sichuan", "fermented", "spicy", "sauce"],
+    "substitutes": [
+      {"name": "gochujang", "reason": "Korean chili paste, similar fermented heat", "allergens_free": ["soy"], "category": "chili paste", "taste_profile": "spicy, sweet, fermented", "ratio": "1:1"},
+      {"name": "sambal oelek", "reason": "Chili paste, provides heat but less fermented depth", "allergens_free": [], "category": "chili paste", "taste_profile": "fresh, spicy", "ratio": "1:1"},
+      {"name": "miso paste + chili flakes", "reason": "Combination mimics fermented bean + heat", "allergens_free": ["soy"], "category": "paste", "taste_profile": "umami, spicy", "ratio": "1 tbsp miso + 1 tsp chili flakes"}
+    ]
+  },
+  {
+    "id": "chinkiang-vinegar",
+    "original": "Chinkiang vinegar",
+    "aliases": ["黑醋", "Chinese black vinegar", "Zhenjiang vinegar", "香醋"],
+    "common_allergens": [],
+    "tags": ["chinese", "vinegar", "condiment", "sour"],
+    "substitutes": [
+      {"name": "balsamic vinegar", "reason": "Dark color, complex flavor, closest match", "allergens_free": [], "category": "vinegar", "taste_profile": "sweet, tangy, complex", "ratio": "1:1"},
+      {"name": "rice vinegar + molasses", "reason": "Mimics the dark color and slight sweetness", "allergens_free": [], "category": "vinegar", "taste_profile": "mild, sweet", "ratio": "1 tbsp rice vinegar + 1/4 tsp molasses"},
+      {"name": "apple cider vinegar", "reason": "Fruity acidity, works in a pinch", "allergens_free": [], "category": "vinegar", "taste_profile": "fruity, tangy", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "sesame-oil",
+    "original": "sesame oil",
+    "aliases": ["麻油", "芝麻油", "sesame seed oil"],
+    "common_allergens": ["sesame"],
+    "tags": ["chinese", "oil", "finishing", "aromatic"],
+    "substitutes": [
+      {"name": "toasted walnut oil", "reason": "Nutty aroma, similar finishing oil role", "allergens_free": ["sesame"], "category": "oil", "taste_profile": "nutty, rich", "ratio": "1:1"},
+      {"name": "olive oil + pinch of sesame seeds", "reason": "Olive oil base with sesame flavor from seeds", "allergens_free": ["sesame"], "category": "oil", "taste_profile": "fruity, nutty hint", "ratio": "1:1"},
+      {"name": "perilla oil", "reason": "Korean alternative, similar aromatic quality", "allergens_free": ["sesame"], "category": "oil", "taste_profile": "herbal, nutty", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "light-soy-sauce",
+    "original": "light soy sauce",
+    "aliases": ["生抽", "酱油", "soy sauce", "regular soy sauce"],
+    "common_allergens": ["soy", "gluten"],
+    "tags": ["chinese", "condiment", "salty", "umami"],
+    "substitutes": [
+      {"name": "coconut aminos", "reason": "Soy-free, gluten-free, slightly sweeter", "allergens_free": ["soy", "gluten"], "category": "sauce", "taste_profile": "sweet, salty, umami", "ratio": "1:1"},
+      {"name": "tamari", "reason": "Gluten-free soy sauce, very similar taste", "allergens_free": ["gluten"], "category": "sauce", "taste_profile": "rich, umami", "ratio": "1:1"},
+      {"name": "fish sauce + water", "reason": "Different flavor but similar salt + umami function", "allergens_free": ["soy", "gluten"], "category": "sauce", "taste_profile": "fishy, salty", "ratio": "1/2 fish sauce + 1/2 water"}
+    ]
+  },
+  {
+    "id": "dark-soy-sauce",
+    "original": "dark soy sauce",
+    "aliases": ["老抽", "dark soy"],
+    "common_allergens": ["soy", "gluten"],
+    "tags": ["chinese", "condiment", "color", "caramel"],
+    "substitutes": [
+      {"name": "light soy sauce + molasses", "reason": "Mimics the dark color and slightly sweet flavor", "allergens_free": ["gluten"], "category": "sauce", "taste_profile": "salty, sweet", "ratio": "1 tbsp light soy + 1/4 tsp molasses"},
+      {"name": "light soy sauce + balsamic vinegar", "reason": "Adds dark color and complexity", "allergens_free": ["gluten"], "category": "sauce", "taste_profile": "salty, tangy", "ratio": "1 tbsp light soy + 1/4 tsp balsamic"},
+      {"name": "coconut aminos + molasses", "reason": "Soy-free alternative with dark color", "allergens_free": ["soy", "gluten"], "category": "sauce", "taste_profile": "sweet, salty", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "oyster-sauce",
+    "original": "oyster sauce",
+    "aliases": ["蚝油", "oyster sauce"],
+    "common_allergens": ["shellfish", "soy"],
+    "tags": ["chinese", "sauce", "umami", "thick"],
+    "substitutes": [
+      {"name": "mushroom sauce", "reason": "Vegetarian oyster sauce, similar umami and consistency", "allergens_free": ["shellfish", "soy"], "category": "sauce", "taste_profile": "earthy, umami", "ratio": "1:1"},
+      {"name": "hoisin sauce", "reason": "Thick, sweet, umami — similar role in stir-fries", "allergens_free": ["shellfish"], "category": "sauce", "taste_profile": "sweet, salty", "ratio": "1:1"},
+      {"name": "soy sauce + sugar + cornstarch", "reason": "DIY approximation of oyster sauce function", "allergens_free": ["shellfish"], "category": "sauce", "taste_profile": "salty, sweet, thick", "ratio": "2 tbsp soy + 1 tsp sugar + 1/2 tsp cornstarch"}
+    ]
+  },
+  {
+    "id": "shaoxing-wine",
+    "original": "Shaoxing wine",
+    "aliases": ["绍兴酒", "Chinese cooking wine", "Shaoxing", "料酒"],
+    "common_allergens": ["gluten"],
+    "tags": ["chinese", "cooking wine", "aromatic", "deglaze"],
+    "substitutes": [
+      {"name": "dry sherry", "reason": "Closest flavor match, nutty and aromatic", "allergens_free": ["gluten"], "category": "wine", "taste_profile": "nutty, dry", "ratio": "1:1"},
+      {"name": "mirin", "reason": "Japanese cooking wine, sweeter but works", "allergens_free": ["gluten"], "category": "wine", "taste_profile": "sweet, mild", "ratio": "1:1"},
+      {"name": "rice vinegar + sugar", "reason": "Mimics acidity and slight sweetness", "allergens_free": ["gluten"], "category": "condiment", "taste_profile": "sour, sweet", "ratio": "1 tbsp vinegar + 1/2 tsp sugar"}
+    ]
+  },
+  {
+    "id": "chinese-five-spice",
+    "original": "Chinese five-spice powder",
+    "aliases": ["五香粉", "five spice", "wu xiang"],
+    "common_allergens": [],
+    "tags": ["chinese", "spice", "aromatic", "warm"],
+    "substitutes": [
+      {"name": "star anise + cinnamon + cloves + fennel + Sichuan pepper", "reason": "The five individual spices that make up the blend", "allergens_free": [], "category": "spice blend", "taste_profile": "warm, aromatic, complex", "ratio": "1/2 tsp each of 5 spices = 1 tsp five-spice"},
+      {"name": "garam masala", "reason": "Indian spice blend, similar warm complexity", "allergens_free": [], "category": "spice blend", "taste_profile": "warm, earthy", "ratio": "1:1"},
+      {"name": "cinnamon + star anise", "reason": "Two of the dominant flavors, simplified version", "allergens_free": [], "category": "spice", "taste_profile": "sweet, warm", "ratio": "1/2 tsp cinnamon + 1 star anise"}
+    ]
+  },
+  {
+    "id": "ginger",
+    "original": "fresh ginger",
+    "aliases": ["姜", "生姜", "ginger root"],
+    "common_allergens": [],
+    "tags": ["chinese", "aromatic", "root", "spice"],
+    "substitutes": [
+      {"name": "ground ginger", "reason": "Same flavor, more concentrated — use less", "allergens_free": [], "category": "spice", "taste_profile": "warm, spicy", "ratio": "1/4 tsp per 1 tbsp fresh"},
+      {"name": "galangal", "reason": "Thai relative, similar aromatic quality", "allergens_free": [], "category": "root", "taste_profile": "sharp, citrusy", "ratio": "1:1"},
+      {"name": "ginger paste", "reason": "Convenient, same flavor", "allergens_free": [], "category": "paste", "taste_profile": "warm, spicy", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "scallion",
+    "original": "scallion",
+    "aliases": ["葱", "大葱", "green onion", "spring onion", "scallions"],
+    "common_allergens": [],
+    "tags": ["chinese", "aromatic", "vegetable", "garnish"],
+    "substitutes": [
+      {"name": "chives", "reason": "Milder, similar appearance and use as garnish", "allergens_free": [], "category": "herb", "taste_profile": "mild, oniony", "ratio": "1:1"},
+      {"name": "leek (white part)", "reason": "Milder onion flavor, similar texture when sliced", "allergens_free": [], "category": "vegetable", "taste_profile": "sweet, mild", "ratio": "1:1"},
+      {"name": "shallot", "reason": "Sweeter, more delicate onion flavor", "allergens_free": [], "category": "vegetable", "taste_profile": "sweet, mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "bok-choy",
+    "original": "bok choy",
+    "aliases": ["白菜", "青菜", "bok choy", "pak choi"],
+    "common_allergens": [],
+    "tags": ["chinese", "vegetable", "green", "leafy"],
+    "substitutes": [
+      {"name": "napa cabbage", "reason": "Similar Chinese cabbage, slightly different texture", "allergens_free": [], "category": "vegetable", "taste_profile": "mild, sweet", "ratio": "1:1"},
+      {"name": "swiss chard", "reason": "Similar thick stem + leaf structure", "allergens_free": [], "category": "vegetable", "taste_profile": "earthy, mild", "ratio": "1:1"},
+      {"name": "broccoli", "reason": "Green, similar crunch in stir-fries", "allergens_free": [], "category": "vegetable", "taste_profile": "fresh, green", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "chinese-eggplant",
+    "original": "Chinese eggplant",
+    "aliases": ["茄子", "长茄子", "Chinese eggplant"],
+    "common_allergens": [],
+    "tags": ["chinese", "vegetable", "purple"],
+    "substitutes": [
+      {"name": "Japanese eggplant", "reason": "Similar thin skin, tender flesh", "allergens_free": [], "category": "vegetable", "taste_profile": "mild, creamy", "ratio": "1:1"},
+      {"name": "regular eggplant", "reason": "Widely available, slightly thicker skin", "allergens_free": [], "category": "vegetable", "taste_profile": "bitter, spongy", "ratio": "1:1"},
+      {"name": "zucchini", "reason": "Similar texture when cooked, milder flavor", "allergens_free": [], "category": "vegetable", "taste_profile": "mild, slightly sweet", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "dried-shiitake",
+    "original": "dried shiitake mushrooms",
+    "aliases": ["香菇", "干香菇", "dried shiitake"],
+    "common_allergens": [],
+    "tags": ["chinese", "mushroom", "umami", "dried"],
+    "substitutes": [
+      {"name": "fresh shiitake mushrooms", "reason": "Same mushroom, fresh version — less intense flavor", "allergens_free": [], "category": "mushroom", "taste_profile": "earthy, mild", "ratio": "3x more fresh than dried"},
+      {"name": "dried porcini mushrooms", "reason": "Rich umami, similar depth of flavor", "allergens_free": [], "category": "mushroom", "taste_profile": "earthy, intense", "ratio": "1:1"},
+      {"name": "oyster mushrooms + soy sauce", "reason": "Meaty texture with umami boost from soy", "allergens_free": ["soy"], "category": "mushroom", "taste_profile": "savory, earthy", "ratio": "1:1 + splash of soy"}
+    ]
+  },
+  {
+    "id": "lotus-root",
+    "original": "lotus root",
+    "aliases": ["莲藕", "lotus root", "ou"],
+    "common_allergens": [],
+    "tags": ["chinese", "vegetable", "starchy", "crunchy"],
+    "substitutes": [
+      {"name": "jicama", "reason": "Similar crunch and mild sweetness", "allergens_free": [], "category": "vegetable", "taste_profile": "crisp, slightly sweet", "ratio": "1:1"},
+      {"name": "water chestnuts", "reason": "Similar crunchy texture in stir-fries", "allergens_free": [], "category": "vegetable", "taste_profile": "crisp, sweet", "ratio": "1:1"},
+      {"name": "potato", "reason": "Starchy, works in braised dishes", "allergens_free": [], "category": "vegetable", "taste_profile": "starchy, mild", "ratio": "1:1"}
+    ]
+  },
+  {
+    "id": "chinese-sausage",
+    "original": "Chinese sausage (lap cheong)",
+    "aliases": ["腊肠", "lap cheong", "Chinese sausage"],
+    "common_allergens": ["soy", "gluten"],
+    "tags": ["chinese", "cured", "meat", "sweet"],
+    "substitutes": [
+      {"name": "Italian sweet sausage", "reason": "Similar fat content and savory-sweet profile", "allergens_free": ["soy"], "category": "sausage", "taste_profile": "savory, slightly sweet", "ratio": "1:1"},
+      {"name": "turkey sausage + sugar", "reason": "Leaner, sugar mimics the sweetness", "allergens_free": ["soy", "gluten"], "category": "sausage", "taste_profile": "lean, mild", "ratio": "1:1 + pinch of sugar"},
+      {"name": "smoked tofu + hoisin", "reason": "Vegetarian alternative with smoky-sweet notes", "allergens_free": ["gluten"], "category": "tofu", "taste_profile": "smoky, sweet", "ratio": "1:1"}
+    ]
   }
 ]

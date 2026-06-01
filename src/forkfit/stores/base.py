@@ -22,7 +22,7 @@ class RunRecord:
     result: RunResultPayload | None = None
     error: PublicRunError | None = None
     trace: RunTrace | None = None
-    events: list[dict] = field(default_factory=list)
+    saved: bool = False
     created_at: datetime = field(default_factory=utc_now)
     started_at: datetime | None = None
     finished_at: datetime | None = None
@@ -46,7 +46,8 @@ class RunStore(Protocol):
         ...
 
     def mark_failed(
-        self, run_id: str, *, error: PublicRunError, trace: RunTrace | None = None
+        self, run_id: str, *, error: PublicRunError, trace: RunTrace | None = None,
+        result=None,
     ) -> RunRecord:
         ...
 

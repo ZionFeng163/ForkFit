@@ -1,13 +1,51 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from forkfit.api.deps import current_user, get_comment_store, get_post_store, get_user_store, optional_current_user
-from forkfit.api.schemas import PostResponse
 from forkfit.auth.models import CurrentUser
-from forkfit.stores import PostgresPostStore
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/me/extracted-preferences")
+def get_my_extracted_preferences(
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    prefs = store.get_extracted_preferences(user.id)
+    return {"preferences": prefs}
+
+
+class ExtractPreferencesRequest(BaseModel):
+    locale: str = "en"
+
+
+@router.post("/me/extract-preferences")
+def extract_my_preferences(
+    body: ExtractPreferencesRequest | None = None,
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    locale = (body.locale if body else "en")
+    from forkfit.agents import UserPreferenceExtractor
+    from forkfit.llm import BailianLLMClient
+    from forkfit.tools.db_query import DBQueryTool
+    from forkfit.config import get_settings
+
+    settings = get_settings()
+    llm = BailianLLMClient()
+    post_store = get_post_store()
+    db_query_tool = DBQueryTool(post_store)
+    extractor = UserPreferenceExtractor(llm, db_query_tool=db_query_tool)
+
+    result = extractor.run(user.id, locale=locale)
+
+    # Save to database
+    user_store = get_user_store()
+    user_store.save_extracted_preferences(user.id, result)
+
+    return {"preferences": result}
 
 
 @router.get("/{user_id}")
@@ -67,6 +105,7 @@ def get_user_posts(
                     "estimated_cost": p.recipe.estimated_cost,
                     "tags": p.recipe.tags,
                     "notes": p.recipe.notes,
+                    "steps": p.recipe.steps,
                 },
                 "saves": p.saves,
                 "forks": p.forks,

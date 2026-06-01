@@ -6,6 +6,7 @@
     "discover": "发现",
     "newPost": "发帖",
     "myPosts": "我的帖子",
+    "myForks": "我的 Fork",
     "profile": "个人"
   },
   "MyPosts": {
@@ -51,7 +52,16 @@
     "profileNote": "本次 Fork 正在使用你保存的个人画像。",
     "editProfile": "编辑个人画像",
     "resetToProfile": "恢复保存值",
-    "runFork": "运行 Fork"
+    "runFork": "运行 Fork",
+    "extractFromPosts": "从我的帖子中提取偏好",
+    "advancedOptions": "高级选项",
+    "configured": "已配置",
+    "allergiesPlaceholder": "例如：花生、海鲜",
+    "likesPlaceholder": "例如：鸡肉、米饭、辣味",
+    "dislikesPlaceholder": "例如：香菜、生鱼",
+    "equipmentPlaceholder": "例如：烤箱、空气炸锅",
+    "dietRulesPlaceholder": "例如：不吃猪肉、素食",
+    "softPreferencesPlaceholder": "例如：少油、少洗碗"
   },
   "Profile": {
     "title": "个人画像",
@@ -59,6 +69,15 @@
     "save": "保存画像",
     "reset": "恢复默认",
     "saved": "已保存",
+    "extractFromPosts": "从我的帖子中提取偏好",
+    "advancedOptions": "高级选项",
+    "configured": "已配置",
+    "allergiesPlaceholder": "例如：花生、海鲜",
+    "likesPlaceholder": "例如：鸡肉、米饭、辣味",
+    "dislikesPlaceholder": "例如：香菜、生鱼",
+    "equipmentPlaceholder": "例如：烤箱、空气炸锅",
+    "dietRulesPlaceholder": "例如：不吃猪肉、素食",
+    "softPreferencesPlaceholder": "例如：少油、少洗碗",
     "tabs": {
       "preferences": "偏好设置",
       "liked": "点赞",
@@ -134,6 +153,7 @@
     "ingredients": "食材",
     "equipment": "厨具",
     "cookingSteps": "制作步骤",
+    "noSteps": "暂无步骤，agent 会为你生成。",
     "none": "无",
     "changeLog": "改动记录",
     "noChanges": "无需改动。",
@@ -147,6 +167,10 @@
     "traceSummary": "{llmCalls} 次 LLM 调用 · {steps} 个图节点",
     "publishButton": "发布为我的帖子",
     "publishSuccess": "发布成功！正在跳转...",
+    "saveAsFork": "保存为我的 Fork",
+    "savedToForks": "已保存到我的 Fork！",
+    "addImages": "添加图片",
+    "addImagesHelp": "上传菜品照片（可选，最多 4 张）。",
     "originalPost": "原版帖子",
     "editHint": "发布前可以编辑以下内容。",
     "fieldTitle": "标题",
@@ -158,6 +182,8 @@
     "fieldTags": "标签",
     "fieldNotes": "烹饪备注",
     "commaSeparated": "用逗号分隔。",
+    "changed": "已改",
+    "fieldName": "菜名",
     "field": {
       "meal name": "菜品名称",
       "ingredients": "食材",
@@ -226,6 +252,13 @@
     "postCount": "{count, plural, other {共 # 篇帖子}}",
     "noPosts": "暂无帖子。",
     "notFound": "用户不存在。"
+  },
+  "MyForks": {
+    "title": "我的 Fork",
+    "empty": "还没有保存的 Fork。Fork 一道菜后可以保存到这里。",
+    "discover": "发现菜谱",
+    "changes": "个改动",
+    "remove": "从我的 Fork 中移除"
   },
   "Comments": {
     "title": "评论 ({count})",

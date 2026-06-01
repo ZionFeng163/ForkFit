@@ -17,13 +17,13 @@ export type UserProfileForm = {
 export const defaultUserProfileForm: UserProfileForm = {
   people_count: "1",
   budget: "60",
-  likes: "rice bowls, vegetables",
+  likes: "",
   dislikes: "",
   allergies: "",
   diet_rules: "",
-  equipment: "oven, stovetop, air fryer",
+  equipment: "",
   max_cook_time_minutes: "40",
-  soft_preferences: "less oily",
+  soft_preferences: "",
 };
 
 export function splitList(value: string) {

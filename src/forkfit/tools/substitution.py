@@ -6,8 +6,9 @@ from forkfit.knowledge.store import SubstitutionStore
 class SubstitutionTool:
     """Tool for looking up ingredient substitutions from the knowledge base."""
 
-    def __init__(self, store: SubstitutionStore) -> None:
+    def __init__(self, store: SubstitutionStore, cache=None) -> None:
         self._store = store
+        self._cache = cache
 
     def lookup(
         self,
@@ -26,6 +27,13 @@ class SubstitutionTool:
         Returns:
             List of substitute suggestions with name, reason, ratio, etc.
         """
+        # Check cache first
+        if self._cache:
+            cache_key = f"{ingredient}:{','.join(sorted(exclude_allergens or []))}"
+            cached = self._cache.get("substitution", cache_key)
+            if cached is not None:
+                return cached
+
         exclude = [a.lower() for a in (exclude_allergens or [])]
 
         # 1. Try exact match first
@@ -46,6 +54,8 @@ class SubstitutionTool:
                         "category": sub.get("category", ""),
                     })
             if results:
+                if self._cache:
+                    self._cache.set("substitution", f"{ingredient}:{','.join(sorted(exclude))}", results, ttl=86400)
                 return results
 
         # 2. Fall back to RAG semantic search
@@ -53,11 +63,14 @@ class SubstitutionTool:
         if context:
             query = f"{ingredient} {context}"
 
-        return self._store.search(
+        results = self._store.search(
             query=query,
             exclude_allergens=exclude,
             top_k=5,
         )
+        if self._cache and results:
+            self._cache.set("substitution", f"{ingredient}:{','.join(sorted(exclude))}", results, ttl=3600)
+        return results
 
     def get_substitution_context(
         self,

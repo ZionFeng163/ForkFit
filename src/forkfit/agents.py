@@ -46,6 +46,19 @@ def _contains_term(text: str, term: str) -> bool:
     return bool(words) and all(word in normalized_text for word in words)
 
 
+def _equipment_available(required: str, available: set[str]) -> bool:
+    """Check if a required equipment item is covered by any available item.
+
+    Uses substring matching so "stove" matches "stovetop" and vice versa.
+    """
+    if required in available:
+        return True
+    for avail in available:
+        if required in avail or avail in required:
+            return True
+    return False
+
+
 def _status_from_findings(findings: list[AgentFinding]) -> str:
     if any(finding.severity == "high" for finding in findings):
         return "block"
@@ -150,8 +163,9 @@ class UserAgent:
 class ConstraintAgent:
     agent_name = "constraint"
 
-    def __init__(self, llm_client: LLMClient) -> None:
+    def __init__(self, llm_client: LLMClient, nutrition_tool=None) -> None:
         self.llm_client = llm_client
+        self.nutrition_tool = nutrition_tool
 
     def review(
         self,
@@ -159,6 +173,14 @@ class ConstraintAgent:
         constraints: ConstraintSet,
         trace: RunTrace | None = None,
     ) -> AgentReview:
+        # Build nutrition context if tool available
+        nutrition_context = ""
+        if self.nutrition_tool:
+            all_ingredients = []
+            for meal in meal_pack.meals:
+                all_ingredients.extend(meal.ingredients)
+            nutrition_context = self.nutrition_tool.get_nutrition_context(all_ingredients)
+
         payload = self.llm_client.complete_json(
             agent=self.agent_name,
             system=(
@@ -166,7 +188,10 @@ class ConstraintAgent:
                 "community meal pack against the provided constraints. Return only "
                 "JSON matching AgentReview. Do not modify the meal pack. Keep all "
                 "strings concise. Do not include markdown, explanation, or hidden "
-                "reasoning."
+                "reasoning. "
+                "When nutrition_information is provided, also flag meals that are "
+                "extremely high in calories (>800 per serving) or very low in protein "
+                "(<5g) for a main dish."
             ),
             user=json.dumps(
                 {
@@ -195,6 +220,7 @@ class ConstraintAgent:
                     ],
                     "meal_pack": meal_pack.to_dict(),
                     "constraints": asdict(constraints),
+                    **({"nutrition_information": nutrition_context} if nutrition_context else {}),
                 },
                 ensure_ascii=False,
             ),
@@ -278,15 +304,19 @@ class ConstraintGuard:
         available = {_norm(item) for item in constraints.equipment}
         findings: list[AgentFinding] = []
         for meal in meal_pack.meals:
-            missing = [item for item in meal.equipment if _norm(item) not in available]
+            missing = [
+                item
+                for item in meal.equipment
+                if not _equipment_available(_norm(item), available)
+            ]
             if missing:
                 findings.append(
                     AgentFinding(
                         type="equipment",
-                        severity="high",
+                        severity="medium",
                         affected_items=[meal.id],
-                        message=f"{meal.name} requires unavailable equipment: {', '.join(missing)}.",
-                        required_action="replace equipment method",
+                        message=f"{meal.name} suggests equipment you don't have: {', '.join(missing)}. The adapter will try to find an alternative method.",
+                        suggested_action="The adapter will adapt the cooking method if possible.",
                     )
                 )
         return findings
@@ -333,9 +363,10 @@ class ConstraintGuard:
 class AdapterAgent:
     agent_name = "adapter"
 
-    def __init__(self, llm_client: LLMClient, substitution_tool: "SubstitutionTool | None" = None) -> None:
+    def __init__(self, llm_client: LLMClient, substitution_tool=None, nutrition_tool=None) -> None:
         self.llm_client = llm_client
         self.substitution_tool = substitution_tool
+        self.nutrition_tool = nutrition_tool
 
     def run(
         self,
@@ -361,6 +392,14 @@ class AdapterAgent:
             substitution_context = self.substitution_tool.get_substitution_context(
                 all_ingredients, exclude_allergens=exclude
             )
+
+        # Pre-fetch nutrition context using the tool
+        nutrition_context = ""
+        if self.nutrition_tool:
+            all_ingredients = []
+            for meal in original_meal_pack.meals:
+                all_ingredients.extend(meal.ingredients)
+            nutrition_context = self.nutrition_tool.get_nutrition_context(all_ingredients)
 
         user_message = {
             "task": "Return AdapterOutput JSON.",
@@ -394,6 +433,9 @@ class AdapterAgent:
         if substitution_context:
             user_message["substitution_suggestions"] = substitution_context
 
+        if nutrition_context:
+            user_message["nutrition_information"] = nutrition_context
+
         payload = self.llm_client.complete_json(
             agent=self.agent_name,
             system=(
@@ -404,7 +446,12 @@ class AdapterAgent:
                 "each change with source_agent. Keep summary, reasons, and notes "
                 "concise. Do not include markdown, explanation, or hidden reasoning. "
                 f"IMPORTANT: All text fields (name, ingredients, equipment, tags, notes, summary, "
-                f"reasons) MUST be written in {lang_hint}."
+                f"reasons) MUST be written in {lang_hint}. "
+                f"When nutrition_information is provided, consider the nutritional impact "
+                f"of substitutions — prefer ingredients with similar protein/fat/carb profiles. "
+                f"When the output language is not English, also provide "
+                f"'original_meal_pack_translated' — a translated copy of the original meal pack "
+                f"so both original and forked versions are in the same language."
             ),
             user=json.dumps(user_message, ensure_ascii=False),
             trace=trace,
@@ -460,3 +507,218 @@ def _constraints_from_reviews(
         max_cook_time_minutes=24 * 60,
         people_count=1,
     )
+
+
+class CookingStepsAgent:
+    """Generates structured cooking steps for each meal in the forked pack.
+
+    Uses a knowledge base of cooking method templates and the LLM to produce
+    meal-specific, step-by-step cooking instructions.
+    """
+
+    agent_name = "cooking_steps"
+
+    def __init__(self, llm_client: LLMClient, cooking_steps_tool=None) -> None:
+        self.llm_client = llm_client
+        self.cooking_steps_tool = cooking_steps_tool
+
+    def run(
+        self,
+        meal_pack: MealPack,
+        user_agent_output: UserAgentOutput,
+        trace: RunTrace | None = None,
+        locale: str = "en",
+    ) -> MealPack:
+        """Generate cooking steps for each meal and return the updated MealPack."""
+        lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
+
+        # Pre-fetch cooking method context from knowledge base
+        steps_context = ""
+        if self.cooking_steps_tool:
+            meal_dicts = [asdict(m) for m in meal_pack.meals]
+            steps_context = self.cooking_steps_tool.get_steps_context(meal_dicts)
+
+        user_message = {
+            "task": "Generate concise cooking steps for each meal.",
+            "meals": [
+                {
+                    "id": meal.id,
+                    "name": meal.name,
+                    "ingredients": meal.ingredients,
+                    "equipment": meal.equipment,
+                    "cook_time_minutes": meal.cook_time_minutes,
+                    "current_steps": meal.steps,
+                }
+                for meal in meal_pack.meals
+            ],
+            "rules": [
+                "Each step should be a single, clear action (one sentence).",
+                "Steps should be in logical cooking order.",
+                "Include prep steps (wash, cut, measure) at the beginning.",
+                "Include a final plating or serving step.",
+                "Keep steps concise — no more than 15-20 words each.",
+                "Typically 4-8 steps per meal depending on complexity.",
+                "Adapt steps to the actual ingredients and equipment listed.",
+                "If a meal already has good steps, keep them or refine them.",
+            ],
+        }
+
+        if steps_context:
+            user_message["cooking_method_templates"] = steps_context
+
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                "You are ForkFit CookingStepsAgent. Generate clear, concise "
+                "cooking steps for each meal. Return JSON with a 'meals' array, "
+                "each containing 'id' and 'steps' (list of strings). "
+                "Every step must be a short, actionable instruction. "
+                "Do not include markdown, explanation, or hidden reasoning. "
+                f"All text MUST be written in {lang_hint}."
+            ),
+            user=json.dumps(user_message, ensure_ascii=False),
+            trace=trace,
+            max_tokens=800,
+        )
+
+        # Apply generated steps to the meal pack
+        steps_by_id = {m["id"]: m.get("steps", []) for m in payload.get("meals", [])}
+        for meal in meal_pack.meals:
+            generated = steps_by_id.get(meal.id)
+            if generated and isinstance(generated, list) and len(generated) > 0:
+                meal.steps = generated
+
+        return meal_pack
+
+
+class UserPreferenceExtractor:
+    """Extracts user preferences from their cooking history (posts, likes, saves).
+
+    This is an independent agent — runs on-demand when user clicks "Extract",
+    not during every fork. Results are cached in the database.
+    """
+
+    agent_name = "user_preference_extractor"
+
+    def __init__(self, llm_client: LLMClient, db_query_tool=None) -> None:
+        self.llm_client = llm_client
+        self.db_query_tool = db_query_tool
+
+    def run(self, user_id: str, locale: str = "en", trace: RunTrace | None = None) -> dict:
+        """Extract preferences from user's cooking history. Returns a dict with:
+        likes, dislikes, allergies, diet_rules, equipment, soft_preferences,
+        cooking_style, preferred_ingredients, summary
+        """
+        lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
+
+        if not self.db_query_tool:
+            return {"summary": "No database access available.", "extracted": False}
+
+        history = self.db_query_tool.get_user_cooking_history(user_id)
+
+        if history == "No cooking history found for this user.":
+            return {"summary": "No posts, likes, or saves found.", "extracted": False}
+
+        is_zh = locale.startswith("zh")
+        user_message = {
+            "task": "Extract user cooking preferences from their history.",
+            "output_language": lang_hint,
+            "cooking_history": history,
+            "schema": {
+                "likes": ["鸡肉"] if is_zh else ["chicken"],
+                "dislikes": ["香菜"] if is_zh else ["cilantro"],
+                "diet_rules": ["高蛋白"] if is_zh else ["high protein"],
+                "equipment": ["烤箱"] if is_zh else ["oven"],
+                "soft_preferences": ["快手菜"] if is_zh else ["quick meals"],
+                "preferred_ingredients": ["鸡胸肉"] if is_zh else ["chicken breast"],
+                "cooking_style": "快手健康菜" if is_zh else "quick healthy meals",
+                "summary": "用户喜欢快手高蛋白菜" if is_zh else "User likes quick high-protein meals",
+            },
+            "rules": [
+                "Analyze the user's recipes, liked recipes, and saved recipes.",
+                "Infer preferences from patterns: repeated ingredients = liked, cooking methods used, price ranges, time ranges.",
+                "Likes: ingredients and styles that appear frequently in their posts/likes/saves.",
+                "Dislikes: ingredients that are notably absent or replaced in their recipes.",
+                "Diet rules: infer from patterns (e.g., no pork if never appears, vegetarian if no meat).",
+                "Equipment: infer from cooking methods used in their recipes.",
+                "Soft preferences: cooking style patterns (quick meals, elaborate dishes, etc.).",
+                "Preferred ingredients: top 5-8 ingredients they use most.",
+                "Summary: 1-2 sentence description of their cooking profile.",
+                "Do NOT include allergies — those must come from explicit user input.",
+                "Return concise lists, not long explanations.",
+            ],
+        }
+
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                "You are ForkFit UserPreferenceExtractor. Analyze a user's cooking "
+                "history (recipes they posted, liked, and saved) to extract their "
+                "cooking preferences. Return JSON matching the schema. Be concise. "
+                "Do not include markdown, explanation, or hidden reasoning. "
+                f"OUTPUT LANGUAGE: {lang_hint}. You MUST write ALL values in this language. "
+                f"If the output language is Chinese, translate everything to Chinese: "
+                f"ingredient names (chicken breast→鸡胸肉, broccoli→西兰花, rice→米饭), "
+                f"diet terms (high protein→高蛋白, healthy→健康), "
+                f"equipment (oven→烤箱, stove→灶台), "
+                f"preferences (quick meals→快手菜, budget conscious→注重性价比). "
+                f"If the output language is English, keep everything in English. "
+                f"NEVER mix languages in the output."
+            ),
+            user=json.dumps(user_message, ensure_ascii=False),
+            trace=trace,
+            max_tokens=600,
+        )
+
+        # Ensure required keys exist with defaults
+        result = {
+            "likes": payload.get("likes", []),
+            "dislikes": payload.get("dislikes", []),
+            "diet_rules": payload.get("diet_rules", []),
+            "equipment": payload.get("equipment", []),
+            "soft_preferences": payload.get("soft_preferences", []),
+            "preferred_ingredients": payload.get("preferred_ingredients", []),
+            "cooking_style": payload.get("cooking_style", ""),
+            "summary": payload.get("summary", ""),
+            "extracted": True,
+        }
+
+        # If target language is not English, translate the output
+        if not locale.startswith("en"):
+            result = self._translate_result(result, locale, trace)
+
+        return result
+
+    def _translate_result(self, result: dict, locale: str, trace: RunTrace | None = None) -> dict:
+        """Translate extracted preferences to the target language."""
+        lang_hint = "Chinese (中文)" if locale.startswith("zh") else locale
+        translate_msg = {
+            "task": "Translate these cooking preferences to the target language.",
+            "target_language": lang_hint,
+            "preferences": result,
+        }
+        translated = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                f"Translate all text values in the JSON to {lang_hint}. "
+                f"Keep the same structure and keys. Only translate the string values. "
+                f"For ingredient names, use the common Chinese name "
+                f"(e.g., chicken breast→鸡胸肉, broccoli→西兰花, rice→米饭, "
+                f"peanut sauce→花生酱, oven→烤箱, high protein→高蛋白). "
+                f"Do not add or remove any items. Return only the translated JSON."
+            ),
+            user=json.dumps(translate_msg, ensure_ascii=False),
+            trace=trace,
+            max_tokens=400,
+        )
+        return {
+            "likes": translated.get("likes", result.get("likes", [])),
+            "dislikes": translated.get("dislikes", result.get("dislikes", [])),
+            "diet_rules": translated.get("diet_rules", result.get("diet_rules", [])),
+            "equipment": translated.get("equipment", result.get("equipment", [])),
+            "soft_preferences": translated.get("soft_preferences", result.get("soft_preferences", [])),
+            "preferred_ingredients": translated.get("preferred_ingredients", result.get("preferred_ingredients", [])),
+            "cooking_style": translated.get("cooking_style", result.get("cooking_style", "")),
+            "summary": translated.get("summary", result.get("summary", "")),
+            "extracted": True,
+        }

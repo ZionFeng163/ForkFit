@@ -117,6 +117,18 @@ export function listRuns() {
   return request<RunStatusResponse[]>("/runs");
 }
 
+export function saveRun(runId: string) {
+  return request<RunStatusResponse>(`/runs/${runId}/save`, { method: "POST" });
+}
+
+export function unsaveRun(runId: string) {
+  return request<RunStatusResponse>(`/runs/${runId}/save`, { method: "DELETE" });
+}
+
+export function listSavedRuns() {
+  return request<RunStatusResponse[]>("/runs/saved");
+}
+
 export function listPosts(limit = 20, offset = 0, q = "", tag = "") {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (q) params.set("q", q);
@@ -233,6 +245,20 @@ export function listUserPosts(userId: string, limit = 20, offset = 0) {
 
 export function listMyComments(limit = 50, offset = 0) {
   return request<{ comments: { id: string; post_id: string; content: string; created_at: string }[]; total: number }>(`/users/me/comments?limit=${limit}&offset=${offset}`);
+}
+
+// --- User Preference Extraction ---
+
+export function extractMyPreferences(locale = "en") {
+  return request<{ preferences: Record<string, unknown> }>(`/users/me/extract-preferences`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ locale }),
+  });
+}
+
+export function getMyExtractedPreferences() {
+  return request<{ preferences: Record<string, unknown> | null }>(`/users/me/extracted-preferences`);
 }
 
 // --- Comments ---

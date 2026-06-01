@@ -74,6 +74,7 @@ class RunStatusResponse(BaseModel):
     result: "RunResultPayload | None" = None
     error: PublicRunError | None = None
     trace: RunTrace | None = None
+    saved: bool = False
 
 
 class RunResultPayload(BaseModel):
@@ -88,8 +89,13 @@ class RunResultPayload(BaseModel):
 def result_payload_from_forkfit(
     original_meal_pack: MealPack, result: ForkFitResult
 ) -> RunResultPayload:
+    # Use translated original if adapter produced one (non-English locale)
+    display_original = (
+        result.adapter_output.original_meal_pack_translated
+        or original_meal_pack
+    )
     return RunResultPayload(
-        original_meal_pack=original_meal_pack,
+        original_meal_pack=display_original,
         forked_meal_pack=result.adapter_output.forked_meal_pack,
         change_log=result.adapter_output.change_log,
         unresolved_items=result.adapter_output.unresolved_items,

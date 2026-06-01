@@ -40,18 +40,7 @@ class PostgresRunStore:
             row = session.get(RunRow, run_id)
             if row is None:
                 return None
-            events = [
-                {
-                    "type": event.event_type,
-                    "payload": event.payload,
-                    "created_at": event.created_at.isoformat(),
-                }
-                for event in session.query(RunEventRow)
-                .filter(RunEventRow.run_id == run_id)
-                .order_by(RunEventRow.id)
-                .all()
-            ]
-            return _record_from_row(row, events)
+            return _record_from_row(row)
 
     def mark_running(self, run_id: str) -> RunRecord:
         with self.session_factory() as session:
@@ -76,12 +65,17 @@ class PostgresRunStore:
         return self.get_run(run_id)
 
     def mark_failed(
-        self, run_id: str, *, error: PublicRunError, trace: RunTrace | None = None
+        self, run_id: str, *, error: PublicRunError, trace: RunTrace | None = None,
+        result=None,
     ) -> RunRecord:
         with self.session_factory() as session:
             row = _require_row(session, run_id)
             row.status = "failed"
             row.error_payload = error.model_dump(mode="json")
+            if result is not None:
+                row.result_payload = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+            else:
+                row.result_payload = None
             row.trace_payload = asdict(trace) if trace else None
             row.finished_at = utc_now()
             session.commit()
@@ -117,7 +111,7 @@ class PostgresRunStore:
                 .order_by(RunRow.created_at.desc())
                 .all()
             )
-            return [_record_from_row(row, []) for row in rows]
+            return [_record_from_row(row) for row in rows]
 
     def list_all_runs(self, limit: int = 50, offset: int = 0) -> list[RunRecord]:
         with self.session_factory() as session:
@@ -128,7 +122,31 @@ class PostgresRunStore:
                 .limit(limit)
                 .all()
             )
-            return [_record_from_row(row, []) for row in rows]
+            return [_record_from_row(row) for row in rows]
+
+    def mark_saved(self, run_id: str) -> RunRecord:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.saved = True
+            session.commit()
+        return self.get_run(run_id)
+
+    def mark_unsaved(self, run_id: str) -> RunRecord:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.saved = False
+            session.commit()
+        return self.get_run(run_id)
+
+    def list_saved_runs_for_user(self, user_id: str) -> list[RunRecord]:
+        with self.session_factory() as session:
+            rows = (
+                session.query(RunRow)
+                .filter(RunRow.user_id == user_id, RunRow.saved == True, RunRow.status == "succeeded")
+                .order_by(RunRow.created_at.desc())
+                .all()
+            )
+            return [_record_from_row(row) for row in rows]
 
 
 def _require_row(session: Session, run_id: str) -> RunRow:
@@ -138,7 +156,7 @@ def _require_row(session: Session, run_id: str) -> RunRow:
     return row
 
 
-def _record_from_row(row: RunRow, events: list[dict]) -> RunRecord:
+def _record_from_row(row: RunRow) -> RunRecord:
     return RunRecord(
         id=row.id,
         user_id=row.user_id,
@@ -148,7 +166,7 @@ def _record_from_row(row: RunRow, events: list[dict]) -> RunRecord:
         result=RunResultPayload(**row.result_payload) if row.result_payload else None,
         error=PublicRunError(**row.error_payload) if row.error_payload else None,
         trace=run_trace_from_dict(row.trace_payload),
-        events=events,
+        saved=row.saved,
         created_at=row.created_at,
         started_at=row.started_at,
         finished_at=row.finished_at,

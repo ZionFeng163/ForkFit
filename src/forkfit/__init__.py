@@ -30,8 +30,6 @@ __all__ = [
     "ConstraintAgent",
     "ConstraintGuard",
     "ConstraintSet",
-    "demo_meal_pack",
-    "demo_user_profile",
     "ForkFitResult",
     "ForkFitLangGraphWorkflow",
     "LLMCallTrace",

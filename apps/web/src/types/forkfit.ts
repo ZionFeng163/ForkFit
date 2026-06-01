@@ -10,6 +10,7 @@ export type Meal = {
   estimated_cost: number;
   tags: string[];
   notes: string;
+  steps: string[];
 };
 
 export type MealPack = {
@@ -97,6 +98,7 @@ export type RunStatusResponse = {
   result: RunResultPayload | null;
   error: { message: string } | null;
   trace: RunTrace | null;
+  saved: boolean;
 };
 
 export type RecipePost = {

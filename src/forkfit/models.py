@@ -19,6 +19,7 @@ class Meal:
     estimated_cost: float
     tags: list[str] = field(default_factory=list)
     notes: str = ""
+    steps: list[str] = field(default_factory=list)
 
     def clone(self) -> "Meal":
         return deepcopy(self)
@@ -31,6 +32,7 @@ class Meal:
             *self.ingredients,
             *self.equipment,
             *self.tags,
+            *self.steps,
         ]
         return " ".join(parts).lower()
 
@@ -153,6 +155,7 @@ class AdapterOutput:
     change_log: list[ChangeLogEntry]
     unresolved_items: list[AgentFinding]
     summary: str
+    original_meal_pack_translated: MealPack | None = None
 
 
 @dataclass(slots=True)

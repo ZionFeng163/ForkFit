@@ -109,7 +109,37 @@ class FakeLLMClient:
                 )
             return self._adapter_payload(request)
 
+        if agent == "cooking_steps":
+            if trace is not None:
+                from forkfit.models import LLMCallTrace
+
+                trace.llm_calls.append(
+                    LLMCallTrace(
+                        agent="cooking_steps",
+                        model=self.model,
+                        duration_ms=1.0,
+                        prompt_tokens=10,
+                        completion_tokens=10,
+                        status="success",
+                    )
+                )
+            return self._cooking_steps_payload(request)
+
         raise AssertionError(f"unexpected agent: {agent}")
+
+    def _cooking_steps_payload(self, request):
+        meals = request.get("meals", [])
+        result_meals = []
+        for meal in meals:
+            result_meals.append({
+                "id": meal["id"],
+                "steps": [
+                    f"Prepare ingredients for {meal['name']}.",
+                    f"Cook {meal['name']} according to the recipe.",
+                    f"Serve {meal['name']} hot.",
+                ],
+            })
+        return {"meals": result_meals}
 
     def _constraint_payload(self, request):
         pack = request["meal_pack"]
@@ -465,7 +495,13 @@ class ForkFitAgentTests(unittest.TestCase):
 
         self.assertTrue(result.success)
         self.assertEqual(result.adapter_output.change_log, [])
-        self.assertEqual(source.to_dict(), result.adapter_output.forked_meal_pack.to_dict())
+        # Cooking steps agent may add steps, so compare without steps field
+        source_dict = source.to_dict()
+        forked_dict = result.adapter_output.forked_meal_pack.to_dict()
+        for s, f in zip(source_dict["meals"], forked_dict["meals"]):
+            f.pop("steps", None)
+            s.pop("steps", None)
+        self.assertEqual(source_dict, forked_dict)
 
     def test_unresolvable_hard_block_fails_without_fake_fork(self):
         user = base_user(equipment=[])
@@ -568,20 +604,16 @@ class ForkFitAgentTests(unittest.TestCase):
         result = workflow().run(user, source)
 
         self.assertIsNotNone(result.trace)
-        self.assertEqual(
-            [step.node for step in result.trace.steps],
-            [
-                "load_input",
-                "user_agent",
-                "reviewer_agents",
-                "adapter_agent",
-                "final_validation",
-            ],
-        )
-        self.assertEqual(result.trace.llm_call_count, 3)
+        step_names = [step.node for step in result.trace.steps]
+        self.assertEqual(step_names[:4], ["load_input", "user_agent", "reviewer_agents", "adapter_agent"])
+        self.assertEqual(step_names[-1], "join_parallel")
+        # cooking_steps and final_validation run in parallel, order may vary
+        self.assertIn("cooking_steps", step_names)
+        self.assertIn("final_validation", step_names)
+        self.assertEqual(result.trace.llm_call_count, 4)
         self.assertEqual(
             [call.agent for call in result.trace.llm_calls],
-            ["user", "constraint", "adapter"],
+            ["user", "constraint", "adapter", "cooking_steps"],
         )
 
     def test_langgraph_auto_tracing_is_disabled_for_workflow_run(self):

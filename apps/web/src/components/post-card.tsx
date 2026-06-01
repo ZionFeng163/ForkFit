@@ -47,13 +47,15 @@ export function PostCard({ post }: { post: RecipePost }) {
   return (
     <div className="mb-4 overflow-hidden rounded-lg border border-[#e4ded6] bg-white transition-colors hover:border-[#cfc5b8]">
       <Link href={`/packs/${post.id}`} className="block">
-        <div className="relative aspect-[4/5] bg-[#eee9e2]">
-          <RemoteImage
-            src={post.image_urls[0]}
-            alt={post.title}
-            className="h-full w-full object-cover"
-          />
-        </div>
+        {post.image_urls.length > 0 && (
+          <div className="relative aspect-[4/5] bg-[#eee9e2]">
+            <RemoteImage
+              src={post.image_urls[0]}
+              alt={post.title}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        )}
         <div className="space-y-3 p-3">
           <div>
             <h2 className="line-clamp-2 text-[15px] font-semibold leading-5">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { FileText, Home, LogOut, Plus, User } from "lucide-react";
+import { FileText, GitFork, Home, LogOut, Plus, User } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { Link, usePathname } from "@/i18n/routing";
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { key: "discover", href: "/", icon: Home },
   { key: "newPost", href: "/posts/new", icon: Plus },
   { key: "myPosts", href: "/my-posts", icon: FileText },
+  { key: "myForks", href: "/my-forks", icon: GitFork },
   { key: "profile", href: "/profile", icon: User },
 ] as const;
 

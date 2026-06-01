@@ -81,11 +81,6 @@ class UserStore:
                 created_at=row.created_at,
             )
 
-    def get_password_hash(self, user_id: str) -> str | None:
-        with self._session_factory() as session:
-            row = session.get(UserRow, user_id)
-            return row.password_hash if row else None
-
     def get_password_hash_by_username(self, username: str) -> tuple[str, str] | None:
         """Returns (user_id, password_hash) or None."""
         with self._session_factory() as session:
@@ -146,3 +141,15 @@ class UserStore:
             row.role = role
             session.commit()
             return True
+
+    def save_extracted_preferences(self, user_id: str, prefs: dict) -> None:
+        with self._session_factory() as session:
+            row = session.get(UserRow, user_id)
+            if row:
+                row.extracted_preferences = prefs
+                session.commit()
+
+    def get_extracted_preferences(self, user_id: str) -> dict | None:
+        with self._session_factory() as session:
+            row = session.get(UserRow, user_id)
+            return row.extracted_preferences if row else None

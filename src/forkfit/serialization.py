@@ -69,6 +69,7 @@ def meal_from_dict(data: dict) -> Meal:
         estimated_cost=float(data["estimated_cost"]),
         tags=list(data.get("tags", [])),
         notes=data.get("notes", ""),
+        steps=list(data.get("steps", [])),
     )
 
 
@@ -94,6 +95,9 @@ def user_agent_output_from_dict(data: dict) -> UserAgentOutput:
 
 
 def adapter_output_from_dict(data: dict) -> AdapterOutput:
+    original_translated = None
+    if data.get("original_meal_pack_translated"):
+        original_translated = meal_pack_from_dict(data["original_meal_pack_translated"])
     return AdapterOutput(
         forked_meal_pack=meal_pack_from_dict(data["forked_meal_pack"]),
         change_log=[
@@ -110,6 +114,7 @@ def adapter_output_from_dict(data: dict) -> AdapterOutput:
             finding_from_dict(item) for item in data.get("unresolved_items", [])
         ],
         summary=data["summary"],
+        original_meal_pack_translated=original_translated,
     )
 
 

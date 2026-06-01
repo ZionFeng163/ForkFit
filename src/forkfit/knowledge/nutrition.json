@@ -1,0 +1,416 @@
+[
+  {
+    "id": "chicken-breast",
+    "name": "chicken breast",
+    "aliases": ["鸡胸肉", "鸡胸"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 165,
+      "protein_g": 31,
+      "fat_g": 3.6,
+      "carbs_g": 0,
+      "fiber_g": 0,
+      "sodium_mg": 74
+    },
+    "allergens": [],
+    "diet_rules": ["halal", "kosher"],
+    "substitutes": ["tofu", "tempeh", "turkey breast", "pork tenderloin"],
+    "tips": "Pound to even thickness before cooking for uniform results. Marinate for 20-30 min for flavor."
+  },
+  {
+    "id": "salmon",
+    "name": "salmon",
+    "aliases": ["三文鱼", "鲑鱼"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 208,
+      "protein_g": 20,
+      "fat_g": 13,
+      "carbs_g": 0,
+      "fiber_g": 0,
+      "sodium_mg": 59
+    },
+    "allergens": ["fish"],
+    "diet_rules": [],
+    "substitutes": ["trout", "arctic char", "tofu", "tempeh"],
+    "tips": "Rich in omega-3. Best cooked to medium (125°F internal). Skin-side down first for crispy skin."
+  },
+  {
+    "id": "tofu",
+    "name": "tofu",
+    "aliases": ["豆腐", "tofu", "bean curd"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 76,
+      "protein_g": 8,
+      "fat_g": 4.8,
+      "carbs_g": 1.9,
+      "fiber_g": 0.3,
+      "sodium_mg": 7
+    },
+    "allergens": ["soy"],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["tempeh", "edamame", "chickpeas"],
+    "tips": "Press for 15-30 min before cooking for firmer texture. Freeze and thaw for meatier texture."
+  },
+  {
+    "id": "eggs",
+    "name": "eggs",
+    "aliases": ["鸡蛋", "蛋"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 155,
+      "protein_g": 13,
+      "fat_g": 11,
+      "carbs_g": 1.1,
+      "fiber_g": 0,
+      "sodium_mg": 124
+    },
+    "allergens": ["eggs"],
+    "diet_rules": ["vegetarian"],
+    "substitutes": ["chia egg", "flax egg", "silken tofu"],
+    "tips": "Room temperature eggs cook more evenly. For hard-boiled: boil 10 min, then ice bath."
+  },
+  {
+    "id": "rice",
+    "name": "white rice",
+    "aliases": ["米饭", "白米饭", "rice"],
+    "category": "grain",
+    "per_100g": {
+      "calories": 130,
+      "protein_g": 2.7,
+      "fat_g": 0.3,
+      "carbs_g": 28,
+      "fiber_g": 0.4,
+      "sodium_mg": 1
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["brown rice", "quinoa", "cauliflower rice", "noodles"],
+    "tips": "Rinse until water runs clear for fluffier rice. 1:1.2 ratio for most rice cookers."
+  },
+  {
+    "id": "brown-rice",
+    "name": "brown rice",
+    "aliases": ["糙米", "brown rice"],
+    "category": "grain",
+    "per_100g": {
+      "calories": 112,
+      "protein_g": 2.6,
+      "fat_g": 0.9,
+      "carbs_g": 24,
+      "fiber_g": 1.8,
+      "sodium_mg": 1
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["white rice", "quinoa", "farro"],
+    "tips": "Higher fiber and nutrients than white rice. Needs more water and longer cooking time."
+  },
+  {
+    "id": "broccoli",
+    "name": "broccoli",
+    "aliases": ["西兰花", "broccoli"],
+    "category": "vegetable",
+    "per_100g": {
+      "calories": 34,
+      "protein_g": 2.8,
+      "fat_g": 0.4,
+      "carbs_g": 7,
+      "fiber_g": 2.6,
+      "sodium_mg": 33
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["cauliflower", "broccolini", "asparagus"],
+    "tips": "Don't overcook — bright green and crisp-tender is ideal. Steam or blanch to retain nutrients."
+  },
+  {
+    "id": "spinach",
+    "name": "spinach",
+    "aliases": ["菠菜", "spinach"],
+    "category": "vegetable",
+    "per_100g": {
+      "calories": 23,
+      "protein_g": 2.9,
+      "fat_g": 0.4,
+      "carbs_g": 3.6,
+      "fiber_g": 2.2,
+      "sodium_mg": 79
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["kale", "swiss chard", "arugula"],
+    "tips": "Wilt in a hot pan for 30 seconds. Pairs well with garlic and lemon."
+  },
+  {
+    "id": "sweet-potato",
+    "name": "sweet potato",
+    "aliases": ["红薯", "番薯", "sweet potato"],
+    "category": "vegetable",
+    "per_100g": {
+      "calories": 86,
+      "protein_g": 1.6,
+      "fat_g": 0.1,
+      "carbs_g": 20,
+      "fiber_g": 3,
+      "sodium_mg": 55
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["butternut squash", "pumpkin", "regular potato"],
+    "tips": "Roast at 400°F for 40-50 min for caramelized sweetness. Poke holes before microwaving."
+  },
+  {
+    "id": "chickpeas",
+    "name": "chickpeas",
+    "aliases": ["鹰嘴豆", "chickpeas", "garbanzo beans"],
+    "category": "legume",
+    "per_100g": {
+      "calories": 164,
+      "protein_g": 8.9,
+      "fat_g": 2.6,
+      "carbs_g": 27,
+      "fiber_g": 7.6,
+      "sodium_mg": 7
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["white beans", "lentils", "black beans"],
+    "tips": "Roast at 400°F with spices for crispy snacks. Blend into hummus or add to curries."
+  },
+  {
+    "id": "lentils",
+    "name": "lentils",
+    "aliases": ["扁豆", "lentils", "lentil"],
+    "category": "legume",
+    "per_100g": {
+      "calories": 116,
+      "protein_g": 9,
+      "fat_g": 0.4,
+      "carbs_g": 20,
+      "fiber_g": 7.9,
+      "sodium_mg": 2
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["chickpeas", "black beans", "split peas"],
+    "tips": "No soaking needed. Red lentils cook in 15 min, green/brown in 25-30 min."
+  },
+  {
+    "id": "olive-oil",
+    "name": "olive oil",
+    "aliases": ["橄榄油", "olive oil"],
+    "category": "fat",
+    "per_100g": {
+      "calories": 884,
+      "protein_g": 0,
+      "fat_g": 100,
+      "carbs_g": 0,
+      "fiber_g": 0,
+      "sodium_mg": 2
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["avocado oil", "coconut oil", "grapeseed oil"],
+    "tips": "Extra virgin for finishing/dressings. Regular for high-heat cooking. Smoke point: 375-410°F."
+  },
+  {
+    "id": "avocado",
+    "name": "avocado",
+    "aliases": ["牛油果", "鳄梨", "avocado"],
+    "category": "fruit",
+    "per_100g": {
+      "calories": 160,
+      "protein_g": 2,
+      "fat_g": 15,
+      "carbs_g": 9,
+      "fiber_g": 7,
+      "sodium_mg": 7
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["hummus", "mashed banana", "Greek yogurt"],
+    "tips": "Ripen at room temperature. Refrigerate once ripe to slow browning. Lime juice prevents oxidation."
+  },
+  {
+    "id": "banana",
+    "name": "banana",
+    "aliases": ["香蕉", "banana"],
+    "category": "fruit",
+    "per_100g": {
+      "calories": 89,
+      "protein_g": 1.1,
+      "fat_g": 0.3,
+      "carbs_g": 23,
+      "fiber_g": 2.6,
+      "sodium_mg": 1
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["applesauce", "mashed sweet potato", "pumpkin puree"],
+    "tips": "Freeze overripe bananas for smoothies and baking. Great natural sweetener."
+  },
+  {
+    "id": "greek-yogurt",
+    "name": "Greek yogurt",
+    "aliases": ["希腊酸奶", "Greek yogurt", "strained yogurt"],
+    "category": "dairy",
+    "per_100g": {
+      "calories": 59,
+      "protein_g": 10,
+      "fat_g": 0.7,
+      "carbs_g": 3.6,
+      "fiber_g": 0,
+      "sodium_mg": 36
+    },
+    "allergens": ["milk"],
+    "diet_rules": ["vegetarian", "halal"],
+    "substitutes": ["coconut yogurt", "sour cream", "mascarpone"],
+    "tips": "Higher protein than regular yogurt. Use as a base for dressings, marinades, or parfaits."
+  },
+  {
+    "id": "quinoa",
+    "name": "quinoa",
+    "aliases": ["藜麦", "quinoa"],
+    "category": "grain",
+    "per_100g": {
+      "calories": 120,
+      "protein_g": 4.4,
+      "fat_g": 1.9,
+      "carbs_g": 21,
+      "fiber_g": 2.8,
+      "sodium_mg": 5
+    },
+    "allergens": [],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["brown rice", "couscous", "farro"],
+    "tips": "Complete protein with all 9 essential amino acids. Rinse before cooking to remove bitter saponins."
+  },
+  {
+    "id": "pork-belly",
+    "name": "pork belly",
+    "aliases": ["五花肉", "pork belly"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 518,
+      "protein_g": 9.3,
+      "fat_g": 53,
+      "carbs_g": 0,
+      "fiber_g": 0,
+      "sodium_mg": 32
+    },
+    "allergens": [],
+    "diet_rules": [],
+    "substitutes": ["chicken thigh", "beef short rib", "tofu"],
+    "tips": "Very fatty — render the fat first. Great for braising, roasting, or making crispy pork."
+  },
+  {
+    "id": "beef-sirloin",
+    "name": "beef sirloin",
+    "aliases": ["牛里脊", "牛柳", "sirloin"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 183,
+      "protein_g": 27,
+      "fat_g": 7.5,
+      "carbs_g": 0,
+      "fiber_g": 0,
+      "sodium_mg": 58
+    },
+    "allergens": [],
+    "diet_rules": ["halal"],
+    "substitutes": ["chicken breast", "pork tenderloin", "tofu"],
+    "tips": "Slice against the grain for tenderness. High heat, quick cook for stir-fries."
+  },
+  {
+    "id": "shrimp",
+    "name": "shrimp",
+    "aliases": ["虾", "大虾", "shrimp", "prawn"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 99,
+      "protein_g": 24,
+      "fat_g": 0.3,
+      "carbs_g": 0.2,
+      "fiber_g": 0,
+      "sodium_mg": 111
+    },
+    "allergens": ["shellfish"],
+    "diet_rules": [],
+    "substitutes": ["tofu", "chicken breast", "white fish"],
+    "tips": "Cook until just pink and curled — overcooked shrimp become rubbery. 2-3 min per side."
+  },
+  {
+    "id": "tofu-firm",
+    "name": "firm tofu",
+    "aliases": ["老豆腐", "北豆腐", "firm tofu"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 144,
+      "protein_g": 15,
+      "fat_g": 8.7,
+      "carbs_g": 3.3,
+      "fiber_g": 0.8,
+      "sodium_mg": 14
+    },
+    "allergens": ["soy"],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["tempeh", "seitan", "paneer"],
+    "tips": "Press for 30 min for best texture. Freezing and thawing creates a chewier, meatier texture."
+  },
+  {
+    "id": "tempeh",
+    "name": "tempeh",
+    "aliases": ["天贝", "tempeh"],
+    "category": "protein",
+    "per_100g": {
+      "calories": 192,
+      "protein_g": 20,
+      "fat_g": 11,
+      "carbs_g": 8,
+      "fiber_g": 0,
+      "sodium_mg": 9
+    },
+    "allergens": ["soy"],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["tofu", "seitan", "chickpeas"],
+    "tips": "Steam for 10 min before marinating to reduce bitterness. Slice thin for crisping."
+  },
+  {
+    "id": "oats",
+    "name": "rolled oats",
+    "aliases": ["燕麦", "燕麦片", "rolled oats"],
+    "category": "grain",
+    "per_100g": {
+      "calories": 389,
+      "protein_g": 17,
+      "fat_g": 7,
+      "carbs_g": 66,
+      "fiber_g": 11,
+      "sodium_mg": 6
+    },
+    "allergens": ["gluten"],
+    "diet_rules": ["vegan", "vegetarian"],
+    "substitutes": ["quinoa flakes", "buckwheat", "chia seeds"],
+    "tips": "Soak overnight for overnight oats. Steel-cut oats have more texture than rolled."
+  },
+  {
+    "id": "almonds",
+    "name": "almonds",
+    "aliases": ["杏仁", "almonds"],
+    "category": "nut",
+    "per_100g": {
+      "calories": 579,
+      "protein_g": 21,
+      "fat_g": 50,
+      "carbs_g": 22,
+      "fiber_g": 12,
+      "sodium_mg": 1
+    },
+    "allergens": ["tree nuts"],
+    "diet_rules": ["vegan", "vegetarian", "gluten-free"],
+    "substitutes": ["sunflower seeds", "pumpkin seeds", "cashews"],
+    "tips": "Toast for 5-8 min at 350°F for enhanced flavor. Almond flour is great for gluten-free baking."
+  }
+]

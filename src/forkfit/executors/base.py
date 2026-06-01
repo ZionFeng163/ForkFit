@@ -2,12 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from forkfit.models import ForkFitResult, MealPack, UserProfile
-
-
-class WorkflowRunner(Protocol):
-    def run(self, user_profile: UserProfile, meal_pack: MealPack) -> ForkFitResult:
-        ...
+from forkfit.models import MealPack, UserProfile
 
 
 class JobExecutor(Protocol):
@@ -17,5 +12,6 @@ class JobExecutor(Protocol):
         run_id: str,
         user_profile: UserProfile,
         meal_pack: MealPack,
+        locale: str = "en",
     ) -> None:
         ...
