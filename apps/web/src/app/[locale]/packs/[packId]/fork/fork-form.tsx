@@ -93,27 +93,25 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
       </div>
 
       {/* ── Profile summary ── */}
-      <div className="rounded-lg border border-[#e4ded6] bg-white p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-[#625b52]">
-            <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
-            {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
-            {form.budget && <span className="ml-2">💰 ${form.budget}</span>}
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleExtract}
-              disabled={extracting}
-              className="text-xs text-[#625b52] hover:text-[#1f1f1f] inline-flex items-center gap-1"
-            >
-              {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {t("extractFromPosts")}
-            </button>
-            <Link href="/profile" className="text-xs text-[#625b52] hover:text-[#1f1f1f]">
-              {t("editProfile")}
-            </Link>
-          </div>
+      <div className="rounded-lg border border-[#e4ded6] bg-white p-4 space-y-3">
+        <div className="text-sm text-[#625b52]">
+          <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
+          {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
+          {form.budget && <span className="ml-2">💰 ${form.budget}</span>}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExtract}
+            disabled={extracting}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
+          >
+            {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            {t("extractFromPosts")}
+          </button>
+          <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
+            {t("editProfile")}
+          </Link>
         </div>
       </div>
 
