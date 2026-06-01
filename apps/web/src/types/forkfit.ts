@@ -1,4 +1,4 @@
-export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
+export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled" | "needs_input";
 
 export type Meal = {
   id: string;
@@ -98,6 +98,11 @@ export type RunStatusResponse = {
   result: RunResultPayload | null;
   error: { message: string } | null;
   trace: RunTrace | null;
+  unresolved_payload: {
+    items: { type: string; message: string; affected_items: string[]; suggested_action?: string }[];
+    message: string;
+    partial_result: RunResultPayload;
+  } | null;
   saved: boolean;
 };
 

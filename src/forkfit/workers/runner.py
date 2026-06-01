@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import asdict
 
 from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
 
@@ -99,8 +100,22 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
                 trace=result.trace,
             )
             _broadcast(run_id, "succeeded", settings)
+        elif result.adapter_output and result.adapter_output.unresolved_items:
+            # Has unresolved items → needs human input
+            partial_result = result_payload_from_forkfit(meal_pack, result)
+            unresolved = {
+                "items": [asdict(f) for f in result.adapter_output.unresolved_items],
+                "message": _build_failure_message(result, locale),
+                "partial_result": partial_result.model_dump(mode="json"),
+            }
+            record = store.mark_needs_input(
+                run_id,
+                unresolved=unresolved,
+                trace=result.trace,
+            )
+            _broadcast(run_id, "needs_input", settings)
         else:
-            # Store partial result so frontend can show what went wrong
+            # No unresolved items but still failed → true failure
             partial_result = result_payload_from_forkfit(meal_pack, result)
             record = store.mark_failed(
                 run_id,

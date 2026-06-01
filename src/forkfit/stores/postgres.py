@@ -138,6 +138,19 @@ class PostgresRunStore:
             session.commit()
         return self.get_run(run_id)
 
+    def mark_needs_input(
+        self, run_id: str, *, unresolved: dict, trace: RunTrace | None = None,
+    ) -> RunRecord:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.status = "needs_input"
+            row.unresolved_payload = unresolved
+            row.trace_payload = asdict(trace) if trace else None
+            row.finished_at = utc_now()
+            session.commit()
+        self.append_event(run_id, "run_needs_input", {})
+        return self.get_run(run_id)
+
     def list_saved_runs_for_user(self, user_id: str) -> list[RunRecord]:
         with self.session_factory() as session:
             rows = (
@@ -166,6 +179,7 @@ def _record_from_row(row: RunRow) -> RunRecord:
         result=RunResultPayload(**row.result_payload) if row.result_payload else None,
         error=PublicRunError(**row.error_payload) if row.error_payload else None,
         trace=run_trace_from_dict(row.trace_payload),
+        unresolved_payload=row.unresolved_payload,
         saved=row.saved,
         created_at=row.created_at,
         started_at=row.started_at,

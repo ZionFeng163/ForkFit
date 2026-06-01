@@ -125,6 +125,14 @@ export function unsaveRun(runId: string) {
   return request<RunStatusResponse>(`/runs/${runId}/save`, { method: "DELETE" });
 }
 
+export function resolveRun(runId: string, substitutions: Record<string, string>) {
+  return request<RunStatusResponse>(`/runs/${runId}/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ substitutions }),
+  });
+}
+
 export function listSavedRuns() {
   return request<RunStatusResponse[]>("/runs/saved");
 }

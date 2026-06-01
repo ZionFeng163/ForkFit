@@ -15,7 +15,7 @@ from forkfit.models import (
 )
 
 
-RunStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
+RunStatus = Literal["queued", "running", "succeeded", "failed", "cancelled", "needs_input"]
 
 
 class CreateRunRequest(BaseModel):

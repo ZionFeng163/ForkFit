@@ -22,6 +22,7 @@ class RunRow(Base):
     result_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     trace_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    unresolved_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

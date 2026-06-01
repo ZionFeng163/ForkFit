@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, DollarSign,
-  Loader2, Send, XCircle, Bookmark, BookmarkCheck,
+  Loader2, Send, XCircle, Bookmark, BookmarkCheck, Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/routing";
-import { getRun, publishRun, saveRun, unsaveRun } from "@/lib/api";
+import { getRun, publishRun, resolveRun, saveRun, unsaveRun } from "@/lib/api";
 import { ImageUpload } from "@/components/image-upload";
 import type { RunResultPayload } from "@/types/forkfit";
 
@@ -70,6 +70,10 @@ export function RunView({ runId }: { runId: string }) {
 
       {run?.status === "failed" ? (
         <FailedView error={run.error?.message ?? t("failedFallback")} result={run.result} />
+      ) : null}
+
+      {run?.status === "needs_input" ? (
+        <NeedsInputView runId={runId} unresolved={run as any} />
       ) : null}
 
       {run?.status === "succeeded" && run.result ? (
@@ -220,6 +224,9 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
             <ImageUpload images={images} onChange={setImages} maxImages={4} />
           </div>
         </div>
+
+        {/* Share */}
+        <ShareButton runId={runId} />
 
         {/* Actions: Save + Publish */}
         <div className="rounded-lg border border-[#e4ded6] bg-white p-5 space-y-3">
@@ -481,6 +488,60 @@ function FailedView({ error, result }: { error: string; result?: NonNullable<Ret
   );
 }
 
+function NeedsInputView({ runId, unresolved }: { runId: string; unresolved: any }) {
+  const t = useTranslations("Run");
+  const router = useRouter();
+  const [resolving, setResolving] = useState(false);
+  const [picks, setPicks] = useState<Record<string, string>>({});
+
+  const items: Array<{ type: string; message: string; affected_items: string[]; suggested_action?: string }> =
+    unresolved?.unresolved_payload?.items || [];
+
+  function handleResolve() {
+    setResolving(true);
+    resolveRun(runId, picks).then((updated) => {
+      if (updated.status === "succeeded" || updated.status === "needs_input") {
+        router.refresh();
+      }
+    }).catch(() => setResolving(false));
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-3 rounded-lg border border-[#f0d060] bg-[#fffdf0] p-5">
+        <AlertTriangle size={18} className="mt-0.5 shrink-0 text-[#b8860b]" />
+        <div>
+          <h2 className="font-semibold text-[#2f2a24]">{t("needsInputTitle")}</h2>
+          <p className="mt-1 text-sm text-[#625b52]">{t("needsInputDescription")}</p>
+        </div>
+      </div>
+
+      {items.map((item, i) => (
+        <div key={i} className="rounded-lg border border-[#e4ded6] bg-white p-4">
+          <p className="text-sm font-medium text-[#2f2a24]">{item.message}</p>
+          {item.suggested_action && (
+            <p className="mt-1 text-xs text-[#7a7167]">{item.suggested_action}</p>
+          )}
+          <div className="mt-3">
+            <label className="text-xs text-[#625b52]">{t("chooseSubstitute")}</label>
+            <input
+              value={picks[i] || ""}
+              onChange={(e) => setPicks({ ...picks, [i]: e.target.value })}
+              className="input mt-1"
+              placeholder={t("substitutePlaceholder")}
+            />
+          </div>
+        </div>
+      ))}
+
+      <Button onClick={handleResolve} disabled={resolving} className="w-full">
+        {resolving ? <Loader2 size={16} className="animate-spin" /> : null}
+        <span className="ml-2">{t("continueFork")}</span>
+      </Button>
+    </div>
+  );
+}
+
 function ComparisonTable({ result }: { result: RunResultPayload }) {
   const t = useTranslations("Run");
 
@@ -642,6 +703,34 @@ const FORK_STEPS = [
   { node: "cooking_steps", labelKey: "stepCooking" },
   { node: "final_validation", labelKey: "stepValidating" },
 ];
+
+function ShareButton({ runId }: { runId: string }) {
+  const t = useTranslations("Run");
+  const [copied, setCopied] = useState(false);
+
+  function handleShare() {
+    const url = `${window.location.origin}/en/runs/${runId}`;
+    if (navigator.share) {
+      navigator.share({ title: "ForkFit Fork", url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#e4ded6] bg-white px-4 py-3 text-sm font-medium text-[#625b52] hover:bg-[#faf8f5] transition-colors"
+    >
+      {copied ? <CheckCircle2 size={14} className="text-[#2f6b45]" /> : <Share2 size={14} />}
+      {copied ? t("linkCopied") : t("shareFork")}
+    </button>
+  );
+}
 
 function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node: string; status: string }[] } | null } }) {
   const t = useTranslations("Run");

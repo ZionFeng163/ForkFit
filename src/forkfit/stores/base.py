@@ -22,6 +22,7 @@ class RunRecord:
     result: RunResultPayload | None = None
     error: PublicRunError | None = None
     trace: RunTrace | None = None
+    unresolved_payload: dict | None = None
     saved: bool = False
     created_at: datetime = field(default_factory=utc_now)
     started_at: datetime | None = None
@@ -48,6 +49,11 @@ class RunStore(Protocol):
     def mark_failed(
         self, run_id: str, *, error: PublicRunError, trace: RunTrace | None = None,
         result=None,
+    ) -> RunRecord:
+        ...
+
+    def mark_needs_input(
+        self, run_id: str, *, unresolved: dict, trace: RunTrace | None = None,
     ) -> RunRecord:
         ...
 
