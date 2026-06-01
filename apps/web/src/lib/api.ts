@@ -261,6 +261,18 @@ export function getMyExtractedPreferences() {
   return request<{ preferences: Record<string, unknown> | null }>(`/users/me/extracted-preferences`);
 }
 
+export function getMyProfile() {
+  return request<{ profile: Record<string, unknown> | null }>(`/users/me/profile`);
+}
+
+export function saveMyProfile(profile: Record<string, unknown>) {
+  return request<{ ok: boolean }>(`/users/me/profile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
+  });
+}
+
 // --- Comments ---
 
 export type Comment = {

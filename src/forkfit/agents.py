@@ -375,6 +375,7 @@ class AdapterAgent:
         reviews: list[AgentReview],
         trace: RunTrace | None = None,
         locale: str = "en",
+        people_count: int = 1,
     ) -> AdapterOutput:
         lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
 
@@ -424,10 +425,13 @@ class AdapterAgent:
                 "If a high-severity hard block cannot be fixed, put that finding in unresolved_items.",
                 "Remove blocked allergy/diet terms from ingredients, name, tags, and notes.",
                 "When substitution_suggestions are provided, prefer them over your own guesses.",
+                f"When people_count > 1, scale ingredient quantities proportionally (e.g., people_count=2 means double the ingredients).",
+                f"The current people_count is {people_count}.",
             ],
             "original_meal_pack": original_meal_pack.to_dict(),
             "user_agent_output": asdict(user_agent_output),
             "reviews": [asdict(review) for review in reviews],
+            "people_count": people_count,
         }
 
         if substitution_context:

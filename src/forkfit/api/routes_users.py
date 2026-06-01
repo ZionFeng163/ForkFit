@@ -48,6 +48,25 @@ def extract_my_preferences(
     return {"preferences": result}
 
 
+@router.get("/me/profile")
+def get_my_profile(
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    profile = store.get_profile(user.id)
+    return {"profile": profile}
+
+
+@router.post("/me/profile")
+def save_my_profile(
+    body: dict,
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    store.save_profile(user.id, body)
+    return {"ok": True}
+
+
 @router.get("/{user_id}")
 def get_user_profile(user_id: str) -> dict:
     store = get_user_store()

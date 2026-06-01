@@ -47,7 +47,7 @@ export function profileFormToUserProfile(form: UserProfileForm): UserProfile {
   };
 }
 
-export function loadUserProfileForm() {
+export function loadUserProfileForm(): UserProfileForm {
   if (typeof window === "undefined") {
     return defaultUserProfileForm;
   }
@@ -69,4 +69,30 @@ export function loadUserProfileForm() {
 
 export function saveUserProfileForm(form: UserProfileForm) {
   window.localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(form));
+}
+
+// Backend persistence — sync localStorage with server
+export async function syncProfileToBackend(form: UserProfileForm): Promise<void> {
+  try {
+    const { saveMyProfile } = await import("@/lib/api");
+    await saveMyProfile(form as unknown as Record<string, unknown>);
+  } catch {
+    // Silently fail — localStorage is the primary store
+  }
+}
+
+export async function loadProfileFromBackend(): Promise<UserProfileForm | null> {
+  try {
+    const { getMyProfile } = await import("@/lib/api");
+    const result = await getMyProfile();
+    if (result.profile) {
+      const form = { ...defaultUserProfileForm, ...result.profile } as UserProfileForm;
+      // Sync to localStorage
+      window.localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(form));
+      return form;
+    }
+  } catch {
+    // Silently fail — fall back to localStorage
+  }
+  return null;
 }

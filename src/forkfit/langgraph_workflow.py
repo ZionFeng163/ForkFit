@@ -200,12 +200,14 @@ class ForkFitLangGraphWorkflow:
         return {"reviews": reviews}
 
     def _run_adapter_agent(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        people_count = state["user_profile"].people_count if "user_profile" in state else 1
         adapter_output = self.adapter_agent.run(
             state["meal_pack"],
             state["user_agent_output"],
             state["reviews"],
             state["trace"],
             locale=state.get("locale", "en"),
+            people_count=people_count,
         )
         return {"adapter_output": adapter_output}
 

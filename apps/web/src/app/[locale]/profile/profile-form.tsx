@@ -56,6 +56,10 @@ export function ProfileForm() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     saveUserProfileForm(form);
+    // Also sync to backend (best-effort)
+    import("@/lib/api").then(({ saveMyProfile }) => {
+      saveMyProfile(form as unknown as Record<string, unknown>).catch(() => {});
+    });
     setSaved(true);
   }
 

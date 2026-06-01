@@ -47,7 +47,8 @@
     "startFork": "Start Fork",
     "edit": "Edit",
     "tags": "Tags",
-    "notes": "Notes"
+    "notes": "Notes",
+    "cookingSteps": "Cooking Steps"
   },
   "Fork": {
     "back": "Recipe details",
@@ -180,6 +181,8 @@
     "suggestedAction": "Suggested",
     "finalReview": "Final review",
     "traceSummary": "{llmCalls} LLM calls · {steps} graph steps",
+    "shoppingList": "Shopping List",
+    "shoppingListHelp": "Merged ingredients from all dishes. Duplicate items are marked with ×.",
     "publishButton": "Publish as my post",
     "publishSuccess": "Published! Redirecting...",
     "saveAsFork": "Save as my fork",

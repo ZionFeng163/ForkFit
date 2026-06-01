@@ -109,6 +109,23 @@ export default async function PackDetailPage({ params }: PageProps) {
                   ) : null}
                 </dl>
               ) : null}
+
+              {/* Cooking steps */}
+              {recipe.steps && recipe.steps.length > 0 ? (
+                <div className="border-t border-[#eee8df] pt-4">
+                  <h3 className="text-sm font-medium text-[#2f2a24]">{t("cookingSteps")}</h3>
+                  <ol className="mt-3 space-y-2 text-sm text-[#625b52]">
+                    {recipe.steps.map((step: string, i: number) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f5f0ea] text-xs font-medium text-[#7b6f61]">
+                          {i + 1}
+                        </span>
+                        <span className="pt-0.5">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
             </div>
           </div>
 

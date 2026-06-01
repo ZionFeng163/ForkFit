@@ -47,7 +47,8 @@
     "startFork": "开始 Fork",
     "edit": "编辑",
     "tags": "标签",
-    "notes": "备注"
+    "notes": "备注",
+    "cookingSteps": "制作步骤"
   },
   "Fork": {
     "back": "菜谱详情",
@@ -180,6 +181,8 @@
     "suggestedAction": "建议",
     "finalReview": "最终校验",
     "traceSummary": "{llmCalls} 次 LLM 调用 · {steps} 个图节点",
+    "shoppingList": "购物清单",
+    "shoppingListHelp": "合并所有菜品的食材。重复项会标注 ×。",
     "publishButton": "发布为我的帖子",
     "publishSuccess": "发布成功！正在跳转...",
     "saveAsFork": "保存为我的 Fork",

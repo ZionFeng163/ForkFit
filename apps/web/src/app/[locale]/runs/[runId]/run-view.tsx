@@ -209,6 +209,9 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
           )}
         </div>
 
+        {/* Shopping list */}
+        <ShoppingList forkedMeals={forked.meals} />
+
         {/* Image upload */}
         <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
           <h3 className="text-sm font-medium text-[#2f2a24]">{t("addImages")}</h3>
@@ -676,6 +679,42 @@ function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node:
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function ShoppingList({ forkedMeals }: { forkedMeals: { name: string; ingredients: string[] }[] }) {
+  const t = useTranslations("Run");
+
+  // Merge and deduplicate ingredients from all meals
+  const ingredientMap = new Map<string, string[]>();
+  for (const meal of forkedMeals) {
+    for (const ing of meal.ingredients) {
+      const key = ing.toLowerCase().trim();
+      if (!ingredientMap.has(key)) {
+        ingredientMap.set(key, []);
+      }
+      ingredientMap.get(key)!.push(meal.name);
+    }
+  }
+
+  if (ingredientMap.size === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
+      <h3 className="text-sm font-medium text-[#2f2a24]">{t("shoppingList")}</h3>
+      <p className="mt-1 text-xs text-[#7a7167]">{t("shoppingListHelp")}</p>
+      <ul className="mt-3 space-y-1.5">
+        {[...ingredientMap.entries()].map(([ing, meals]) => (
+          <li key={ing} className="flex items-center gap-2 text-sm text-[#625b52]">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f6b45]" />
+            <span className="font-medium">{ing}</span>
+            {meals.length > 1 && (
+              <span className="text-xs text-[#9f9890]">({meals.length}×)</span>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

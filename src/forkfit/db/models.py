@@ -52,6 +52,7 @@ class UserRow(Base):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     extracted_preferences: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    profile_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

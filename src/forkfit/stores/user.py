@@ -153,3 +153,15 @@ class UserStore:
         with self._session_factory() as session:
             row = session.get(UserRow, user_id)
             return row.extracted_preferences if row else None
+
+    def save_profile(self, user_id: str, profile: dict) -> None:
+        with self._session_factory() as session:
+            row = session.get(UserRow, user_id)
+            if row:
+                row.profile_payload = profile
+                session.commit()
+
+    def get_profile(self, user_id: str) -> dict | None:
+        with self._session_factory() as session:
+            row = session.get(UserRow, user_id)
+            return row.profile_payload if row else None
