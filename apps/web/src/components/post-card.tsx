@@ -44,10 +44,12 @@ export function PostCard({ post }: { post: RecipePost }) {
     });
   }
 
+  const hasImage = post.image_urls.length > 0;
+
   return (
     <div className="mb-4 overflow-hidden rounded-lg border border-[#e4ded6] bg-white transition-colors hover:border-[#cfc5b8]">
       <Link href={`/packs/${post.id}`} className="block">
-        {post.image_urls.length > 0 && (
+        {hasImage && (
           <div className="relative aspect-[4/5] bg-[#eee9e2]">
             <RemoteImage
               src={post.image_urls[0]}
@@ -56,17 +58,12 @@ export function PostCard({ post }: { post: RecipePost }) {
             />
           </div>
         )}
-        {!post.image_urls.length && (
-          <div className="flex aspect-[4/5] items-center justify-center bg-gradient-to-br from-[#f5f0ea] to-[#eee9e2]">
-            <span className="text-4xl">🍽️</span>
-          </div>
-        )}
-        <div className="space-y-3 p-3">
+        <div className={`space-y-3 ${hasImage ? "p-3" : "p-4"}`}>
           <div>
-            <h2 className="line-clamp-2 text-[15px] font-semibold leading-5">
+            <h2 className={`${hasImage ? "line-clamp-2 text-[15px] font-semibold leading-5" : "text-base font-semibold"}`}>
               {post.title}
             </h2>
-            <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[#6f6a61]">
+            <p className={`${hasImage ? "mt-1 line-clamp-2 text-[13px] leading-5 text-[#6f6a61]" : "mt-1 text-sm text-[#6f6a61]"}`}>
               {post.description}
             </p>
           </div>
