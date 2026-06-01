@@ -65,11 +65,7 @@ export function RunView({ runId }: { runId: string }) {
       ) : null}
 
       {run && (run.status === "queued" || run.status === "running") ? (
-        <StatusPanel
-          icon={<Loader2 size={18} className="animate-spin" />}
-          title={run.status === "queued" ? t("queued") : t("running")}
-          message={t("workerMessage")}
-        />
+        <ForkProgress run={run} />
       ) : null}
 
       {run?.status === "failed" ? (
@@ -460,9 +456,17 @@ function FailedView({ error, result }: { error: string; result?: NonNullable<Ret
       {/* Error banner */}
       <div className="flex items-start gap-3 rounded-lg border border-[#e8a9a0] bg-[#fff8f5] p-5">
         <XCircle size={18} className="mt-0.5 shrink-0 text-[#7f3525]" />
-        <div>
+        <div className="flex-1">
           <h2 className="font-semibold text-[#7f3525]">{t("failed")}</h2>
           <p className="mt-1 text-sm leading-6 text-[#7f3525] whitespace-pre-line">{renderError(error)}</p>
+          <div className="mt-3 flex gap-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 rounded-md bg-white border border-[#e8a9a0] px-3 py-1.5 text-xs font-medium text-[#7f3525] hover:bg-[#fff0ed]"
+            >
+              {t("tryAnother")}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -624,6 +628,55 @@ function Field({ label, help, children }: { label: string; help?: string; childr
       {children}
       {help ? <span className="block text-xs text-[#7a7167]">{help}</span> : null}
     </label>
+  );
+}
+
+const FORK_STEPS = [
+  { node: "load_input", labelKey: "stepLoading" },
+  { node: "user_agent", labelKey: "stepAnalyzing" },
+  { node: "reviewer_agents", labelKey: "stepChecking" },
+  { node: "adapter_agent", labelKey: "stepAdapting" },
+  { node: "cooking_steps", labelKey: "stepCooking" },
+  { node: "final_validation", labelKey: "stepValidating" },
+];
+
+function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node: string; status: string }[] } | null } }) {
+  const t = useTranslations("Run");
+  const traceSteps = run.trace?.steps || [];
+  const completedNodes = new Set(traceSteps.filter(s => s.status === "success").map(s => s.node));
+
+  // Determine current step: last completed + 1
+  const currentIdx = FORK_STEPS.findIndex(s => !completedNodes.has(s.node));
+  const isRunning = run.status === "running" || run.status === "queued";
+
+  return (
+    <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <Loader2 size={18} className="animate-spin text-[#625b52]" />
+        <h2 className="font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
+      </div>
+      <div className="space-y-3">
+        {FORK_STEPS.map((step, i) => {
+          const done = completedNodes.has(step.node);
+          const active = isRunning && i === currentIdx;
+          return (
+            <div key={step.node} className="flex items-center gap-3">
+              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                done ? "bg-[#2f6b45] text-white"
+                : active ? "bg-[#e8f5e9] text-[#2f6b45] ring-2 ring-[#2f6b45] ring-offset-1"
+                : "bg-[#f0ebe4] text-[#9f9890]"
+              }`}>
+                {done ? "✓" : i + 1}
+              </div>
+              <span className={`text-sm ${done ? "text-[#2f2a24]" : active ? "font-medium text-[#2f2a24]" : "text-[#9f9890]"}`}>
+                {t(step.labelKey)}
+              </span>
+              {active && <Loader2 size={14} className="animate-spin text-[#2f6b45]" />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

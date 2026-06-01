@@ -25,42 +25,58 @@ def _broadcast(run_id: str, status: str, settings) -> None:
 
 
 def _build_failure_message(result, locale: str = "zh") -> str:
-    """Build a user-friendly error message from actual constraint findings."""
+    """Build a user-friendly error message from constraint findings."""
     findings = []
 
-    # Collect findings from final_review
     if result.final_review and result.final_review.findings:
         findings.extend(result.final_review.findings)
-
-    # Collect unresolved items from adapter output
     if result.adapter_output and result.adapter_output.unresolved_items:
         findings.extend(result.adapter_output.unresolved_items)
 
     is_zh = locale.startswith("zh")
+
     if not findings:
-        return "该餐包无法安全适配，请调整厨具或食材后重试。" if is_zh else "Cannot safely adapt this meal pack. Please adjust equipment or ingredients."
+        return "这道菜暂时无法适配你的偏好，建议换个菜谱试试。" if is_zh else "This dish can't be adapted to your preferences right now. Try another recipe."
 
-    # Group findings by type
-    by_type: dict[str, list[str]] = {}
-    type_labels = {
-        "allergy": ("过敏源", "Allergen"),
-        "diet_rule": ("饮食规则", "Diet rule"),
-        "equipment": ("厨具", "Equipment"),
-        "budget": ("预算", "Budget"),
-        "time": ("烹饪时间", "Cooking time"),
-        "meal_identity": ("餐食结构", "Meal structure"),
+    # Map finding types to friendly messages
+    friendly = {
+        "allergy": (
+            lambda f: f"这道菜含有你的过敏源（{f.message.split('contains')[-1].strip() if 'contains' in f.message else f.message}），没法安全替换。" if is_zh
+            else f"This dish contains an allergen you specified ({f.message.split('contains')[-1].strip() if 'contains' in f.message else f.message}) and can't be safely substituted.",
+        ),
+        "diet_rule": (
+            lambda f: f"这道菜不符合你的饮食规则：{f.message.split('conflicts with')[-1].strip() if 'conflicts' in f.message else f.message}。" if is_zh
+            else f"This dish conflicts with your diet rule: {f.message.split('conflicts with')[-1].strip() if 'conflicts' in f.message else f.message}.",
+        ),
+        "equipment": (
+            lambda f: f"这道菜需要你没有的厨具，但可以尝试换个做法。" if is_zh
+            else f"This dish requires equipment you don't have, but we can try a different method.",
+        ),
+        "budget": (
+            lambda f: f"即使替换后仍然超出预算。" if is_zh
+            else f"Still over budget even after substitutions.",
+        ),
+        "time": (
+            lambda f: f"即使调整后仍然超过你的烹饪时间限制。" if is_zh
+            else f"Still exceeds your cooking time limit after adjustments.",
+        ),
     }
+
+    messages = []
+    seen = set()
     for f in findings:
-        label = type_labels.get(f.type, (f.type, f.type))[0 if is_zh else 1]
-        by_type.setdefault(label, []).append(f.message)
+        if f.type in seen:
+            continue
+        seen.add(f.type)
+        fn = friendly.get(f.type)
+        if fn:
+            messages.append(fn(f))
 
-    sep = "；" if is_zh else "; "
-    parts = []
-    for label, messages in by_type.items():
-        parts.append(f"**{label}**：" + sep.join(messages) if is_zh else f"**{label}**: " + sep.join(messages))
+    if not messages:
+        return "这道菜暂时无法适配你的偏好，建议换个菜谱试试。" if is_zh else "This dish can't be adapted to your preferences right now. Try another recipe."
 
-    prefix = "该餐包无法安全适配：\n" if is_zh else "Cannot safely adapt this meal pack:\n"
-    return prefix + "\n".join(parts)
+    prefix = "很抱歉，这道菜没法为你适配：\n" if is_zh else "Sorry, this dish couldn't be adapted for you:\n"
+    return prefix + "\n".join(f"• {m}" for m in messages)
 
 
 def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: dict, locale: str = "en") -> None:

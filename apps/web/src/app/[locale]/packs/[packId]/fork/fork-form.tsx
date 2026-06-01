@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 
@@ -20,9 +20,8 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
   const fields = useTranslations("ProfileFields");
   const router = useRouter();
   const locale = useLocale();
-  const [savedProfile] = useState<UserProfileForm>(() => loadUserProfileForm());
   const [form, setForm] = useState<UserProfileForm>(() => loadUserProfileForm());
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showTweaks, setShowTweaks] = useState(false);
   const [extracting, setExtracting] = useState(false);
 
   const mutation = useMutation({
@@ -31,6 +30,19 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
       router.push(`/runs/${response.run_id}`);
     },
   });
+
+  function update(name: keyof typeof form, value: string) {
+    setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    mutation.mutate({
+      user_profile: profileFormToUserProfile(form),
+      meal_pack: mealPack,
+      locale,
+    });
+  }
 
   async function handleExtract() {
     setExtracting(true);
@@ -47,32 +59,11 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
           soft_preferences: (prefs.soft_preferences as string[])?.join(", ") || prev.soft_preferences,
         }));
       }
-    } catch {
-      // Silently fail
-    } finally {
-      setExtracting(false);
-    }
+    } catch { /* silently fail */ }
+    setExtracting(false);
   }
 
-  function update(name: keyof typeof form, value: string) {
-    setForm((current) => ({ ...current, [name]: value }));
-  }
-
-  function resetToProfile() {
-    setForm(savedProfile);
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    mutation.mutate({
-      user_profile: profileFormToUserProfile(form),
-      meal_pack: mealPack,
-      locale,
-    });
-  }
-
-  const hasAdvancedContent =
-    form.equipment || form.diet_rules || form.soft_preferences || form.max_cook_time_minutes !== "40";
+  const firstMeal = mealPack.meals[0];
 
   return (
     <form onSubmit={submit} className="space-y-5">
@@ -84,185 +75,104 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
         {t("back")}
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-0">
+      {/* ── Pack summary card ── */}
+      <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
+        <h1 className="text-xl font-semibold tracking-0">
           {t("title", { title: mealPack.title })}
         </h1>
-        <p className="mt-2 text-sm leading-6 text-[#625b52]">
-          {t("description")}
+        <p className="mt-1 text-sm text-[#625b52]">
+          {t("oneClickDescription")}
         </p>
+        {firstMeal && (
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#7a7167]">
+            {firstMeal.cook_time_minutes > 0 && <span>⏱ {firstMeal.cook_time_minutes} min</span>}
+            {firstMeal.estimated_cost > 0 && <span>💰 ${firstMeal.estimated_cost}</span>}
+            {firstMeal.ingredients.length > 0 && <span>🥘 {firstMeal.ingredients.slice(0, 4).join(", ")}{firstMeal.ingredients.length > 4 ? "..." : ""}</span>}
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#e4ded6] bg-white p-4 text-sm text-[#625b52]">
-        <span>{t("profileNote")}</span>
-        <Link className="font-medium text-[#2f2a24] hover:underline" href="/profile">
-          {t("editProfile")}
-        </Link>
-        <button
-          type="button"
-          onClick={resetToProfile}
-          className="font-medium text-[#2f2a24] hover:underline"
-        >
-          {t("resetToProfile")}
-        </button>
-        <button
-          type="button"
-          onClick={handleExtract}
-          disabled={extracting}
-          className="font-medium text-[#2f2a24] hover:underline inline-flex items-center gap-1"
-        >
-          {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-          {t("extractFromPosts")}
-        </button>
+      {/* ── Profile summary ── */}
+      <div className="rounded-lg border border-[#e4ded6] bg-white p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[#625b52]">
+            <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
+            {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
+            {form.budget && <span className="ml-2">💰 ${form.budget}</span>}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleExtract}
+              disabled={extracting}
+              className="text-xs text-[#625b52] hover:text-[#1f1f1f] inline-flex items-center gap-1"
+            >
+              {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {t("extractFromPosts")}
+            </button>
+            <Link href="/profile" className="text-xs text-[#625b52] hover:text-[#1f1f1f]">
+              {t("editProfile")}
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* ── Primary: the 3 things most users care about ── */}
-      <div className="grid gap-4 rounded-lg border border-[#e4ded6] bg-white p-5 sm:grid-cols-3">
-        <Field label={fields("people")} htmlFor="people_count">
-          <input
-            id="people_count"
-            type="number"
-            min="1"
-            value={form.people_count}
-            onChange={(event) => update("people_count", event.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label={fields("budget")} htmlFor="budget">
-          <input
-            id="budget"
-            type="number"
-            min="0"
-            placeholder="60"
-            value={form.budget}
-            onChange={(event) => update("budget", event.target.value)}
-            className="input"
-          />
-        </Field>
-        <Field label={fields("allergies")} htmlFor="allergies">
-          <input
-            id="allergies"
-            value={form.allergies}
-            onChange={(event) => update("allergies", event.target.value)}
-            className="input"
-            placeholder={t("allergiesPlaceholder")}
-          />
-        </Field>
-      </div>
-
-      {/* ── Taste preferences ── */}
-      <div className="grid gap-4 rounded-lg border border-[#e4ded6] bg-white p-5 sm:grid-cols-2">
-        <Field label={fields("likes")} htmlFor="likes">
-          <input
-            id="likes"
-            value={form.likes}
-            onChange={(event) => update("likes", event.target.value)}
-            className="input"
-            placeholder={t("likesPlaceholder")}
-          />
-        </Field>
-        <Field label={fields("dislikes")} htmlFor="dislikes">
-          <input
-            id="dislikes"
-            value={form.dislikes}
-            onChange={(event) => update("dislikes", event.target.value)}
-            className="input"
-            placeholder={t("dislikesPlaceholder")}
-          />
-        </Field>
-      </div>
-
-      {/* ── Advanced (collapsed) ── */}
+      {/* ── Quick tweaks (collapsible) ── */}
       <button
         type="button"
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        className="flex w-full items-center justify-between rounded-lg border border-[#e4ded6] bg-white px-5 py-3 text-sm font-medium text-[#625b52] hover:bg-[#faf8f5]"
+        onClick={() => setShowTweaks(!showTweaks)}
+        className="flex w-full items-center justify-between rounded-lg border border-[#e4ded6] bg-white px-4 py-3 text-sm text-[#625b52] hover:bg-[#faf8f5]"
       >
         <span className="flex items-center gap-2">
-          {t("advancedOptions")}
-          {hasAdvancedContent && (
-            <span className="rounded-full bg-[#e4ded6] px-2 py-0.5 text-xs text-[#625b52]">
-              {t("configured")}
-            </span>
-          )}
+          <Settings2 size={14} />
+          {t("quickTweaks")}
         </span>
-        {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        {showTweaks ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
-      {showAdvanced && (
-        <div className="grid gap-4 rounded-lg border border-[#e4ded6] bg-white p-5 sm:grid-cols-2">
-          <Field label={fields("equipment")} htmlFor="equipment">
+      {showTweaks && (
+        <div className="grid gap-3 rounded-lg border border-[#e4ded6] bg-white p-4 sm:grid-cols-3">
+          <label className="space-y-1 text-sm font-medium">
+            <span>{fields("people")}</span>
             <input
-              id="equipment"
-              value={form.equipment}
-              onChange={(event) => update("equipment", event.target.value)}
+              type="number" min="1"
+              value={form.people_count}
+              onChange={(e) => update("people_count", e.target.value)}
               className="input"
-              placeholder={t("equipmentPlaceholder")}
             />
-          </Field>
-          <Field label={fields("dietRules")} htmlFor="diet_rules">
+          </label>
+          <label className="space-y-1 text-sm font-medium">
+            <span>{fields("budget")}</span>
             <input
-              id="diet_rules"
-              value={form.diet_rules}
-              onChange={(event) => update("diet_rules", event.target.value)}
+              type="number" min="0"
+              value={form.budget}
+              onChange={(e) => update("budget", e.target.value)}
               className="input"
-              placeholder={t("dietRulesPlaceholder")}
             />
-          </Field>
-          <Field label={fields("maxCookTime")} htmlFor="max_cook_time_minutes">
+          </label>
+          <label className="space-y-1 text-sm font-medium">
+            <span>{fields("allergies")}</span>
             <input
-              id="max_cook_time_minutes"
-              type="number"
-              min="1"
-              value={form.max_cook_time_minutes}
-              onChange={(event) =>
-                update("max_cook_time_minutes", event.target.value)
-              }
+              value={form.allergies}
+              onChange={(e) => update("allergies", e.target.value)}
               className="input"
-              placeholder="40"
+              placeholder={t("allergiesPlaceholder")}
             />
-          </Field>
-          <Field label={fields("softPreferences")} htmlFor="soft_preferences">
-            <input
-              id="soft_preferences"
-              value={form.soft_preferences}
-              onChange={(event) => update("soft_preferences", event.target.value)}
-              className="input"
-              placeholder={t("softPreferencesPlaceholder")}
-            />
-          </Field>
+          </label>
         </div>
       )}
 
-      {mutation.error ? (
+      {/* ── Run button ── */}
+      <Button type="submit" disabled={mutation.isPending} className="w-full">
+        {mutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+        <span className="ml-2">{t("runFork")}</span>
+      </Button>
+
+      {mutation.error && (
         <p className="rounded-md border border-[#e1b7a9] bg-[#fff8f5] p-3 text-sm text-[#7f3525]">
           {mutation.error.message}
         </p>
-      ) : null}
-
-      <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : null}
-        {t("runFork")}
-      </Button>
+      )}
     </form>
-  );
-}
-
-function Field({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label htmlFor={htmlFor} className="space-y-1.5 text-sm font-medium">
-      <span>{label}</span>
-      {children}
-    </label>
   );
 }
