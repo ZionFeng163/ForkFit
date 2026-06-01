@@ -56,6 +56,11 @@ export function PostCard({ post }: { post: RecipePost }) {
             />
           </div>
         )}
+        {!post.image_urls.length && (
+          <div className="flex aspect-[4/5] items-center justify-center bg-gradient-to-br from-[#f5f0ea] to-[#eee9e2]">
+            <span className="text-4xl">🍽️</span>
+          </div>
+        )}
         <div className="space-y-3 p-3">
           <div>
             <h2 className="line-clamp-2 text-[15px] font-semibold leading-5">
