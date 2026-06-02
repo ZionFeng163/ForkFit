@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, DollarSign, MapPin } from "lucide-react";
+import { ArrowLeft, Clock, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -68,16 +68,12 @@ export default async function PackDetailPage({ params }: PageProps) {
               </div>
 
               {hasRecipeDetails || hasLocation ? (
-                <div className="grid gap-3 border-y border-[#eee8df] py-4 text-sm text-[#5f5a52] sm:grid-cols-3">
+                <div className="flex gap-4 border-y border-[#eee8df] py-4 text-sm text-[#5f5a52]">
                   {hasRecipeDetails ? (
                     <>
                       <span className="flex items-center gap-2">
                         <Clock size={16} />
                         {t("minutes", { count: recipe.cook_time_minutes })}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <DollarSign size={16} />
-                        {recipe.estimated_cost.toFixed(0)}
                       </span>
                     </>
                   ) : null}

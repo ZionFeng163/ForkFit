@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, DollarSign, GitFork, Heart, Bookmark, MessageSquare } from "lucide-react";
+import { Clock, GitFork, Heart, Bookmark, MessageSquare } from "lucide-react";
 
 import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
@@ -80,14 +80,10 @@ export function PostCard({ post }: { post: RecipePost }) {
             </div>
           ) : null}
           {showMeta ? (
-            <div className="grid grid-cols-3 gap-2 border-t border-[#eee8df] pt-3 text-[12px] text-[#625b52]">
+            <div className="flex items-center gap-4 border-t border-[#eee8df] pt-3 text-[12px] text-[#625b52]">
               <span className="flex items-center gap-1">
                 <Clock size={14} />
                 {post.recipe.cook_time_minutes}m
-              </span>
-              <span className="flex items-center gap-1">
-                <DollarSign size={14} />
-                {post.recipe.estimated_cost.toFixed(0)}
               </span>
               <span className="flex items-center gap-1">
                 <GitFork size={14} />

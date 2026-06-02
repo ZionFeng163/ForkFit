@@ -121,7 +121,6 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
       ingredients: ingredients.split(",").map((s) => s.trim()).filter(Boolean),
       equipment: equipment.split(",").map((s) => s.trim()).filter(Boolean),
       cook_time_minutes: Number(cookTime) || 30,
-      estimated_cost: Number(cost) || 10,
       tags: tags.split(",").map((s) => s.trim()).filter(Boolean),
       notes,
       steps,
@@ -170,12 +169,9 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
           <Field label={t("fieldEquipment")} help={t("commaSeparated")}>
             <input value={equipment} onChange={(e) => setEquipment(e.target.value)} className="input" />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("fieldCookTime")}>
               <input type="number" min="1" value={cookTime} onChange={(e) => setCookTime(e.target.value)} className="input" />
-            </Field>
-            <Field label={t("fieldCost")}>
-              <input type="number" min="0" step="0.1" value={cost} onChange={(e) => setCost(e.target.value)} className="input" />
             </Field>
             <Field label={t("fieldTags")} help={t("commaSeparated")}>
               <input value={tags} onChange={(e) => setTags(e.target.value)} className="input" />
@@ -325,15 +321,6 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
               forked: `${forked.cook_time_minutes} min`,
               changed: original.cook_time_minutes !== forked.cook_time_minutes,
               reason: findReason("cook_time_minutes"),
-            });
-
-            // Cost
-            rows.push({
-              label: t("fieldCost"),
-              original: `$${original.estimated_cost}`,
-              forked: `$${forked.estimated_cost}`,
-              changed: original.estimated_cost !== forked.estimated_cost,
-              reason: findReason("estimated_cost"),
             });
 
             // Tags
@@ -575,12 +562,9 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
               <Field label={t("fieldEquipment")}>
                 <input value={firstMeal.equipment.join(", ") || "—"} readOnly className="input bg-[#fafafa]" />
               </Field>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("fieldCookTime")}>
                   <input value={`${firstMeal.cook_time_minutes} min`} readOnly className="input bg-[#fafafa]" />
-                </Field>
-                <Field label={t("fieldCost")}>
-                  <input value={`$${firstMeal.estimated_cost}`} readOnly className="input bg-[#fafafa]" />
                 </Field>
                 <Field label={t("fieldTags")}>
                   <input value={firstMeal.tags.join(", ") || "—"} readOnly className="input bg-[#fafafa]" />
@@ -616,7 +600,6 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
             rows.push({ label: t("fieldIngredients"), original: formatVal(original.ingredients), forked: formatVal(forked.ingredients), changed: JSON.stringify(original.ingredients) !== JSON.stringify(forked.ingredients) });
             rows.push({ label: t("fieldEquipment"), original: formatVal(original.equipment), forked: formatVal(forked.equipment), changed: JSON.stringify(original.equipment) !== JSON.stringify(forked.equipment) });
             rows.push({ label: t("fieldCookTime"), original: `${original.cook_time_minutes} min`, forked: `${forked.cook_time_minutes} min`, changed: original.cook_time_minutes !== forked.cook_time_minutes });
-            rows.push({ label: t("fieldCost"), original: `$${original.estimated_cost}`, forked: `$${forked.estimated_cost}`, changed: original.estimated_cost !== forked.estimated_cost });
             rows.push({ label: t("fieldTags"), original: formatVal(original.tags), forked: formatVal(forked.tags), changed: JSON.stringify(original.tags) !== JSON.stringify(forked.tags) });
             rows.push({ label: t("fieldNotes"), original: original.notes || "—", forked: forked.notes || "—", changed: original.notes !== forked.notes });
 

@@ -86,7 +86,6 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
         {firstMeal && (
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#7a7167]">
             {firstMeal.cook_time_minutes > 0 && <span>⏱ {firstMeal.cook_time_minutes} min</span>}
-            {firstMeal.estimated_cost > 0 && <span>💰 ${firstMeal.estimated_cost}</span>}
             {firstMeal.ingredients.length > 0 && <span>🥘 {firstMeal.ingredients.slice(0, 4).join(", ")}{firstMeal.ingredients.length > 4 ? "..." : ""}</span>}
           </div>
         )}
@@ -97,19 +96,18 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
         <div className="text-sm text-[#625b52]">
           <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
           {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
-          {form.budget && <span className="ml-2">💰 ${form.budget}</span>}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleExtract}
             disabled={extracting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
           >
             {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             {t("extractFromPosts")}
           </button>
-          <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
+          <Link href="/profile" className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
             {t("editProfile")}
           </Link>
         </div>
