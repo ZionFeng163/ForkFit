@@ -97,17 +97,17 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
           <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
           {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={handleExtract}
             disabled={extracting}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
+            className="flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
           >
             {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             {t("extractFromPosts")}
           </button>
-          <Link href="/profile" className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
+          <Link href="/profile" className="flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
             {t("editProfile")}
           </Link>
         </div>
