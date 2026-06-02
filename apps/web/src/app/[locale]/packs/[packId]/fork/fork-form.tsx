@@ -108,6 +108,7 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
             {t("extractFromPosts")}
           </button>
           <Link href="/profile" className="flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
+            <Settings2 size={12} />
             {t("editProfile")}
           </Link>
         </div>
