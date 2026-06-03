@@ -690,9 +690,13 @@ function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node:
     return () => clearInterval(iv);
   }, [run.status]);
 
-  // Find current step: first incomplete step
+  // Find rightmost completed step — mark all before it as done too (parallel steps)
+  let lastDoneIdx = -1;
+  for (let i = STEP_TIMES.length - 1; i >= 0; i--) {
+    if (completedNodes.has(STEP_TIMES[i].node)) { lastDoneIdx = i; break; }
+  }
   const currentIdx = hasTrace
-    ? STEP_TIMES.findIndex(s => !completedNodes.has(s.node))
+    ? (lastDoneIdx + 1 < STEP_TIMES.length ? lastDoneIdx + 1 : -1)
     : STEP_TIMES.findIndex(s => elapsed < s.end);
 
   return (
@@ -700,7 +704,7 @@ function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node:
       <h2 className="mb-4 font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
       <div className="space-y-3">
         {STEP_TIMES.map((step, i) => {
-          const done = completedNodes.has(step.node);
+          const done = i <= lastDoneIdx;
           const active = i === currentIdx;
           return (
             <div key={step.node} className="flex items-center gap-3">
