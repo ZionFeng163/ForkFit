@@ -418,8 +418,8 @@ class AdapterAgent:
                 "When substitution_suggestions are provided, prefer them over your own guesses.",
                 f"When people_count > 1, scale ingredient quantities proportionally (e.g., people_count=2 means double the ingredients).",
                 f"The current people_count is {people_count}.",
-                f"ALL text MUST be in {lang_hint}. Equipment names, ingredient names, tags — everything. No English allowed when language is Chinese.",
-                "Keep change reasons SHORT and user-friendly (1 sentence, casual tone). Do NOT mention severity levels, internal IDs, or technical details.",
+                f"ALL text MUST be in {lang_hint}. No mixing languages.",
+                "Keep change reasons SHORT and casual (1 sentence). No technical jargon.",
             ],
             "original_meal_pack": original_meal_pack.to_dict(),
             "user_agent_output": asdict(user_agent_output),
@@ -443,9 +443,9 @@ class AdapterAgent:
                 "each change with source_agent. Keep summary, reasons, and notes "
                 "concise. Do not include markdown, explanation, or hidden reasoning. "
                 f"CRITICAL: ALL text MUST be written in {lang_hint}. "
-                f"This includes equipment names (e.g. use '灶台' not 'stovetop', '烤箱' not 'oven'), "
-                f"ingredient names, tags, notes, summary, and change reasons. "
-                f"Change reasons should be short and casual (1 sentence), like talking to a friend. "
+                f"Equipment names, ingredient names, tags, notes, summary, reasons — everything. "
+                f"Do NOT mix languages. "
+                f"Change reasons should be short and casual (1 sentence). "
                 f"When the output language is not English, also provide "
                 f"'original_meal_pack_translated' — a translated copy of the original meal pack "
                 f"so both original and forked versions are in the same language."
@@ -571,7 +571,7 @@ class CookingStepsAgent:
                 "Every step must be a short, actionable instruction. "
                 "Do not include markdown, explanation, or hidden reasoning. "
                 f"All text MUST be written in {lang_hint}. "
-                f"Equipment names must be in {lang_hint} (e.g. '灶台' not 'stovetop', '烤箱' not 'oven')."
+                f"Equipment names, ingredient names — everything must match {lang_hint}. Do NOT mix languages."
             ),
             user=json.dumps(user_message, ensure_ascii=False),
             trace=trace,
