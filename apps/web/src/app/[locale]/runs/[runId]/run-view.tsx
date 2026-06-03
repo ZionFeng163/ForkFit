@@ -314,8 +314,8 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
             // Cook time
             rows.push({
               label: t("fieldCookTime"),
-              original: `${original.cook_time_minutes} min`,
-              forked: `${forked.cook_time_minutes} min`,
+              original: `${original.cook_time_minutes} 分钟`,
+              forked: `${forked.cook_time_minutes} 分钟`,
               changed: original.cook_time_minutes !== forked.cook_time_minutes,
               reason: findReason("cook_time_minutes"),
             });
@@ -381,16 +381,13 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
             );
           })()}
 
-          {/* Change reasons */}
+          {/* Change reasons — deduplicate by reason */}
           {result.change_log.length > 0 ? (
             <div className="mt-4 space-y-2 border-t border-[#f0ebe4] pt-3">
-              {result.change_log.map((c, i) => (
+              {[...new Set(result.change_log.map(c => c.reason))].map((reason, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
                   <span className="mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f6b45]" />
-                  <p className="text-[#5a5249]">
-                    <span className="font-medium text-[#2f2a24]">{c.affected_item}:</span>{" "}
-                    <span className="text-[#7a7167]">{c.reason}</span>
-                  </p>
+                  <span className="text-[#5a5249]">{reason}</span>
                 </div>
               ))}
             </div>
@@ -594,7 +591,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
             rows.push({ label: t("fieldName", { defaultValue: "meal name" }), original: original.name, forked: forked.name, changed: original.name !== forked.name });
             rows.push({ label: t("fieldIngredients"), original: formatVal(original.ingredients), forked: formatVal(forked.ingredients), changed: JSON.stringify(original.ingredients) !== JSON.stringify(forked.ingredients) });
             rows.push({ label: t("fieldEquipment"), original: formatVal(original.equipment), forked: formatVal(forked.equipment), changed: JSON.stringify(original.equipment) !== JSON.stringify(forked.equipment) });
-            rows.push({ label: t("fieldCookTime"), original: `${original.cook_time_minutes} min`, forked: `${forked.cook_time_minutes} min`, changed: original.cook_time_minutes !== forked.cook_time_minutes });
+            rows.push({ label: t("fieldCookTime"), original: `${original.cook_time_minutes} 分钟`, forked: `${forked.cook_time_minutes} 分钟`, changed: original.cook_time_minutes !== forked.cook_time_minutes });
             rows.push({ label: t("fieldTags"), original: formatVal(original.tags), forked: formatVal(forked.tags), changed: JSON.stringify(original.tags) !== JSON.stringify(forked.tags) });
             rows.push({ label: t("fieldNotes"), original: original.notes || "—", forked: forked.notes || "—", changed: original.notes !== forked.notes });
 
@@ -635,13 +632,10 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
 
           {result.change_log.length > 0 ? (
             <div className="mt-4 space-y-2 border-t border-[#f0ebe4] pt-3">
-              {result.change_log.map((c, i) => (
+              {[...new Set(result.change_log.map(c => c.reason))].map((reason, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
                   <span className="mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2f6b45]" />
-                  <p className="text-[#5a5249]">
-                    <span className="font-medium text-[#2f2a24]">{c.affected_item}:</span>{" "}
-                    <span className="text-[#7a7167]">{c.reason}</span>
-                  </p>
+                  <span className="text-[#5a5249]">{reason}</span>
                 </div>
               ))}
             </div>
