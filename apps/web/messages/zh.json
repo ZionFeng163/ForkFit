@@ -1,6 +1,6 @@
 {
   "Meta": {
-    "description": "把社区菜谱按你的约束 Fork 成个性化版本。"
+    "description": "把社区菜谱按你的口味定制成个性化版本。"
   },
   "Nav": {
     "discover": "发现",
@@ -22,10 +22,10 @@
   },
   "Home": {
     "title": "发现菜谱",
-    "description": "浏览社区菜谱帖子，再按过敏、厨具、预算和烹饪时间做个性化 Fork。",
-    "heroDescription": "找到喜欢的菜谱，点击 Fork，ForkFit 会根据你的口味、过敏源和预算自动适配。",
+    "description": "浏览社区菜谱，按过敏、厨具、预算和时间做个性化定制。",
+    "heroDescription": "找到喜欢的菜谱，点击定制，根据你的口味、过敏源和预算自动调整。",
     "heroStep1": "选一道菜",
-    "heroStep2": "点击 Fork",
+    "heroStep2": "点击定制",
     "heroStep3": "获得你的专属版本",
     "postCount": "{count} 道菜谱",
     "loadMore": "加载更多",
@@ -39,12 +39,12 @@
     "ingredients": "食材",
     "equipment": "厨具",
     "none": "无",
-    "forkTitle": "Fork 这道菜",
-    "forkDescription": "用 ForkFit worker 按用户画像适配它。",
+    "forkTitle": "定制这道菜",
+    "forkDescription": "根据你的口味偏好自动调整这道菜。",
     "author": "作者",
     "theme": "主题",
-    "forks": "Fork 数",
-    "startFork": "开始 Fork",
+    "forks": "定制数",
+    "startFork": "开始定制",
     "edit": "编辑",
     "tags": "标签",
     "notes": "备注",
@@ -73,7 +73,7 @@
   },
   "Profile": {
     "title": "个人画像",
-    "description": "保存你的常用约束和偏好。Fork 页面会把它作为默认值。",
+    "description": "保存你的常用偏好和约束，定制时会作为默认值。",
     "save": "保存画像",
     "reset": "恢复默认",
     "saved": "已保存",
@@ -134,7 +134,7 @@
     "mainSection": "内容",
     "detailsSection": "更多详情",
     "detailsHelp": "不填也可以发布，之后可以从描述里自动识别。",
-    "publishHelp": "发布后会出现在发现页，并可被其他用户 Fork。",
+    "publishHelp": "发布后会出现在发现页，并可被其他用户定制。",
     "titlePlaceholder": "例如：周末番茄牛肉小火锅",
     "descriptionPlaceholder": "写做法、口味、适合人数、替换建议，像发一篇正常帖子一样。",
     "imagePlaceholder": "https://...\nhttps://...",
@@ -149,7 +149,7 @@
   },
   "Run": {
     "back": "发现",
-    "title": "Fork 结果",
+    "title": "定制结果",
     "loading": "正在加载",
     "couldNotLoad": "无法加载",
     "queued": "排队中",
@@ -167,14 +167,14 @@
     "stepAdapting": "适配食材和烹饪方式",
     "stepCooking": "生成烹饪步骤",
     "stepValidating": "最终校验",
-    "failed": "Fork 失败",
-    "failedFallback": "这次 run 失败了。",
+    "failed": "定制失败",
+    "failedFallback": "这次定制失败了。",
     "tryAnother": "浏览其他菜谱",
     "adaptedPack": "为你定制的菜",
     "ingredients": "食材",
     "equipment": "厨具",
     "cookingSteps": "制作步骤",
-    "noSteps": "暂无步骤，agent 会为你生成。",
+    "noSteps": "暂无步骤，系统会为你生成。",
     "none": "无",
     "changeLog": "改动记录",
     "noChanges": "无需改动。",
@@ -185,7 +185,7 @@
     "unresolvedItems": "未解决项",
     "suggestedAction": "建议",
     "finalReview": "定制建议",
-    "traceSummary": "{llmCalls} 次 LLM 调用 · {steps} 个图节点",
+    "traceSummary": "{llmCalls} 次智能调用 · {steps} 个处理步骤",
     "shareFork": "分享这道菜",
     "linkCopied": "链接已复制！",
     "shoppingList": "购物清单",
@@ -287,11 +287,11 @@
     "notFound": "用户不存在。"
   },
   "MyForks": {
-    "title": "我的 Fork",
-    "empty": "还没有保存的 Fork。Fork 一道菜后可以保存到这里。",
+    "title": "我的定制",
+    "empty": "还没有保存的定制菜谱。定制一道菜后可以保存到这里。",
     "discover": "发现菜谱",
     "changes": "个改动",
-    "remove": "从我的 Fork 中移除"
+    "remove": "从我的定制中移除"
   },
   "Comments": {
     "title": "评论 ({count})",
