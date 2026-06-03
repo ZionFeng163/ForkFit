@@ -80,9 +80,8 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
   const forked = result.forked_meal_pack;
   const firstMeal = forked.meals[0];
 
-  // Editable state — use meal data, not workflow summary
   const [title, setTitle] = useState(forked.title || firstMeal?.name || "");
-  const [description, setDescription] = useState(firstMeal?.notes || result.summary || "");
+  const [description, setDescription] = useState(result.summary || firstMeal?.notes || "");
   const [ingredients, setIngredients] = useState(firstMeal?.ingredients.join(", ") || "");
   const [equipment, setEquipment] = useState(firstMeal?.equipment.join(", ") || "");
   const [cookTime, setCookTime] = useState(String(firstMeal?.cook_time_minutes || 30));
@@ -147,17 +146,18 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
           <Field label={t("fieldDescription")}>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="textarea" />
           </Field>
-          <Field label={t("fieldIngredients")} help={t("commaSeparated")}>
+          <p className="text-xs text-[#9f9890]">{t("commaSeparated")}</p>
+          <Field label={t("fieldIngredients")}>
             <textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)} rows={3} className="textarea" />
           </Field>
-          <Field label={t("fieldEquipment")} help={t("commaSeparated")}>
+          <Field label={t("fieldEquipment")}>
             <input value={equipment} onChange={(e) => setEquipment(e.target.value)} className="input" />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("fieldCookTime")}>
               <input type="number" min="1" value={cookTime} onChange={(e) => setCookTime(e.target.value)} className="input" />
             </Field>
-            <Field label={t("fieldTags")} help={t("commaSeparated")}>
+            <Field label={t("fieldTags")}>
               <input value={tags} onChange={(e) => setTags(e.target.value)} className="input" />
             </Field>
           </div>
