@@ -152,26 +152,28 @@ start_brew_service_if_needed "Redis" "$REDIS_PORT" redis
 
 api_port_pid="$(pid_for_port "$API_PORT")"
 if [[ -n "$api_port_pid" ]]; then
-  log "API port $API_PORT is already in use by PID $api_port_pid"
-else
-  start_process \
-    "API" \
-    "$PID_DIR/api.pid" \
-    "$LOG_DIR/api.log" \
-    conda run -n "$CONDA_ENV" --no-capture-output env PYTHONPATH="$PYTHONPATH" python scripts/run_api.py
-  wait_for_port "API" "$API_PORT" 30
+  log "killing old API PID $api_port_pid"
+  kill -9 "$api_port_pid" 2>/dev/null
+  sleep 1
 fi
+start_process \
+  "API" \
+  "$PID_DIR/api.pid" \
+  "$LOG_DIR/api.log" \
+  conda run -n "$CONDA_ENV" --no-capture-output env PYTHONPATH="$PYTHONPATH" python scripts/run_api.py
+wait_for_port "API" "$API_PORT" 30
 
 existing_worker_pid="$(worker_pid)"
 if [[ -n "$existing_worker_pid" ]]; then
-  log "worker already running with PID $existing_worker_pid"
-else
-  start_process \
-    "worker" \
-    "$PID_DIR/worker.pid" \
-    "$LOG_DIR/worker.log" \
-    conda run -n "$CONDA_ENV" --no-capture-output env PYTHONPATH="$PYTHONPATH" python scripts/run_worker.py
+  log "killing old worker PID $existing_worker_pid"
+  kill -9 "$existing_worker_pid" 2>/dev/null
+  sleep 1
 fi
+start_process \
+  "worker" \
+  "$PID_DIR/worker.pid" \
+  "$LOG_DIR/worker.log" \
+  conda run -n "$CONDA_ENV" --no-capture-output env PYTHONPATH="$PYTHONPATH" python scripts/run_worker.py
 
 web_port_pid="$(pid_for_port "$WEB_PORT")"
 if [[ -n "$web_port_pid" ]]; then
