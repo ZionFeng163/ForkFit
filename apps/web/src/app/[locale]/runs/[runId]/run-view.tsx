@@ -17,42 +17,18 @@ import type { RunResultPayload } from "@/types/forkfit";
 
 export function RunView({ runId }: { runId: string }) {
   const t = useTranslations("Run");
-  const queryClient = useQueryClient();
 
-  // REST query: initial load + final result only (no polling)
+  // Poll every 1.5s while run is in progress — simple and reliable
   const query = useQuery({
     queryKey: ["run", runId],
     queryFn: () => getRun(runId),
+    refetchInterval: (query) => {
+      const s = query.state.data?.status;
+      return s === "running" || s === "queued" ? 1500 : false;
+    },
   });
 
-  // Real-time progress from SSE (separate from React Query)
-  const [liveTrace, setLiveTrace] = useState<{ steps: { node: string; status: string }[] } | null>(null);
-  const [liveStatus, setLiveStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("forkfit.auth.token") || "";
-    const url = `/api/backend/runs/${runId}/stream?token=${encodeURIComponent(token)}`;
-    const es = new EventSource(url);
-    es.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.status) setLiveStatus(data.status);
-      if (data.trace) setLiveTrace(data.trace);
-      const terminal = ["succeeded", "failed", "cancelled", "needs_input"].includes(data.status);
-      if (terminal) {
-        es.close();
-        queryClient.invalidateQueries({ queryKey: ["run", runId] });
-      }
-    };
-    es.onerror = () => { es.close(); };
-    return () => { es.close(); };
-  }, [runId, queryClient]);
-
-  // Merge: SSE data takes priority over REST data for progress
-  const run = query.data ? {
-    ...query.data,
-    status: liveStatus || query.data.status,
-    trace: liveTrace || query.data.trace,
-  } : undefined;
+  const run = query.data;
 
   return (
     <div className="space-y-6">
