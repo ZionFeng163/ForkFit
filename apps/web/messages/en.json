@@ -184,7 +184,7 @@
     "forked": "Forked",
     "unresolvedItems": "Unresolved items",
     "suggestedAction": "Suggested",
-    "finalReview": "Final review",
+    "finalReview": "Final Suggestion",
     "traceSummary": "{llmCalls} LLM calls · {steps} graph steps",
     "shareFork": "Share this fork",
     "linkCopied": "Link copied!",
@@ -217,7 +217,15 @@
       "estimated_cost": "Cost",
       "tags": "Tags",
       "notes": "Notes"
-    }
+    },
+    "viewOriginal": "View original post",
+    "finalSuggestion": "Final Suggestion",
+    "statusPass": "Passed",
+    "statusWarn": "Warning",
+    "statusBlock": "Blocked",
+    "addStep": "Add step",
+    "removeStep": "Remove",
+    "originalPostHint": "Personalized version based on this post"
   },
   "Auth": {
     "loginTitle": "Log in",

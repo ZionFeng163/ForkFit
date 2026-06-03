@@ -41,6 +41,9 @@ class RunStore(Protocol):
     def mark_running(self, run_id: str) -> RunRecord:
         ...
 
+    def update_trace(self, run_id: str, trace: RunTrace) -> None:
+        ...
+
     def mark_succeeded(
         self, run_id: str, *, result: RunResultPayload, trace: RunTrace | None
     ) -> RunRecord:

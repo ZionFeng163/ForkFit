@@ -51,6 +51,12 @@ class PostgresRunStore:
         self.append_event(run_id, "run_started", {})
         return self.get_run(run_id)
 
+    def update_trace(self, run_id: str, trace: RunTrace) -> None:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.trace_payload = asdict(trace)
+            session.commit()
+
     def mark_succeeded(
         self, run_id: str, *, result: RunResultPayload, trace: RunTrace | None
     ) -> RunRecord:

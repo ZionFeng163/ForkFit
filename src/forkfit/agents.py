@@ -247,39 +247,45 @@ class ConstraintGuard:
 
     guard_name = "constraint_guard"
 
-    def review(self, meal_pack: MealPack, constraints: ConstraintSet) -> AgentReview:
+    def review(self, meal_pack: MealPack, constraints: ConstraintSet, locale: str = "en") -> AgentReview:
+        zh = locale.startswith("zh")
         findings: list[AgentFinding] = []
-        findings.extend(self._allergy_findings(meal_pack, constraints))
-        findings.extend(self._diet_rule_findings(meal_pack, constraints))
-        findings.extend(self._equipment_findings(meal_pack, constraints))
-        findings.extend(self._time_findings(meal_pack, constraints))
-        findings.extend(self._budget_findings(meal_pack, constraints))
+        findings.extend(self._allergy_findings(meal_pack, constraints, zh))
+        findings.extend(self._diet_rule_findings(meal_pack, constraints, zh))
+        findings.extend(self._equipment_findings(meal_pack, constraints, zh))
+        findings.extend(self._time_findings(meal_pack, constraints, zh))
+        findings.extend(self._budget_findings(meal_pack, constraints, zh))
 
         has_block = any(finding.severity == "high" for finding in findings)
         status = "block" if has_block else "warn" if findings else "pass"
         return AgentReview(agent=self.guard_name, status=status, findings=findings)
 
     def _allergy_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet
+        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
     ) -> list[AgentFinding]:
         findings: list[AgentFinding] = []
         for meal in meal_pack.meals:
             text = meal.searchable_text()
             for allergy in constraints.allergies:
                 if _contains_term(text, allergy):
+                    msg = (
+                        f"{meal.name} 含有过敏源「{allergy}」，与过敏约束冲突。"
+                        if zh
+                        else f"{meal.name} contains {allergy}, which conflicts with an allergy constraint."
+                    )
                     findings.append(
                         AgentFinding(
                             type="allergy",
                             severity="high",
                             affected_items=[meal.id],
-                            message=f"{meal.name} contains {allergy}, which conflicts with an allergy constraint.",
+                            message=msg,
                             required_action="replace ingredient",
                         )
                     )
         return findings
 
     def _diet_rule_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet
+        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
     ) -> list[AgentFinding]:
         findings: list[AgentFinding] = []
         for meal in meal_pack.meals:
@@ -287,19 +293,24 @@ class ConstraintGuard:
             for rule in constraints.diet_rules:
                 blocked_term = _norm(rule).removeprefix("no ")
                 if blocked_term and _contains_term(text, blocked_term):
+                    msg = (
+                        f"{meal.name} 与饮食规则冲突：{rule}。"
+                        if zh
+                        else f"{meal.name} conflicts with diet rule: {rule}."
+                    )
                     findings.append(
                         AgentFinding(
                             type="diet_rule",
                             severity="high",
                             affected_items=[meal.id],
-                            message=f"{meal.name} conflicts with diet rule: {rule}.",
+                            message=msg,
                             required_action="replace ingredient",
                         )
                     )
         return findings
 
     def _equipment_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet
+        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
     ) -> list[AgentFinding]:
         available = {_norm(item) for item in constraints.equipment}
         findings: list[AgentFinding] = []
@@ -310,52 +321,69 @@ class ConstraintGuard:
                 if not _equipment_available(_norm(item), available)
             ]
             if missing:
+                joined = "、".join(missing) if zh else ", ".join(missing)
+                msg = (
+                    f"{meal.name} 需要你没有的厨具：{joined}，适配器会尝试替代方案。"
+                    if zh
+                    else f"{meal.name} suggests equipment you don't have: {joined}. The adapter will try to find an alternative method."
+                )
+                suggested = "适配器会尽量调整烹饪方式。" if zh else "The adapter will adapt the cooking method if possible."
                 findings.append(
                     AgentFinding(
                         type="equipment",
                         severity="medium",
                         affected_items=[meal.id],
-                        message=f"{meal.name} suggests equipment you don't have: {', '.join(missing)}. The adapter will try to find an alternative method.",
-                        suggested_action="The adapter will adapt the cooking method if possible.",
+                        message=msg,
+                        suggested_action=suggested,
                     )
                 )
         return findings
 
     def _time_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet
+        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
     ) -> list[AgentFinding]:
         findings: list[AgentFinding] = []
         for meal in meal_pack.meals:
             over_by = meal.cook_time_minutes - constraints.max_cook_time_minutes
             if over_by <= 0:
                 continue
+            msg = (
+                f"{meal.name} 需要 {meal.cook_time_minutes} 分钟，超过 {constraints.max_cook_time_minutes} 分钟的限制。"
+                if zh
+                else f"{meal.name} takes {meal.cook_time_minutes} minutes, over the {constraints.max_cook_time_minutes}-minute limit."
+            )
             findings.append(
                 AgentFinding(
                     type="time",
                     severity="high" if over_by > 15 else "medium",
                     affected_items=[meal.id],
-                    message=f"{meal.name} takes {meal.cook_time_minutes} minutes, over the {constraints.max_cook_time_minutes}-minute limit.",
+                    message=msg,
                     required_action="shorten recipe" if over_by > 15 else "",
-                    suggested_action="simplify prep or move to a less busy day",
+                    suggested_action="简化步骤或换个时间充裕的日子" if zh else "simplify prep or move to a less busy day",
                 )
             )
         return findings
 
     def _budget_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet
+        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
     ) -> list[AgentFinding]:
         if constraints.budget <= 0 or meal_pack.estimated_cost <= constraints.budget:
             return []
         over_ratio = (meal_pack.estimated_cost - constraints.budget) / constraints.budget
         severity = "high" if over_ratio > 0.15 else "medium"
+        msg = (
+            f"预估费用 ¥{meal_pack.estimated_cost:.2f} 超出预算 ¥{constraints.budget:.2f}。"
+            if zh
+            else f"Estimated cost ${meal_pack.estimated_cost:.2f} exceeds budget ${constraints.budget:.2f}."
+        )
         return [
             AgentFinding(
                 type="budget",
                 severity=severity,
                 affected_items=[meal.id for meal in meal_pack.meals],
-                message=f"Estimated cost ${meal_pack.estimated_cost:.2f} exceeds budget ${constraints.budget:.2f}.",
+                message=msg,
                 required_action="reduce cost" if severity == "high" else "",
-                suggested_action="replace expensive ingredients or reduce duplicate purchases",
+                suggested_action="替换昂贵食材或减少重复采购" if zh else "replace expensive ingredients or reduce duplicate purchases",
             )
         ]
 

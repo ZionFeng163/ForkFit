@@ -14,13 +14,13 @@ from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
 from forkfit.stores import PostgresRunStore
 
 
-def _broadcast(run_id: str, status: str, settings) -> None:
+def _broadcast(run_id: str, status: str, settings, extra: dict | None = None) -> None:
     """Broadcast run status update via Redis pub/sub."""
     try:
         from forkfit.redis_utils import get_pubsub
         pubsub = get_pubsub(settings.redis_url)
         if pubsub:
-            pubsub.broadcast_run_update(run_id, status)
+            pubsub.broadcast_run_update(run_id, status, extra=extra)
     except Exception:
         pass  # Broadcasting is best-effort
 
@@ -42,24 +42,29 @@ def _build_failure_message(result, locale: str = "zh") -> str:
     # Map finding types to friendly messages
     friendly = {
         "allergy": (
-            lambda f: f"这道菜含有你的过敏源（{f.message.split('contains')[-1].strip() if 'contains' in f.message else f.message}），没法安全替换。" if is_zh
-            else f"This dish contains an allergen you specified ({f.message.split('contains')[-1].strip() if 'contains' in f.message else f.message}) and can't be safely substituted.",
+            lambda f: f.message if is_zh and "含有" in f.message
+            else f"这道菜含有你的过敏源，没法安全替换。" if is_zh
+            else f.message,
         ),
         "diet_rule": (
-            lambda f: f"这道菜不符合你的饮食规则：{f.message.split('conflicts with')[-1].strip() if 'conflicts' in f.message else f.message}。" if is_zh
-            else f"This dish conflicts with your diet rule: {f.message.split('conflicts with')[-1].strip() if 'conflicts' in f.message else f.message}.",
+            lambda f: f.message if is_zh and "冲突" in f.message
+            else f"这道菜不符合你的饮食规则。" if is_zh
+            else f.message,
         ),
         "equipment": (
-            lambda f: f"这道菜需要你没有的厨具，但可以尝试换个做法。" if is_zh
-            else f"This dish requires equipment you don't have, but we can try a different method.",
+            lambda f: f.message if is_zh and "厨具" in f.message
+            else f"这道菜需要你没有的厨具，但可以尝试换个做法。" if is_zh
+            else f.message,
         ),
         "budget": (
-            lambda f: f"即使替换后仍然超出预算。" if is_zh
-            else f"Still over budget even after substitutions.",
+            lambda f: f.message if is_zh and "预算" in f.message
+            else f"即使替换后仍然超出预算。" if is_zh
+            else f.message,
         ),
         "time": (
-            lambda f: f"即使调整后仍然超过你的烹饪时间限制。" if is_zh
-            else f"Still exceeds your cooking time limit after adjustments.",
+            lambda f: f.message if is_zh and "分钟" in f.message
+            else f"即使调整后仍然超过你的烹饪时间限制。" if is_zh
+            else f.message,
         ),
     }
 
@@ -92,7 +97,15 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
     store.mark_running(run_id)
     exporter = LangSmithRunExporter(settings)
     try:
-        result = ForkFitLangGraphWorkflow().run(user_profile, meal_pack, locale=locale)
+        def on_step_complete(trace):
+            store.update_trace(run_id, trace)
+            trace_dict = asdict(trace)
+            _broadcast(run_id, "running", settings, extra={"trace": trace_dict})
+
+        result = ForkFitLangGraphWorkflow().run(
+            user_profile, meal_pack, locale=locale,
+            on_step_complete=on_step_complete,
+        )
         if result.success:
             record = store.mark_succeeded(
                 run_id,

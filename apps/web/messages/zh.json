@@ -184,7 +184,7 @@
     "forked": "适配版",
     "unresolvedItems": "未解决项",
     "suggestedAction": "建议",
-    "finalReview": "最终校验",
+    "finalReview": "最终建议",
     "traceSummary": "{llmCalls} 次 LLM 调用 · {steps} 个图节点",
     "shareFork": "分享这个 Fork",
     "linkCopied": "链接已复制！",
@@ -206,7 +206,7 @@
     "fieldCost": "费用（$）",
     "fieldTags": "标签",
     "fieldNotes": "烹饪备注",
-    "commaSeparated": "用逗号分隔。",
+    "commaSeparated": "用逗号分隔（中英文均可）。",
     "changed": "已改",
     "fieldName": "菜名",
     "field": {
@@ -217,7 +217,15 @@
       "estimated_cost": "费用",
       "tags": "标签",
       "notes": "备注"
-    }
+    },
+    "viewOriginal": "查看原帖",
+    "finalSuggestion": "最终建议",
+    "statusPass": "通过",
+    "statusWarn": "有风险",
+    "statusBlock": "未通过",
+    "addStep": "添加步骤",
+    "removeStep": "删除",
+    "originalPostHint": "基于此帖生成的个性化版本"
   },
   "Auth": {
     "loginTitle": "登录",

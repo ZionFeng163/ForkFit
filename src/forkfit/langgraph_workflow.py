@@ -103,7 +103,14 @@ class ForkFitLangGraphWorkflow:
         self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
-    def run(self, user_profile: UserProfile, meal_pack: MealPack, locale: str = "en") -> ForkFitResult:
+    def run(
+        self,
+        user_profile: UserProfile,
+        meal_pack: MealPack,
+        locale: str = "en",
+        on_step_complete: Callable[[RunTrace], None] | None = None,
+    ) -> ForkFitResult:
+        self._on_step_complete = on_step_complete
         with tracing_context(enabled=False):
             state = self.graph.invoke(
                 {
@@ -238,6 +245,7 @@ class ForkFitLangGraphWorkflow:
         final_review = self.final_constraint_guard.review(
             state["adapter_output"].forked_meal_pack,
             state["constraints"],
+            locale=state.get("locale", "en"),
         )
         success = not state["adapter_output"].unresolved_items and final_review.status != "block"
         return {
@@ -262,7 +270,6 @@ class ForkFitLangGraphWorkflow:
                         status="success",
                     )
                 )
-                return output
             except Exception as exc:
                 trace.steps.append(
                     StepTrace(
@@ -273,6 +280,16 @@ class ForkFitLangGraphWorkflow:
                     )
                 )
                 raise
+
+            # Notify caller of progress
+            cb = getattr(self, "_on_step_complete", None)
+            if cb:
+                try:
+                    cb(trace)
+                except Exception:
+                    pass
+
+            return output
 
         return wrapped
 

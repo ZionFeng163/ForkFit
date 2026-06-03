@@ -52,13 +52,16 @@ async def stream_run(
 
     # If already in terminal state, return immediately
     if run.status in ("succeeded", "failed", "cancelled", "needs_input"):
-        async def final_event():
+        def final_event():
             yield f"data: {json.dumps({'status': run.status})}\n\n"
-        return StreamingResponse(final_event(), media_type="text/event-stream")
+        return StreamingResponse(
+            final_event(), media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     subscriber = pubsub.get_subscriber(run_id)
 
-    async def event_generator():
+    def event_generator():
         try:
             yield f"data: {json.dumps({'status': run.status})}\n\n"
             for message in subscriber.listen():
@@ -71,7 +74,11 @@ async def stream_run(
             subscriber.unsubscribe()
             subscriber.close()
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("", response_model=list[RunStatusResponse])

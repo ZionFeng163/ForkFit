@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Sparkles, Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Settings2, ChevronDown, ChevronUp, UserPen } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 
@@ -91,29 +91,6 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
         )}
       </div>
 
-      {/* ── Profile summary ── */}
-      <div className="rounded-lg border border-[#e4ded6] bg-white p-4 space-y-3">
-        <div className="text-sm text-[#625b52]">
-          <span className="font-medium text-[#2f2a24]">{t("usingProfile")}</span>
-          {form.allergies && <span className="ml-2">⚠️ {form.allergies}</span>}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={handleExtract}
-            disabled={extracting}
-            className="flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
-          >
-            {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            {t("extractFromPosts")}
-          </button>
-          <Link href="/profile" className="flex items-center justify-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]">
-            <Settings2 size={12} />
-            {t("editProfile")}
-          </Link>
-        </div>
-      </div>
-
       {/* ── Quick tweaks (collapsible) ── */}
       <button
         type="button"
@@ -159,11 +136,25 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
         </div>
       )}
 
-      {/* ── Run button ── */}
-      <Button type="submit" disabled={mutation.isPending} className="w-full">
-        {mutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-        <span className="ml-2">{t("runFork")}</span>
-      </Button>
+      {/* ── Actions ── */}
+      <div className="flex items-center gap-2">
+        <Button type="submit" disabled={mutation.isPending} className="flex-1">
+          {mutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+          <span className="ml-2">{t("runFork")}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleExtract}
+          disabled={extracting}
+        >
+          {extracting ? <Loader2 className="animate-spin" /> : <Sparkles />}
+          {t("extractFromPosts")}
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/profile"><UserPen />{t("editProfile")}</Link>
+        </Button>
+      </div>
 
       {mutation.error && (
         <p className="rounded-md border border-[#e1b7a9] bg-[#fff8f5] p-3 text-sm text-[#7f3525]">

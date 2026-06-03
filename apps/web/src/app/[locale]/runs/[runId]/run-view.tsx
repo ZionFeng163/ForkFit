@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, AlertTriangle, CheckCircle2, Clock, DollarSign,
   Loader2, Send, XCircle, Bookmark, BookmarkCheck, Share2,
+  ExternalLink, Plus, X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -17,34 +18,41 @@ import type { RunResultPayload } from "@/types/forkfit";
 export function RunView({ runId }: { runId: string }) {
   const t = useTranslations("Run");
   const queryClient = useQueryClient();
+
+  // REST query: initial load + final result only (no polling)
   const query = useQuery({
     queryKey: ["run", runId],
     queryFn: () => getRun(runId),
   });
 
-  // SSE: subscribe to real-time updates, fall back to polling if SSE unavailable
+  // Real-time progress from SSE (separate from React Query)
+  const [liveTrace, setLiveTrace] = useState<{ steps: { node: string; status: string }[] } | null>(null);
+  const [liveStatus, setLiveStatus] = useState<string | null>(null);
+
   useEffect(() => {
-    const status = query.data?.status;
-    if (status === "succeeded" || status === "failed" || status === "cancelled") return;
-
-    let es: EventSource | null = null;
-    try {
-      const token = localStorage.getItem("forkfit.auth.token") || "";
-      es = new EventSource(`/api/backend/runs/${runId}/stream?token=${encodeURIComponent(token)}`);
-      es.onmessage = () => {
+    const token = localStorage.getItem("forkfit.auth.token") || "";
+    const url = `/api/backend/runs/${runId}/stream?token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.status) setLiveStatus(data.status);
+      if (data.trace) setLiveTrace(data.trace);
+      const terminal = ["succeeded", "failed", "cancelled", "needs_input"].includes(data.status);
+      if (terminal) {
+        es.close();
         queryClient.invalidateQueries({ queryKey: ["run", runId] });
-      };
-      es.onerror = () => {
-        es?.close();
-      };
-    } catch {
-      // SSE not available — no action, React Query won't refetch either
-    }
+      }
+    };
+    es.onerror = () => { es.close(); };
+    return () => { es.close(); };
+  }, [runId, queryClient]);
 
-    return () => { es?.close(); };
-  }, [runId, query.data?.status, queryClient]);
-
-  const run = query.data;
+  // Merge: SSE data takes priority over REST data for progress
+  const run = query.data ? {
+    ...query.data,
+    status: liveStatus || query.data.status,
+    trace: liveTrace || query.data.trace,
+  } : undefined;
 
   return (
     <div className="space-y-6">
@@ -111,6 +119,10 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
   const [notes, setNotes] = useState(firstMeal?.notes || "");
   const [steps, setSteps] = useState(firstMeal?.steps || []);
 
+  function splitList(s: string) {
+    return s.split(/[,，]/).map((x) => x.trim()).filter(Boolean);
+  }
+
   function handlePublish() {
     setPublishing(true);
     const payload = {
@@ -118,10 +130,10 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
       description,
       image_urls: images,
       recipe_name: title,
-      ingredients: ingredients.split(",").map((s) => s.trim()).filter(Boolean),
-      equipment: equipment.split(",").map((s) => s.trim()).filter(Boolean),
+      ingredients: splitList(ingredients),
+      equipment: splitList(equipment),
       cook_time_minutes: Number(cookTime) || 30,
-      tags: tags.split(",").map((s) => s.trim()).filter(Boolean),
+      tags: splitList(tags),
       notes,
       steps,
     };
@@ -188,8 +200,8 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
           {steps.length > 0 ? (
             <ol className="mt-3 space-y-2 text-sm text-[#625b52]">
               {steps.map((step, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f5f0ea] text-xs font-medium text-[#7b6f61]">
+                <li key={i} className="flex items-start gap-2">
+                  <span className="mt-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f5f0ea] text-xs font-medium text-[#7b6f61]">
                     {i + 1}
                   </span>
                   <input
@@ -201,16 +213,29 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
                     }}
                     className="flex-1 border-0 bg-transparent text-sm text-[#625b52] focus:outline-none focus:ring-0 p-0"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                    className="mt-1 shrink-0 rounded p-0.5 text-[#9f9890] hover:bg-[#f5f0ea] hover:text-[#7f3525]"
+                    title={t("removeStep")}
+                  >
+                    <X size={14} />
+                  </button>
                 </li>
               ))}
             </ol>
           ) : (
             <p className="mt-2 text-xs text-[#9f9890]">{t("noSteps")}</p>
           )}
+          <button
+            type="button"
+            onClick={() => setSteps([...steps, ""])}
+            className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[#625b52] hover:text-[#2f2a24]"
+          >
+            <Plus size={14} />
+            {t("addStep")}
+          </button>
         </div>
-
-        {/* Shopping list */}
-        <ShoppingList forkedMeals={forked.meals} />
 
         {/* Image upload */}
         <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
@@ -419,16 +444,12 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
           </section>
         ) : null}
 
-        <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <h2 className="text-sm font-medium text-[#6f6a61]">{t("originalPost")}</h2>
-          <p className="mt-1 text-sm font-medium">{result.original_meal_pack.title}</p>
-          <p className="mt-1 text-xs text-[#9f9890]">{result.original_meal_pack.theme}</p>
-        </section>
+        {/* Shopping list */}
+        <ShoppingList forkedMeals={forked.meals} />
 
-        <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <h2 className="text-sm font-medium text-[#6f6a61]">{t("finalReview")}</h2>
-          <p className="mt-1 text-sm">{result.final_review.status}</p>
-        </section>
+        <OriginalPostCard pack={result.original_meal_pack} />
+
+        <FinalReviewCard review={result.final_review} />
       </aside>
     </div>
   );
@@ -653,16 +674,9 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
           ) : null}
         </section>
 
-        <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <h2 className="text-sm font-medium text-[#6f6a61]">{t("originalPost")}</h2>
-          <p className="mt-1 text-sm font-medium">{result.original_meal_pack.title}</p>
-          <p className="mt-1 text-xs text-[#9f9890]">{result.original_meal_pack.theme}</p>
-        </section>
+        <OriginalPostCard pack={result.original_meal_pack} />
 
-        <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <h2 className="text-sm font-medium text-[#6f6a61]">{t("finalReview")}</h2>
-          <p className="mt-1 text-sm">{result.final_review.status}</p>
-        </section>
+        <FinalReviewCard review={result.final_review} />
       </aside>
     </div>
   );
@@ -678,14 +692,65 @@ function Field({ label, help, children }: { label: string; help?: string; childr
   );
 }
 
-const FORK_STEPS = [
-  { node: "load_input", labelKey: "stepLoading" },
-  { node: "user_agent", labelKey: "stepAnalyzing" },
-  { node: "reviewer_agents", labelKey: "stepChecking" },
-  { node: "adapter_agent", labelKey: "stepAdapting" },
-  { node: "cooking_steps", labelKey: "stepCooking" },
-  { node: "final_validation", labelKey: "stepValidating" },
+// Time-based step estimation (typical durations in seconds)
+const STEP_TIMES = [
+  { node: "load_input", labelKey: "stepLoading", end: 0.5 },
+  { node: "user_agent", labelKey: "stepAnalyzing", end: 2 },
+  { node: "reviewer_agents", labelKey: "stepChecking", end: 3.5 },
+  { node: "adapter_agent", labelKey: "stepAdapting", end: 7 },
+  { node: "cooking_steps", labelKey: "stepCooking", end: 9 },
+  { node: "final_validation", labelKey: "stepValidating", end: 9.5 },
 ];
+
+function ForkProgress({ run }: { run: { status: string; started_at?: string | null; trace?: { steps: { node: string; status: string }[] } | null } }) {
+  const t = useTranslations("Run");
+  const [elapsed, setElapsed] = useState(0);
+  const traceSteps = run.trace?.steps || [];
+  const completedNodes = new Set(traceSteps.filter(s => s.status === "success").map(s => s.node));
+  const hasTrace = traceSteps.length > 0;
+
+  // Timer: tick every 200ms while running
+  useEffect(() => {
+    if (run.status !== "running" && run.status !== "queued") return;
+    const start = Date.now();
+    const iv = setInterval(() => setElapsed((Date.now() - start) / 1000), 200);
+    return () => clearInterval(iv);
+  }, [run.status]);
+
+  const currentIdx = hasTrace
+    ? STEP_TIMES.findIndex(s => !completedNodes.has(s.node))
+    : STEP_TIMES.findIndex(s => elapsed < s.end);
+
+  return (
+    <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <Loader2 size={18} className="animate-spin text-[#625b52]" />
+        <h2 className="font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
+      </div>
+      <div className="space-y-3">
+        {STEP_TIMES.map((step, i) => {
+          const done = hasTrace ? completedNodes.has(step.node) : i < currentIdx;
+          const active = i === currentIdx;
+          return (
+            <div key={step.node} className="flex items-center gap-3">
+              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                done ? "bg-[#2f6b45] text-white"
+                : active ? "bg-[#e8f5e9] text-[#2f6b45] ring-2 ring-[#2f6b45] ring-offset-1"
+                : "bg-[#f0ebe4] text-[#9f9890]"
+              }`}>
+                {done ? "✓" : i + 1}
+              </div>
+              <span className={`text-sm ${done ? "text-[#2f2a24]" : active ? "font-medium text-[#2f2a24]" : "text-[#9f9890]"}`}>
+                {t(step.labelKey)}
+              </span>
+              {active && <Loader2 size={14} className="animate-spin text-[#2f6b45]" />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function ShareButton({ runId }: { runId: string }) {
   const t = useTranslations("Run");
@@ -712,46 +777,6 @@ function ShareButton({ runId }: { runId: string }) {
       {copied ? <CheckCircle2 size={14} className="text-[#2f6b45]" /> : <Share2 size={14} />}
       {copied ? t("linkCopied") : t("shareFork")}
     </button>
-  );
-}
-
-function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node: string; status: string }[] } | null } }) {
-  const t = useTranslations("Run");
-  const traceSteps = run.trace?.steps || [];
-  const completedNodes = new Set(traceSteps.filter(s => s.status === "success").map(s => s.node));
-
-  // Determine current step: last completed + 1
-  const currentIdx = FORK_STEPS.findIndex(s => !completedNodes.has(s.node));
-  const isRunning = run.status === "running" || run.status === "queued";
-
-  return (
-    <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <Loader2 size={18} className="animate-spin text-[#625b52]" />
-        <h2 className="font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
-      </div>
-      <div className="space-y-3">
-        {FORK_STEPS.map((step, i) => {
-          const done = completedNodes.has(step.node);
-          const active = isRunning && i === currentIdx;
-          return (
-            <div key={step.node} className="flex items-center gap-3">
-              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                done ? "bg-[#2f6b45] text-white"
-                : active ? "bg-[#e8f5e9] text-[#2f6b45] ring-2 ring-[#2f6b45] ring-offset-1"
-                : "bg-[#f0ebe4] text-[#9f9890]"
-              }`}>
-                {done ? "✓" : i + 1}
-              </div>
-              <span className={`text-sm ${done ? "text-[#2f2a24]" : active ? "font-medium text-[#2f2a24]" : "text-[#9f9890]"}`}>
-                {t(step.labelKey)}
-              </span>
-              {active && <Loader2 size={14} className="animate-spin text-[#2f6b45]" />}
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -788,6 +813,69 @@ function ShoppingList({ forkedMeals }: { forkedMeals: { name: string; ingredient
         ))}
       </ul>
     </div>
+  );
+}
+
+const REVIEW_STYLE: Record<string, { color: string; bg: string; icon: typeof CheckCircle2 }> = {
+  pass:  { color: "text-[#2f6b45]", bg: "bg-[#f0faf3]", icon: CheckCircle2 },
+  warn:  { color: "text-[#b8860b]", bg: "bg-[#fffdf0]", icon: AlertTriangle },
+  block: { color: "text-[#7f3525]", bg: "bg-[#fff8f5]", icon: XCircle },
+};
+
+function FinalReviewCard({ review }: { review: { agent: string; status: string; findings: { type: string; severity: string; message: string; suggested_action?: string }[] } }) {
+  const t = useTranslations("Run");
+  const style = REVIEW_STYLE[review.status] || REVIEW_STYLE.pass;
+  const Icon = style.icon;
+  const statusLabel = t(`status${review.status.charAt(0).toUpperCase() + review.status.slice(1)}` as any, { defaultValue: review.status });
+
+  return (
+    <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
+      <h2 className="text-sm font-medium text-[#6f6a61]">{t("finalReview")}</h2>
+      <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${style.bg} ${style.color}`}>
+        <Icon size={12} />
+        {statusLabel}
+      </div>
+      {review.findings.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {review.findings.map((f, i) => (
+            <div key={i} className="flex items-start gap-2 text-xs">
+              <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${f.severity === "high" ? "bg-[#7f3525]" : f.severity === "medium" ? "bg-[#b8860b]" : "bg-[#9f9890]"}`} />
+              <div>
+                <span className="text-[#5a5249]">{f.message}</span>
+                {f.suggested_action && <span className="ml-1 text-[#9f9890]">→ {f.suggested_action}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function OriginalPostCard({ pack }: { pack: { id: string; title: string; theme: string; meals: { name: string; ingredients: string[] }[] } }) {
+  const t = useTranslations("Run");
+  const firstMeal = pack.meals[0];
+
+  return (
+    <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
+      <h2 className="text-sm font-medium text-[#6f6a61]">{t("originalPost")}</h2>
+      <p className="mt-2 text-sm font-semibold text-[#2f2a24]">{pack.title}</p>
+      {pack.theme && <p className="mt-0.5 text-xs text-[#9f9890]">{pack.theme}</p>}
+      {firstMeal && (
+        <p className="mt-2 text-xs text-[#7a7167]">
+          🥘 {firstMeal.name} · {firstMeal.ingredients.slice(0, 3).join("、")}{firstMeal.ingredients.length > 3 ? "…" : ""}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-[#9f9890]">{t("originalPostHint")}</p>
+      <Link
+        href={`/packs/${pack.id}`}
+        target="_blank"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
+      >
+        <ExternalLink size={12} />
+        {t("viewOriginal")}
+      </Link>
+    </section>
   );
 }
 
