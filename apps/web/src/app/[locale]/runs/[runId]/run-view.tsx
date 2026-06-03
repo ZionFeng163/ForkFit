@@ -107,10 +107,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
 
   // Editable state — use meal data, not workflow summary
   const [title, setTitle] = useState(forked.title || firstMeal?.name || "");
-  const mealDesc = firstMeal
-    ? [firstMeal.name, firstMeal.ingredients.slice(0, 5).join(" "), firstMeal.notes].filter(Boolean).join(" — ")
-    : "";
-  const [description, setDescription] = useState(mealDesc || result.summary || "");
+  const [description, setDescription] = useState(firstMeal?.notes || result.summary || "");
   const [ingredients, setIngredients] = useState(firstMeal?.ingredients.join(", ") || "");
   const [equipment, setEquipment] = useState(firstMeal?.equipment.join(", ") || "");
   const [cookTime, setCookTime] = useState(String(firstMeal?.cook_time_minutes || 30));
@@ -280,10 +277,10 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
 
       {/* Right column — comparison & info */}
       <aside className="space-y-4">
-        {/* Full before/after comparison table */}
+        {/* Full before/after comparison table — only show if changes exist */}
+        {result.change_log.length > 0 ? (
         <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
           <h2 className="text-base font-semibold text-[#2f2a24]">{t("substitutions")}</h2>
-          <p className="mt-1 text-xs text-[#7a7167]">{t("editHint")}</p>
 
           {(() => {
             const original = result.original_meal_pack.meals[0];
@@ -424,6 +421,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
             </div>
           ) : null}
         </section>
+        ) : null}
 
         {result.unresolved_items.length > 0 ? (
           <section className="rounded-lg border border-[#e8a9a0] bg-[#fff8f5] p-5">
@@ -601,6 +599,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
 
       {/* Right column — comparison & info */}
       <aside className="space-y-4">
+        {result.change_log.length > 0 && (
         <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
           <h2 className="text-base font-semibold text-[#2f2a24]">{t("substitutions")}</h2>
 
@@ -673,6 +672,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
             </div>
           ) : null}
         </section>
+        )}
 
         <OriginalPostCard pack={result.original_meal_pack} />
 
@@ -840,10 +840,7 @@ function FinalReviewCard({ review }: { review: { agent: string; status: string; 
           {review.findings.map((f, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
               <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${f.severity === "high" ? "bg-[#7f3525]" : f.severity === "medium" ? "bg-[#b8860b]" : "bg-[#9f9890]"}`} />
-              <div>
-                <span className="text-[#5a5249]">{f.message}</span>
-                {f.suggested_action && <span className="ml-1 text-[#9f9890]">→ {f.suggested_action}</span>}
-              </div>
+              <span className="text-[#5a5249]">{f.message}</span>
             </div>
           ))}
         </div>

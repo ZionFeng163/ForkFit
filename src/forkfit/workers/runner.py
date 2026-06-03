@@ -39,49 +39,20 @@ def _build_failure_message(result, locale: str = "zh") -> str:
     if not findings:
         return "这道菜暂时无法适配你的偏好，建议换个菜谱试试。" if is_zh else "This dish can't be adapted to your preferences right now. Try another recipe."
 
-    # Map finding types to friendly messages
-    friendly = {
-        "allergy": (
-            lambda f: f.message if is_zh and "含有" in f.message
-            else f"这道菜含有你的过敏源，没法安全替换。" if is_zh
-            else f.message,
-        ),
-        "diet_rule": (
-            lambda f: f.message if is_zh and "冲突" in f.message
-            else f"这道菜不符合你的饮食规则。" if is_zh
-            else f.message,
-        ),
-        "equipment": (
-            lambda f: f.message if is_zh and "厨具" in f.message
-            else f"这道菜需要你没有的厨具，但可以尝试换个做法。" if is_zh
-            else f.message,
-        ),
-        "budget": (
-            lambda f: f.message if is_zh and "预算" in f.message
-            else f"即使替换后仍然超出预算。" if is_zh
-            else f.message,
-        ),
-        "time": (
-            lambda f: f.message if is_zh and "分钟" in f.message
-            else f"即使调整后仍然超过你的烹饪时间限制。" if is_zh
-            else f.message,
-        ),
-    }
-
+    # Use finding messages directly (already user-friendly from ConstraintGuard)
     messages = []
     seen = set()
     for f in findings:
         if f.type in seen:
             continue
         seen.add(f.type)
-        fn = friendly.get(f.type)
-        if fn:
-            messages.append(fn(f))
+        if f.message:
+            messages.append(f.message)
 
     if not messages:
         return "这道菜暂时无法适配你的偏好，建议换个菜谱试试。" if is_zh else "This dish can't be adapted to your preferences right now. Try another recipe."
 
-    prefix = "很抱歉，这道菜没法为你适配：\n" if is_zh else "Sorry, this dish couldn't be adapted for you:\n"
+    prefix = "很抱歉，这道菜没法为你适配：\n" if is_zh else "Sorry, this dish couldn't be adapted:\n"
     return prefix + "\n".join(f"• {m}" for m in messages)
 
 

@@ -268,11 +268,7 @@ class ConstraintGuard:
             text = meal.searchable_text()
             for allergy in constraints.allergies:
                 if _contains_term(text, allergy):
-                    msg = (
-                        f"{meal.name} 含有过敏源「{allergy}」，与过敏约束冲突。"
-                        if zh
-                        else f"{meal.name} contains {allergy}, which conflicts with an allergy constraint."
-                    )
+                    msg = f"含有过敏源「{allergy}」" if zh else f"Contains allergen: {allergy}"
                     findings.append(
                         AgentFinding(
                             type="allergy",
@@ -293,11 +289,7 @@ class ConstraintGuard:
             for rule in constraints.diet_rules:
                 blocked_term = _norm(rule).removeprefix("no ")
                 if blocked_term and _contains_term(text, blocked_term):
-                    msg = (
-                        f"{meal.name} 与饮食规则冲突：{rule}。"
-                        if zh
-                        else f"{meal.name} conflicts with diet rule: {rule}."
-                    )
+                    msg = f"不符合饮食要求：{rule}" if zh else f"Conflicts with diet rule: {rule}"
                     findings.append(
                         AgentFinding(
                             type="diet_rule",
@@ -322,19 +314,14 @@ class ConstraintGuard:
             ]
             if missing:
                 joined = "、".join(missing) if zh else ", ".join(missing)
-                msg = (
-                    f"{meal.name} 需要你没有的厨具：{joined}，适配器会尝试替代方案。"
-                    if zh
-                    else f"{meal.name} suggests equipment you don't have: {joined}. The adapter will try to find an alternative method."
-                )
-                suggested = "适配器会尽量调整烹饪方式。" if zh else "The adapter will adapt the cooking method if possible."
+                msg = f"需要厨具：{joined}" if zh else f"Requires equipment: {joined}"
                 findings.append(
                     AgentFinding(
                         type="equipment",
                         severity="medium",
                         affected_items=[meal.id],
                         message=msg,
-                        suggested_action=suggested,
+                        suggested_action="已自动调整烹饪方式" if zh else "Cooking method adjusted",
                     )
                 )
         return findings
@@ -348,9 +335,9 @@ class ConstraintGuard:
             if over_by <= 0:
                 continue
             msg = (
-                f"{meal.name} 需要 {meal.cook_time_minutes} 分钟，超过 {constraints.max_cook_time_minutes} 分钟的限制。"
+                f"烹饪时间 {meal.cook_time_minutes} 分钟，超出预期"
                 if zh
-                else f"{meal.name} takes {meal.cook_time_minutes} minutes, over the {constraints.max_cook_time_minutes}-minute limit."
+                else f"Cook time is {meal.cook_time_minutes} min, exceeds limit"
             )
             findings.append(
                 AgentFinding(
@@ -359,7 +346,7 @@ class ConstraintGuard:
                     affected_items=[meal.id],
                     message=msg,
                     required_action="shorten recipe" if over_by > 15 else "",
-                    suggested_action="简化步骤或换个时间充裕的日子" if zh else "simplify prep or move to a less busy day",
+                    suggested_action="已简化步骤" if zh else "Steps simplified",
                 )
             )
         return findings
@@ -372,9 +359,9 @@ class ConstraintGuard:
         over_ratio = (meal_pack.estimated_cost - constraints.budget) / constraints.budget
         severity = "high" if over_ratio > 0.15 else "medium"
         msg = (
-            f"预估费用 ¥{meal_pack.estimated_cost:.2f} 超出预算 ¥{constraints.budget:.2f}。"
+            f"预估费用 ¥{meal_pack.estimated_cost:.2f}，超出预算"
             if zh
-            else f"Estimated cost ${meal_pack.estimated_cost:.2f} exceeds budget ${constraints.budget:.2f}."
+            else f"Estimated cost ${meal_pack.estimated_cost:.2f}, over budget"
         )
         return [
             AgentFinding(
