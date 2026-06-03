@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, AlertTriangle, CheckCircle2, Clock, DollarSign,
+  ArrowLeft, AlertTriangle, CheckCircle2,
   Loader2, Send, XCircle, Bookmark, BookmarkCheck, Share2,
   ExternalLink, Plus, X,
 } from "lucide-react";
@@ -18,13 +18,12 @@ import type { RunResultPayload } from "@/types/forkfit";
 export function RunView({ runId }: { runId: string }) {
   const t = useTranslations("Run");
 
-  // Poll every 1.5s while run is in progress — simple and reliable
   const query = useQuery({
     queryKey: ["run", runId],
     queryFn: () => getRun(runId),
     refetchInterval: (query) => {
       const s = query.state.data?.status;
-      return s === "running" || s === "queued" ? 1500 : false;
+      return s === "running" || s === "queued" ? 300 : false;
     },
   });
 
