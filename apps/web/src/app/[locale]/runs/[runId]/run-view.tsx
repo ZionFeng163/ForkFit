@@ -677,14 +677,12 @@ const STEP_TIMES = [
   { node: "final_validation", labelKey: "stepValidating", end: 9.5 },
 ];
 
-function ForkProgress({ run }: { run: { status: string; started_at?: string | null; trace?: { steps: { node: string; status: string }[] } | null } }) {
+function ForkProgress({ run }: { run: { status: string; trace?: { steps: { node: string; status: string }[] } | null } }) {
   const t = useTranslations("Run");
   const [elapsed, setElapsed] = useState(0);
-  const traceSteps = run.trace?.steps || [];
-  const completedNodes = new Set(traceSteps.filter(s => s.status === "success").map(s => s.node));
-  const hasTrace = traceSteps.length > 0;
+  const completedNodes = new Set((run.trace?.steps || []).filter(s => s.status === "success").map(s => s.node));
+  const hasTrace = (run.trace?.steps || []).length > 0;
 
-  // Timer: tick every 200ms while running
   useEffect(() => {
     if (run.status !== "running" && run.status !== "queued") return;
     const start = Date.now();
@@ -692,19 +690,17 @@ function ForkProgress({ run }: { run: { status: string; started_at?: string | nu
     return () => clearInterval(iv);
   }, [run.status]);
 
+  // Find current step: first incomplete step
   const currentIdx = hasTrace
     ? STEP_TIMES.findIndex(s => !completedNodes.has(s.node))
     : STEP_TIMES.findIndex(s => elapsed < s.end);
 
   return (
     <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <Loader2 size={18} className="animate-spin text-[#625b52]" />
-        <h2 className="font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
-      </div>
+      <h2 className="mb-4 font-semibold text-[#2f2a24]">{t("forkInProgress")}</h2>
       <div className="space-y-3">
         {STEP_TIMES.map((step, i) => {
-          const done = hasTrace ? completedNodes.has(step.node) : i < currentIdx;
+          const done = completedNodes.has(step.node);
           const active = i === currentIdx;
           return (
             <div key={step.node} className="flex items-center gap-3">
