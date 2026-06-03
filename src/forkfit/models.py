@@ -65,7 +65,6 @@ class MealPack:
 @dataclass(slots=True)
 class UserProfile:
     people_count: int
-    budget: float
     likes: list[str] = field(default_factory=list)
     dislikes: list[str] = field(default_factory=list)
     allergies: list[str] = field(default_factory=list)
@@ -89,7 +88,6 @@ class PreferenceProfile:
             allergies=list(self.allergies),
             diet_rules=list(self.diet_rules),
             equipment=list(self.equipment),
-            budget=user_profile.budget,
             max_cook_time_minutes=user_profile.max_cook_time_minutes,
             people_count=user_profile.people_count,
         )
@@ -127,7 +125,6 @@ class ConstraintSet:
     allergies: list[str]
     diet_rules: list[str]
     equipment: list[str]
-    budget: float
     max_cook_time_minutes: int
     people_count: int
 

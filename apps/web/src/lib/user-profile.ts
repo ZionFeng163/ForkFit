@@ -4,7 +4,6 @@ export const USER_PROFILE_STORAGE_KEY = "forkfit.userProfile.v1";
 
 export type UserProfileForm = {
   people_count: string;
-  budget: string;
   likes: string;
   dislikes: string;
   allergies: string;
@@ -16,7 +15,6 @@ export type UserProfileForm = {
 
 export const defaultUserProfileForm: UserProfileForm = {
   people_count: "1",
-  budget: "60",
   likes: "",
   dislikes: "",
   allergies: "",
@@ -36,7 +34,6 @@ export function splitList(value: string) {
 export function profileFormToUserProfile(form: UserProfileForm): UserProfile {
   return {
     people_count: Number(form.people_count),
-    budget: Number(form.budget),
     likes: splitList(form.likes),
     dislikes: splitList(form.dislikes),
     allergies: splitList(form.allergies),

@@ -201,7 +201,7 @@ class ConstraintAgent:
                         "status": "pass | warn | block",
                         "findings": [
                             {
-                                "type": "allergy | diet_rule | equipment | budget | time",
+                                "type": "allergy | diet_rule | equipment | time",
                                 "severity": "low | medium | high",
                                 "affected_items": ["meal id"],
                                 "message": "string",
@@ -214,7 +214,7 @@ class ConstraintAgent:
                     "rules": [
                         "High severity means the fork cannot be published until fixed.",
                         "Allergy, diet_rule, and unavailable equipment conflicts are high severity.",
-                        "Budget and time can be warn unless clearly impossible.",
+                        "Time can be warn unless clearly impossible.",
                         "affected_items must use meal ids from meal_pack.",
                         "status is block if any high-severity finding exists, warn if only low/medium findings exist, otherwise pass.",
                     ],
@@ -254,7 +254,6 @@ class ConstraintGuard:
         findings.extend(self._diet_rule_findings(meal_pack, constraints, zh))
         findings.extend(self._equipment_findings(meal_pack, constraints, zh))
         findings.extend(self._time_findings(meal_pack, constraints, zh))
-        findings.extend(self._budget_findings(meal_pack, constraints, zh))
 
         has_block = any(finding.severity == "high" for finding in findings)
         status = "block" if has_block else "warn" if findings else "pass"
@@ -351,29 +350,6 @@ class ConstraintGuard:
             )
         return findings
 
-    def _budget_findings(
-        self, meal_pack: MealPack, constraints: ConstraintSet, zh: bool = False
-    ) -> list[AgentFinding]:
-        if constraints.budget <= 0 or meal_pack.estimated_cost <= constraints.budget:
-            return []
-        over_ratio = (meal_pack.estimated_cost - constraints.budget) / constraints.budget
-        severity = "high" if over_ratio > 0.15 else "medium"
-        msg = (
-            f"预估费用 ¥{meal_pack.estimated_cost:.2f}，超出预算"
-            if zh
-            else f"Estimated cost ${meal_pack.estimated_cost:.2f}, over budget"
-        )
-        return [
-            AgentFinding(
-                type="budget",
-                severity=severity,
-                affected_items=[meal.id for meal in meal_pack.meals],
-                message=msg,
-                required_action="reduce cost" if severity == "high" else "",
-                suggested_action="替换昂贵食材或减少重复采购" if zh else "replace expensive ingredients or reduce duplicate purchases",
-            )
-        ]
-
 
 class AdapterAgent:
     agent_name = "adapter"
@@ -427,7 +403,7 @@ class AdapterAgent:
                         "from_value": "string",
                         "to_value": "string",
                         "reason": "string",
-                        "source_agent": "constraint | user | nutrition | budget | pantry | knowledge_base",
+                        "source_agent": "constraint | user | nutrition | pantry | knowledge_base",
                     }
                 ],
                 "unresolved_items": [],
@@ -522,7 +498,6 @@ def _constraints_from_reviews(
         allergies=list(user_agent_output.preference_profile.allergies),
         diet_rules=list(user_agent_output.preference_profile.diet_rules),
         equipment=list(user_agent_output.preference_profile.equipment),
-        budget=10_000,
         max_cook_time_minutes=24 * 60,
         people_count=1,
     )
@@ -680,7 +655,7 @@ class UserPreferenceExtractor:
                 f"ingredient names (chicken breast→鸡胸肉, broccoli→西兰花, rice→米饭), "
                 f"diet terms (high protein→高蛋白, healthy→健康), "
                 f"equipment (oven→烤箱, stove→灶台), "
-                f"preferences (quick meals→快手菜, budget conscious→注重性价比). "
+                f"preferences (quick meals→快手菜). "
                 f"If the output language is English, keep everything in English. "
                 f"NEVER mix languages in the output."
             ),

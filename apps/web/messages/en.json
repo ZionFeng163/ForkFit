@@ -22,8 +22,8 @@
   },
   "Home": {
     "title": "Discover dishes",
-    "description": "Browse community recipe posts, then fork one against your allergies, equipment, budget, and cooking time.",
-    "heroDescription": "Find a recipe you like, click Fork, and ForkFit adapts it to your taste, allergies, and budget automatically.",
+    "description": "Browse community recipe posts, then fork one against your allergies, equipment和烹饪时间.",
+    "heroDescription": "Find a recipe you like, click Fork, and ForkFit adapts it to your taste automatically.",
     "heroStep1": "Pick a recipe",
     "heroStep2": "Click Fork",
     "heroStep3": "Get your personalized version",
@@ -100,7 +100,6 @@
   },
   "ProfileFields": {
     "people": "People",
-    "budget": "Budget",
     "likes": "Likes",
     "dislikes": "Dislikes",
     "allergies": "Allergies",

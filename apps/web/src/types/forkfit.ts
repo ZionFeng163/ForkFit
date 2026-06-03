@@ -22,7 +22,6 @@ export type MealPack = {
 
 export type UserProfile = {
   people_count: number;
-  budget: number;
   likes: string[];
   dislikes: string[];
   allergies: string[];

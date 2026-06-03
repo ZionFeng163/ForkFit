@@ -145,9 +145,6 @@ async def resolve_run(
                         elif item.get("type") == "equipment":
                             # Replace the equipment
                             meal["equipment"] = [substitute]
-                        elif item.get("type") == "budget":
-                            # Reduce cost
-                            meal["estimated_cost"] = max(1, meal.get("estimated_cost", 10) - 5)
 
     # Mark as running again
     store.mark_running(run_id)

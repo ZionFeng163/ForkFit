@@ -105,22 +105,13 @@ export function ForkForm({ mealPack }: { mealPack: MealPack }) {
       </button>
 
       {showTweaks && (
-        <div className="grid gap-3 rounded-lg border border-[#e4ded6] bg-white p-4 sm:grid-cols-3">
+        <div className="grid gap-3 rounded-lg border border-[#e4ded6] bg-white p-4 sm:grid-cols-2">
           <label className="space-y-1 text-sm font-medium">
             <span>{fields("people")}</span>
             <input
               type="number" min="1"
               value={form.people_count}
               onChange={(e) => update("people_count", e.target.value)}
-              className="input"
-            />
-          </label>
-          <label className="space-y-1 text-sm font-medium">
-            <span>{fields("budget")}</span>
-            <input
-              type="number" min="0"
-              value={form.budget}
-              onChange={(e) => update("budget", e.target.value)}
               className="input"
             />
           </label>

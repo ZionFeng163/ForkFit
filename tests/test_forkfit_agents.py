@@ -195,18 +195,6 @@ class FakeLLMClient:
                     }
                 )
 
-        if pack["meals"] and sum(item["estimated_cost"] for item in pack["meals"]) > constraints["budget"]:
-            findings.append(
-                {
-                    "type": "budget",
-                    "severity": "medium",
-                    "affected_items": [item["id"] for item in pack["meals"]],
-                    "message": "Estimated cost exceeds budget.",
-                    "suggested_action": "reduce cost",
-                    "required_action": "",
-                }
-            )
-
         return {
             "agent": "constraint",
             "status": "block"
@@ -376,7 +364,6 @@ def workflow():
 def base_user(**overrides):
     data = {
         "people_count": 1,
-        "budget": 60,
         "likes": ["rice bowls"],
         "dislikes": [],
         "allergies": [],
@@ -469,23 +456,6 @@ class ForkFitAgentTests(unittest.TestCase):
             result.adapter_output.forked_meal_pack.meals[0].ingredients,
         )
         self.assertEqual(result.adapter_output.change_log[0].source_agent, "user")
-
-    def test_budget_warning_can_be_softly_reduced(self):
-        user = base_user(budget=60)
-        source = pack_with(
-            meal(
-                id="friday",
-                name="Salmon Rice Bowl",
-                ingredients=["rice", "salmon", "asparagus"],
-                estimated_cost=65,
-            )
-        )
-
-        result = workflow().run(user, source)
-
-        self.assertTrue(result.success)
-        self.assertEqual(result.reviews[0].status, "warn")
-        self.assertLessEqual(result.adapter_output.forked_meal_pack.estimated_cost, 60)
 
     def test_no_conflict_keeps_pack_unchanged(self):
         user = base_user()

@@ -135,15 +135,6 @@ class FakeLLMClient:
                     "suggested_action": "shorten recipe",
                     "required_action": "",
                 })
-        if pack.get("meals") and sum(i["estimated_cost"] for i in pack["meals"]) > constraints["budget"]:
-            findings.append({
-                "type": "budget",
-                "severity": "medium",
-                "affected_items": [i["id"] for i in pack["meals"]],
-                "message": "Estimated cost exceeds budget.",
-                "suggested_action": "reduce cost",
-                "required_action": "",
-            })
         return {
             "agent": "constraint",
             "status": (
@@ -305,7 +296,7 @@ class SyncExecutor:
         from forkfit.serialization import meal_pack_to_dict, user_profile_to_dict
         # Patch ForkFitLangGraphWorkflow inside run_forkfit_job to use our fake LLM
         with patch("forkfit.workers.runner.ForkFitLangGraphWorkflow") as MockWorkflow:
-            MockWorkflow.return_value.run = lambda up, mp, locale="en": ForkFitLangGraphWorkflow(
+            MockWorkflow.return_value.run = lambda up, mp, locale="en", on_step_complete=None: ForkFitLangGraphWorkflow(
                 llm_client=self.fake_llm
             ).run(up, mp, locale)
             run_forkfit_job(
@@ -332,7 +323,6 @@ FAKE_USER = CurrentUser(
 def _make_user(**overrides):
     data = {
         "people_count": 1,
-        "budget": 60,
         "likes": ["rice bowls"],
         "dislikes": [],
         "allergies": [],
@@ -494,31 +484,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
         # Should have a meaningful error (either constraint-based or generic)
         self.assertTrue(len(result["error"]["message"]) > 0)
 
-    # -- 5. Budget overrun → soft reduction ----------------------------------
-
-    def test_budget_overrun_softly_reduced(self):
-        fake_llm = FakeLLMClient()
-        client, store = _build_app(fake_llm)
-        # Budget=60, cost=65 → adapter reduces by 8 → 57 ≤ 60 ✓
-        user = _make_user(budget=60)
-        pack = _make_pack(_make_meal(
-            id="fri", name="Salmon Bowl",
-            ingredients=["rice", "salmon", "asparagus"],
-            estimated_cost=65,
-        ))
-
-        resp = client.post("/runs", json={
-            "user_profile": asdict(user),
-            "meal_pack": pack.to_dict(),
-        })
-        run_id = resp.json()["run_id"]
-        result = client.get(f"/runs/{run_id}").json()
-
-        self.assertEqual(result["status"], "succeeded")
-        forked_cost = result["result"]["forked_meal_pack"]["meals"][0]["estimated_cost"]
-        self.assertLessEqual(forked_cost, 60)
-
-    # -- 6. Empty meal pack --------------------------------------------------
+    # -- 5. Empty meal pack --------------------------------------------------
 
     def test_empty_meal_pack(self):
         fake_llm = FakeLLMClient()

@@ -6,7 +6,6 @@ from .models import Meal, MealPack, UserProfile
 def demo_user_profile() -> UserProfile:
     return UserProfile(
         people_count=1,
-        budget=60,
         likes=["rice bowls", "soupy meals", "mild spicy"],
         dislikes=["chicken breast"],
         allergies=["peanut"],

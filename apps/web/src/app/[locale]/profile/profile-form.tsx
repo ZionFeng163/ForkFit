@@ -93,17 +93,6 @@ export function ProfileForm() {
             className="input"
           />
         </Field>
-        <Field label={fields("budget")} htmlFor="budget">
-          <input
-            id="budget"
-            type="number"
-            min="0"
-            placeholder="60"
-            value={form.budget}
-            onChange={(event) => update("budget", event.target.value)}
-            className="input"
-          />
-        </Field>
         <Field label={fields("allergies")} htmlFor="allergies">
           <input
             id="allergies"

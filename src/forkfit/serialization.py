@@ -33,7 +33,6 @@ def meal_pack_to_dict(meal_pack: MealPack) -> dict:
 def user_profile_from_dict(data: dict) -> UserProfile:
     return UserProfile(
         people_count=int(data["people_count"]),
-        budget=float(data["budget"]),
         likes=list(data.get("likes", [])),
         dislikes=list(data.get("dislikes", [])),
         allergies=list(data.get("allergies", [])),
@@ -47,7 +46,6 @@ def user_profile_from_dict(data: dict) -> UserProfile:
 def user_profile_to_dict(user_profile: UserProfile) -> dict:
     return {
         "people_count": user_profile.people_count,
-        "budget": user_profile.budget,
         "likes": list(user_profile.likes),
         "dislikes": list(user_profile.dislikes),
         "allergies": list(user_profile.allergies),
@@ -157,7 +155,7 @@ def run_trace_from_dict(data: dict | None) -> RunTrace | None:
 
 def normalize_source_agent(value: str) -> str:
     normalized = value.lower()
-    for candidate in ("constraint", "user", "nutrition", "budget", "pantry", "knowledge_base"):
+    for candidate in ("constraint", "user", "nutrition", "pantry", "knowledge_base"):
         if candidate in normalized:
             return candidate
     return value.strip() or "unknown"

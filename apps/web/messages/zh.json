@@ -23,7 +23,7 @@
   "Home": {
     "title": "发现菜谱",
     "description": "浏览社区菜谱，按过敏、厨具、预算和时间做个性化定制。",
-    "heroDescription": "找到喜欢的菜谱，点击定制，根据你的口味、过敏源和预算自动调整。",
+    "heroDescription": "找到喜欢的菜谱，点击定制，根据你的口味自动调整。",
     "heroStep1": "选一道菜",
     "heroStep2": "点击定制",
     "heroStep3": "获得你的专属版本",
@@ -100,7 +100,6 @@
   },
   "ProfileFields": {
     "people": "人数",
-    "budget": "预算",
     "likes": "喜欢",
     "dislikes": "不喜欢",
     "allergies": "过敏",
