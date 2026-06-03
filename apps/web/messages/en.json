@@ -22,7 +22,7 @@
   },
   "Home": {
     "title": "Discover dishes",
-    "description": "Browse community recipe posts, then fork one against your allergies, equipment和烹饪时间.",
+    "description": "Browse community recipes, customize by allergies, equipment, and cooking time.",
     "heroDescription": "Find a recipe you like, click Fork, and ForkFit adapts it to your taste automatically.",
     "heroStep1": "Pick a recipe",
     "heroStep2": "Click Fork",
