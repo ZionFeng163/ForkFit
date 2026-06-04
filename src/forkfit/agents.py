@@ -494,51 +494,44 @@ class AdapterAgent:
 
 
 class TranslationAgent:
-    """Translates all adapter output text fields to the target locale."""
+    """Translates all output text fields to the target locale."""
 
     agent_name = "translator"
 
     def __init__(self, llm_client: LLMClient) -> None:
         self.llm_client = llm_client
 
-    def translate(self, output: AdapterOutput, locale: str) -> AdapterOutput:
+    def translate(
+        self, output: AdapterOutput, locale: str, final_review: AgentReview | None = None
+    ) -> tuple[AdapterOutput, AgentReview | None]:
         if not locale.startswith("zh"):
-            return output  # English is the default, no translation needed
+            return output, final_review
 
         lang_hint = "Chinese (中文)"
-        meal_pack = output.forked_meal_pack
 
         user_message = {
-            "task": "Translate all text fields to Chinese. Return the same JSON structure with translated values.",
-            "forked_meal_pack": meal_pack.to_dict(),
+            "task": "Translate all text fields to Chinese. Return the same JSON structure.",
+            "forked_meal_pack": output.forked_meal_pack.to_dict(),
             "change_log": [asdict(c) for c in output.change_log],
             "summary": output.summary,
             "description": output.description,
+            "final_review": asdict(final_review) if final_review else None,
             "rules": [
-                "Translate EVERYTHING: meal name, ingredients, equipment, tags, notes, steps, summary, description, change reasons.",
-                "Keep the same JSON structure. Only translate text values.",
-                "Equipment names must be Chinese (e.g. '灶台' not 'stovetop', '烤箱' not 'oven').",
-                "Ingredient names must be Chinese (e.g. '鸡胸肉' not 'chicken breast').",
-                "Keep meal ids unchanged.",
-                "Be concise and natural.",
+                "Translate EVERYTHING: meal name, ingredients, equipment, tags, notes, steps, summary, description, change reasons, review messages.",
+                "Equipment: 'stovetop'→'灶台', 'oven'→'烤箱', 'wok'→'炒锅', 'pot'→'锅', 'pan'→'平底锅'.",
+                "Keep JSON structure. Only translate text values. Keep meal ids unchanged.",
             ],
         }
 
         payload = self.llm_client.complete_json(
             agent=self.agent_name,
-            system=(
-                f"You are a food recipe translator. Translate all text to {lang_hint}. "
-                f"Return JSON with the same structure. Do NOT add explanations."
-            ),
+            system=f"Translate all recipe text to {lang_hint}. Return JSON only.",
             user=json.dumps(user_message, ensure_ascii=False),
-            max_tokens=1200,
+            max_tokens=1500,
         )
 
-        # Apply translations
         if "forked_meal_pack" in payload:
-            translated_pack = meal_pack_from_dict(payload["forked_meal_pack"])
-            output.forked_meal_pack = translated_pack
-
+            output.forked_meal_pack = meal_pack_from_dict(payload["forked_meal_pack"])
         if "change_log" in payload:
             output.change_log = [
                 ChangeLogEntry(
@@ -550,13 +543,32 @@ class TranslationAgent:
                 )
                 for item in payload["change_log"]
             ]
-
         if "summary" in payload:
             output.summary = payload["summary"]
         if "description" in payload:
             output.description = payload["description"]
 
-        return output
+        translated_review = final_review
+        if final_review and "final_review" in payload:
+            review_data = payload["final_review"]
+            translated_review = AgentReview(
+                agent=final_review.agent,
+                status=final_review.status,
+                findings=[
+                    AgentFinding(
+                        type=f.get("type", ""),
+                        severity=f.get("severity", "low"),
+                        affected_items=f.get("affected_items", []),
+                        message=f.get("message", ""),
+                        suggested_action=f.get("suggested_action", ""),
+                        required_action=f.get("required_action", ""),
+                    )
+                    for f in review_data.get("findings", [])
+                ],
+                scores=final_review.scores,
+            )
+
+        return output, translated_review
 
 
 def _constraints_from_reviews(

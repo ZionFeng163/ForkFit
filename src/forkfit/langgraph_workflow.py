@@ -262,8 +262,14 @@ class ForkFitLangGraphWorkflow:
     def _run_translate(self, state: ForkFitGraphState) -> ForkFitGraphState:
         locale = state.get("locale", "en")
         adapter_output = state["adapter_output"]
-        translated = self.translation_agent.translate(adapter_output, locale)
-        return {"adapter_output": translated}
+        final_review = state.get("final_review")
+        translated_output, translated_review = self.translation_agent.translate(
+            adapter_output, locale, final_review
+        )
+        result = {"adapter_output": translated_output}
+        if translated_review:
+            result["final_review"] = translated_review
+        return result
 
     def _traced_node(
         self,
