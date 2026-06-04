@@ -11,6 +11,7 @@ dependencies = [
     "langgraph>=0.2",
     "langsmith>=0.8",
     "psycopg[binary]>=3.2",
+    "python-multipart>=0.0.6",
     "PyJWT>=2.8",
     "redis>=5.0",
     "sqlalchemy>=2.0",
