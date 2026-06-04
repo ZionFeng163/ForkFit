@@ -129,12 +129,22 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
       {/* Left column — editable recipe form */}
       <section className="space-y-5">
         <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
-            <div>
-              <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
-              <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
+              <div>
+                <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
+                <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
+              </div>
             </div>
+            <Link
+              href={`/packs/${result.original_meal_pack.id}`}
+              target="_blank"
+              className="shrink-0 flex items-center gap-1 text-xs text-[#9f9890] hover:text-[#625b52]"
+            >
+              <ExternalLink size={12} />
+              {t("viewOriginal")}
+            </Link>
           </div>
         </div>
 
@@ -417,8 +427,6 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
         {/* Shopping list */}
         <ShoppingList forkedMeals={forked.meals} />
 
-        <OriginalPostCard pack={result.original_meal_pack} />
-
         <FinalReviewCard review={result.final_review} />
       </aside>
     </div>
@@ -528,12 +536,22 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
       {/* Left column — forked result (editable if succeeded, read-only if failed) */}
       <section className="space-y-5">
         <div className="rounded-lg border border-[#e4ded6] bg-white p-5">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
-            <div>
-              <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
-              <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
+              <div>
+                <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
+                <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
+              </div>
             </div>
+            <Link
+              href={`/packs/${result.original_meal_pack.id}`}
+              target="_blank"
+              className="shrink-0 flex items-center gap-1 text-xs text-[#9f9890] hover:text-[#625b52]"
+            >
+              <ExternalLink size={12} />
+              {t("viewOriginal")}
+            </Link>
           </div>
         </div>
 
@@ -642,8 +660,6 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
           ) : null}
         </section>
         )}
-
-        <OriginalPostCard pack={result.original_meal_pack} />
 
         <FinalReviewCard review={result.final_review} />
       </aside>
@@ -814,33 +830,6 @@ function FinalReviewCard({ review }: { review: { agent: string; status: string; 
           ))}
         </div>
       )}
-    </section>
-  );
-}
-
-function OriginalPostCard({ pack }: { pack: { id: string; title: string; theme: string; meals: { name: string; ingredients: string[] }[] } }) {
-  const t = useTranslations("Run");
-  const firstMeal = pack.meals[0];
-
-  return (
-    <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
-      <h2 className="text-sm font-medium text-[#6f6a61]">{t("originalPost")}</h2>
-      <p className="mt-2 text-sm font-semibold text-[#2f2a24]">{pack.title}</p>
-      {pack.theme && <p className="mt-0.5 text-xs text-[#9f9890]">{pack.theme}</p>}
-      {firstMeal && (
-        <p className="mt-2 text-xs text-[#7a7167]">
-          🥘 {firstMeal.name} · {firstMeal.ingredients.slice(0, 3).join("、")}{firstMeal.ingredients.length > 3 ? "…" : ""}
-        </p>
-      )}
-      <p className="mt-1 text-xs text-[#9f9890]">{t("originalPostHint")}</p>
-      <Link
-        href={`/packs/${pack.id}`}
-        target="_blank"
-        className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[#d8d0c6] bg-white px-3 py-1.5 text-xs font-medium text-[#625b52] hover:bg-[#faf8f5]"
-      >
-        <ExternalLink size={12} />
-        {t("viewOriginal")}
-      </Link>
     </section>
   );
 }
