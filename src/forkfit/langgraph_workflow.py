@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 from langgraph.graph import END, START, StateGraph
 from langsmith import tracing_context
 
-from .agents import AdapterAgent, CookingStepsAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, UserAgent
+from .agents import AdapterAgent, CookingStepsAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, TranslationAgent, UserAgent
 from .llm import BailianLLMClient, LLMClient
 from .models import (
     AdapterOutput,
@@ -100,6 +100,7 @@ class ForkFitLangGraphWorkflow:
         self.reviewer_agents = reviewer_agents or [ConstraintAgent(llm_client, nutrition_tool=nutrition_tool)]
         self.adapter_agent = adapter_agent or AdapterAgent(llm_client, substitution_tool=substitution_tool, nutrition_tool=nutrition_tool)
         self.cooking_steps_agent = CookingStepsAgent(llm_client, cooking_steps_tool=cooking_steps_tool)
+        self.translation_agent = TranslationAgent(llm_client)
         self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
@@ -152,6 +153,10 @@ class ForkFitLangGraphWorkflow:
             "join_parallel",
             self._traced_node("join_parallel", self._join_parallel),
         )
+        graph.add_node(
+            "translate",
+            self._traced_node("translate", self._run_translate),
+        )
 
         graph.add_edge(START, "load_input")
         graph.add_edge("load_input", "user_agent")
@@ -163,7 +168,8 @@ class ForkFitLangGraphWorkflow:
         # Fan-in: both merge at join_parallel
         graph.add_edge("cooking_steps", "join_parallel")
         graph.add_edge("final_validation", "join_parallel")
-        graph.add_edge("join_parallel", END)
+        graph.add_edge("join_parallel", "translate")
+        graph.add_edge("translate", END)
         return graph.compile()
 
     def _load_input(self, state: ForkFitGraphState) -> ForkFitGraphState:
@@ -252,6 +258,12 @@ class ForkFitLangGraphWorkflow:
             "final_review": final_review,
             "success": success,
         }
+
+    def _run_translate(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        locale = state.get("locale", "en")
+        adapter_output = state["adapter_output"]
+        translated = self.translation_agent.translate(adapter_output, locale)
+        return {"adapter_output": translated}
 
     def _traced_node(
         self,

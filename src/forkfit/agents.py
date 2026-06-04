@@ -9,13 +9,14 @@ from .models import (
     AdapterOutput,
     AgentFinding,
     AgentReview,
+    ChangeLogEntry,
     ConstraintSet,
     MealPack,
     UserAgentOutput,
     UserProfile,
     RunTrace,
 )
-from .serialization import adapter_output_from_dict, user_agent_output_from_dict
+from .serialization import adapter_output_from_dict, meal_pack_from_dict, user_agent_output_from_dict
 from .serialization import agent_review_from_dict
 
 
@@ -488,6 +489,72 @@ class AdapterAgent:
             output.unresolved_items = constrained.findings
             output.summary = "Could not safely fork the meal pack because guard validation found unresolved hard constraints."
             return output
+
+        return output
+
+
+class TranslationAgent:
+    """Translates all adapter output text fields to the target locale."""
+
+    agent_name = "translator"
+
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    def translate(self, output: AdapterOutput, locale: str) -> AdapterOutput:
+        if not locale.startswith("zh"):
+            return output  # English is the default, no translation needed
+
+        lang_hint = "Chinese (中文)"
+        meal_pack = output.forked_meal_pack
+
+        user_message = {
+            "task": "Translate all text fields to Chinese. Return the same JSON structure with translated values.",
+            "forked_meal_pack": meal_pack.to_dict(),
+            "change_log": [asdict(c) for c in output.change_log],
+            "summary": output.summary,
+            "description": output.description,
+            "rules": [
+                "Translate EVERYTHING: meal name, ingredients, equipment, tags, notes, steps, summary, description, change reasons.",
+                "Keep the same JSON structure. Only translate text values.",
+                "Equipment names must be Chinese (e.g. '灶台' not 'stovetop', '烤箱' not 'oven').",
+                "Ingredient names must be Chinese (e.g. '鸡胸肉' not 'chicken breast').",
+                "Keep meal ids unchanged.",
+                "Be concise and natural.",
+            ],
+        }
+
+        payload = self.llm_client.complete_json(
+            agent=self.agent_name,
+            system=(
+                f"You are a food recipe translator. Translate all text to {lang_hint}. "
+                f"Return JSON with the same structure. Do NOT add explanations."
+            ),
+            user=json.dumps(user_message, ensure_ascii=False),
+            max_tokens=1200,
+        )
+
+        # Apply translations
+        if "forked_meal_pack" in payload:
+            translated_pack = meal_pack_from_dict(payload["forked_meal_pack"])
+            output.forked_meal_pack = translated_pack
+
+        if "change_log" in payload:
+            output.change_log = [
+                ChangeLogEntry(
+                    affected_item=item.get("affected_item", ""),
+                    from_value=item.get("from_value", ""),
+                    to_value=item.get("to_value", ""),
+                    reason=item.get("reason", ""),
+                    source_agent=item.get("source_agent", "translator"),
+                )
+                for item in payload["change_log"]
+            ]
+
+        if "summary" in payload:
+            output.summary = payload["summary"]
+        if "description" in payload:
+            output.description = payload["description"]
 
         return output
 

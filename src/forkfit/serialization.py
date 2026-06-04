@@ -162,61 +162,6 @@ def normalize_source_agent(value: str) -> str:
     return value.strip() or "unknown"
 
 
-# Equipment translation mapping (English → Chinese)
-_EQUIPMENT_ZH = {
-    "stovetop": "灶台",
-    "oven": "烤箱",
-    "microwave": "微波炉",
-    "rice cooker": "电饭煲",
-    "air fryer": "空气炸锅",
-    "pressure cooker": "高压锅",
-    "instant pot": "高压锅",
-    "blender": "搅拌机",
-    "food processor": "料理机",
-    "toaster": "烤面包机",
-    "grill": "烤架",
-    "wok": "炒锅",
-    "pot": "锅",
-    "pan": "平底锅",
-    "baking sheet": "烤盘",
-    "cutting board": "砧板",
-    "knife": "刀",
-    "mixing bowl": "碗",
-    "measuring cup": "量杯",
-    "spatula": "锅铲",
-    "tongs": "夹子",
-    "ladle": "汤勺",
-    "colander": "漏勺",
-    "steamer": "蒸锅",
-    "slow cooker": "慢炖锅",
-    "dishwasher": "洗碗机",
-}
-
-
-def localize_equipment(equipment: list[str], locale: str) -> list[str]:
-    """Translate equipment names to the target locale."""
-    if not locale.startswith("zh"):
-        return equipment
-    return [_EQUIPMENT_ZH.get(item.lower().strip(), item) for item in equipment]
-
-
-def localize_meal_pack(meal_pack: MealPack, locale: str) -> MealPack:
-    """Translate equipment names in a meal pack."""
-    if not locale.startswith("zh"):
-        return meal_pack
-    for meal in meal_pack.meals:
-        meal.equipment = localize_equipment(meal.equipment, locale)
-    return meal_pack
-
-
-def localize_adapter_output(output: AdapterOutput, locale: str) -> AdapterOutput:
-    """Translate equipment names in the adapter output."""
-    if not locale.startswith("zh"):
-        return output
-    output.forked_meal_pack = localize_meal_pack(output.forked_meal_pack, locale)
-    return output
-
-
 def finding_from_dict(data: dict) -> AgentFinding:
     return AgentFinding(
         type=data["type"],
