@@ -14,6 +14,7 @@ class Settings:
     llm_timeout_seconds: int = 60
     database_url: str = ""
     redis_url: str = "redis://localhost:6379/0"
+    kafka_bootstrap_servers: str = "localhost:9092"
     rate_limit_enabled: bool = True
     langsmith_tracing: bool = False
     langsmith_api_key: str = ""
@@ -39,6 +40,7 @@ def get_settings() -> Settings:
         llm_timeout_seconds=int(os.getenv("LLM_TIMEOUT_SECONDS", "60")),
         database_url=database_url,
         redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+        kafka_bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
         rate_limit_enabled=parse_bool(os.getenv("RATE_LIMIT_ENABLED", "true")),
         langsmith_tracing=parse_bool(os.getenv("LANGSMITH_TRACING", "false")),
         langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),

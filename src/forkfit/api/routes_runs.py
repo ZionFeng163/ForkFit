@@ -18,9 +18,9 @@ async def stream_run(
     token: str | None = None,
     user: CurrentUser = Depends(optional_current_user),
 ):
-    """SSE endpoint for real-time run status updates. Supports token query param for EventSource."""
+    """SSE endpoint for real-time run status updates via Kafka."""
     from forkfit.config import get_settings
-    from forkfit.redis_utils import get_pubsub
+    from forkfit.kafka_utils import create_consumer
     from fastapi.responses import StreamingResponse
     import json
 
@@ -39,11 +39,6 @@ async def stream_run(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    settings = get_settings()
-    pubsub = get_pubsub(settings.redis_url)
-    if not pubsub:
-        raise HTTPException(status_code=503, detail="Real-time updates not available.")
-
     # Verify run exists and belongs to user
     service = get_run_service()
     run = service.get_run(run_id)
@@ -59,20 +54,38 @@ async def stream_run(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
-    subscriber = pubsub.get_subscriber(run_id)
+    settings = get_settings()
+    consumer = create_consumer(
+        bootstrap_servers=settings.kafka_bootstrap_servers,
+        group_id=f"sse-{run_id}",
+        auto_offset_reset="latest",
+    )
+    # Assign topic partition directly for this specific run
+    from confluent_kafka import TopicPartition
+    # We need to find which partition this run_id maps to
+    # For simplicity, subscribe to the topic and filter by run_id
+    consumer.subscribe(["forkfit-events"])
 
     def event_generator():
         try:
             yield f"data: {json.dumps({'status': run.status})}\n\n"
-            for message in subscriber.listen():
-                if message["type"] == "message":
-                    data = json.loads(message["data"])
+            while True:
+                msg = consumer.poll(timeout=1.0)
+                if msg is None:
+                    continue
+                if msg.error():
+                    continue
+                try:
+                    data = json.loads(msg.value().decode("utf-8"))
+                    if data.get("run_id") != run_id:
+                        continue
                     yield f"data: {json.dumps(data)}\n\n"
-                    if data.get("status") in ("succeeded", "failed", "cancelled"):
+                    if data.get("status") in ("succeeded", "failed", "cancelled", "needs_input"):
                         break
+                except Exception:
+                    continue
         finally:
-            subscriber.unsubscribe()
-            subscriber.close()
+            consumer.close()
 
     return StreamingResponse(
         event_generator(),

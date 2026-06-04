@@ -15,12 +15,17 @@ from forkfit.stores import PostgresRunStore
 
 
 def _broadcast(run_id: str, status: str, settings, extra: dict | None = None) -> None:
-    """Broadcast run status update via Redis pub/sub."""
+    """Broadcast run status update via Kafka."""
     try:
-        from forkfit.redis_utils import get_pubsub
-        pubsub = get_pubsub(settings.redis_url)
-        if pubsub:
-            pubsub.broadcast_run_update(run_id, status, extra=extra)
+        from forkfit.kafka_utils import produce
+        import time
+        message = {
+            "run_id": run_id,
+            "status": status,
+            "timestamp": time.time(),
+            **(extra or {}),
+        }
+        produce("forkfit-events", message, key=run_id, bootstrap_servers=settings.kafka_bootstrap_servers)
     except Exception:
         pass  # Broadcasting is best-effort
 

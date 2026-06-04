@@ -1,4 +1,4 @@
 from .base import JobExecutor
-from .redis import RedisJobExecutor
+from .kafka import KafkaJobExecutor
 
-__all__ = ["JobExecutor", "RedisJobExecutor"]
+__all__ = ["JobExecutor", "KafkaJobExecutor"]

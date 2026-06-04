@@ -8,7 +8,7 @@ from forkfit.auth.jwt import decode_access_token
 from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
-from forkfit.executors import RedisJobExecutor
+from forkfit.executors.kafka import KafkaJobExecutor
 from forkfit.llm import BailianLLMClient
 from forkfit.services import RunService
 from forkfit.stores import PostgresPostStore, PostgresRunStore
@@ -53,7 +53,7 @@ def get_post_extraction_llm() -> BailianLLMClient:
 def get_run_service() -> RunService:
     settings = get_settings()
     store = get_run_store()
-    executor = RedisJobExecutor(redis_url=settings.redis_url)
+    executor = KafkaJobExecutor()
     return RunService(store=store, executor=executor, settings=settings)
 
 
