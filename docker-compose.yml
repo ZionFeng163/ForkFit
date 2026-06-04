@@ -1,4 +1,5 @@
 services:
+  # ── 基础设施 ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     environment:
@@ -9,11 +10,21 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forkfit"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
@@ -26,7 +37,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     ports:
       - "9092:9092"
     environment:
@@ -38,51 +50,78 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-  api:
-    build: .
+  # ── 后端 (API + Worker) ──────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./.env:/app/.env:ro
     environment:
       DATABASE_URL: postgresql+psycopg://forkfit:forkfit@postgres:5432/forkfit
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      BAILIAN_API_KEY: ${BAILIAN_API_KEY}
-      BAILIAN_MODEL: ${BAILIAN_MODEL:-qwen3.6-flash}
-      BAILIAN_BASE_URL: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
-      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
-      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-forkfit}
+      PYTHONPATH: /app/src
     depends_on:
-      - postgres
-      - redis
-      - kafka
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    command: >
+      sh -c "
+        echo 'Waiting for Kafka...' &&
+        sleep 5 &&
+        python scripts/run_api.py
+      "
 
   worker:
-    build: .
-    command: python scripts/run_worker.py
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./.env:/app/.env:ro
     environment:
       DATABASE_URL: postgresql+psycopg://forkfit:forkfit@postgres:5432/forkfit
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      BAILIAN_API_KEY: ${BAILIAN_API_KEY}
-      BAILIAN_MODEL: ${BAILIAN_MODEL:-qwen3.6-flash}
-      BAILIAN_BASE_URL: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
-      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
-      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
-      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-forkfit}
+      PYTHONPATH: /app/src
     depends_on:
-      - postgres
-      - redis
-      - kafka
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    command: >
+      sh -c "
+        echo 'Waiting for Kafka...' &&
+        sleep 8 &&
+        python scripts/run_worker.py
+      "
 
+  # ── 前端 ─────────────────────────────────────────────────
   frontend:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
     environment:
-      FORKFIT_API_BASE_URL: http://api:8000
+      FORKFIT_API_BASE_URL: http://backend:8000
     depends_on:
-      - api
+      - backend
 
 volumes:
   pgdata:
