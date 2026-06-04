@@ -10,7 +10,7 @@ from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
 from forkfit.observability import LangSmithRunExporter
-from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
+from forkfit.serialization import localize_adapter_output, meal_pack_from_dict, user_profile_from_dict
 from forkfit.stores import PostgresRunStore
 
 
@@ -77,6 +77,10 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
             user_profile, meal_pack, locale=locale,
             on_step_complete=on_step_complete,
         )
+
+        # Translate equipment names etc. to user's language
+        result.adapter_output = localize_adapter_output(result.adapter_output, locale)
+
         if result.success:
             record = store.mark_succeeded(
                 run_id,

@@ -419,7 +419,6 @@ class AdapterAgent:
                 "When substitution_suggestions are provided, prefer them over your own guesses.",
                 f"When people_count > 1, scale ingredient quantities proportionally (e.g., people_count=2 means double the ingredients).",
                 f"The current people_count is {people_count}.",
-                f"ALL text MUST be in {lang_hint}. No mixing languages.",
                 "Keep change reasons SHORT and casual (1 sentence). No technical jargon.",
             ],
             "original_meal_pack": original_meal_pack.to_dict(),
@@ -443,9 +442,7 @@ class AdapterAgent:
                 "before soft preferences, preserve the original theme, and explain "
                 "each change with source_agent. Keep summary, reasons, and notes "
                 "concise. Do not include markdown, explanation, or hidden reasoning. "
-                f"CRITICAL: ALL text MUST be written in {lang_hint}. "
-                f"Equipment names, ingredient names, tags, notes, summary, reasons — everything. "
-                f"Do NOT mix languages. "
+                f"Write all text in {lang_hint} when possible. "
                 f"Change reasons should be short and casual (1 sentence). "
                 f"'description' should be a natural, engaging 2-3 sentence intro of this dish, like writing for a food blog. "
                 f"When the output language is not English, also provide "
@@ -572,8 +569,7 @@ class CookingStepsAgent:
                 "each containing 'id' and 'steps' (list of strings). "
                 "Every step must be a short, actionable instruction. "
                 "Do not include markdown, explanation, or hidden reasoning. "
-                f"All text MUST be written in {lang_hint}. "
-                f"Equipment names, ingredient names — everything must match {lang_hint}. Do NOT mix languages."
+                f"Write all text in {lang_hint} when possible."
             ),
             user=json.dumps(user_message, ensure_ascii=False),
             trace=trace,

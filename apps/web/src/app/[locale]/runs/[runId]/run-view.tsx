@@ -134,7 +134,6 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
               <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
               <div>
                 <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
-                <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
               </div>
             </div>
             <Link
@@ -541,7 +540,6 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
               <CheckCircle2 size={20} className="mt-1 text-[#2f6b45]" />
               <div>
                 <h2 className="text-xl font-semibold">{t("adaptedPack")}</h2>
-                <p className="mt-1 text-sm leading-6 text-[#625b52]">{t("editHint")}</p>
               </div>
             </div>
             <Link
