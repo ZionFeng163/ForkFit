@@ -408,6 +408,7 @@ class AdapterAgent:
                 ],
                 "unresolved_items": [],
                 "summary": "string",
+                "description": "string (a natural, engaging 2-3 sentence description of this dish, like writing for a food blog)",
             },
             "rules": [
                 "Do not fully rewrite the meal pack.",
@@ -446,6 +447,7 @@ class AdapterAgent:
                 f"Equipment names, ingredient names, tags, notes, summary, reasons — everything. "
                 f"Do NOT mix languages. "
                 f"Change reasons should be short and casual (1 sentence). "
+                f"'description' should be a natural, engaging 2-3 sentence intro of this dish, like writing for a food blog. "
                 f"When the output language is not English, also provide "
                 f"'original_meal_pack_translated' — a translated copy of the original meal pack "
                 f"so both original and forked versions are in the same language."

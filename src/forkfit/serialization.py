@@ -112,6 +112,7 @@ def adapter_output_from_dict(data: dict) -> AdapterOutput:
             finding_from_dict(item) for item in data.get("unresolved_items", [])
         ],
         summary=data["summary"],
+        description=data.get("description", ""),
         original_meal_pack_translated=original_translated,
     )
 

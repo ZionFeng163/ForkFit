@@ -80,6 +80,7 @@ export type RunResultPayload = {
   unresolved_items: AgentFinding[];
   final_review: AgentReview;
   summary: string;
+  description: string;
 };
 
 export type CreateRunResponse = {

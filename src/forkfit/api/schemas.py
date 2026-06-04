@@ -84,6 +84,7 @@ class RunResultPayload(BaseModel):
     unresolved_items: list
     final_review: AgentReview
     summary: str
+    description: str = ""
 
 
 def result_payload_from_forkfit(
@@ -101,6 +102,7 @@ def result_payload_from_forkfit(
         unresolved_items=result.adapter_output.unresolved_items,
         final_review=result.final_review,
         summary=result.adapter_output.summary,
+        description=result.adapter_output.description,
     )
 
 

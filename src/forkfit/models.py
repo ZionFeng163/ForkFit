@@ -152,6 +152,7 @@ class AdapterOutput:
     change_log: list[ChangeLogEntry]
     unresolved_items: list[AgentFinding]
     summary: str
+    description: str = ""
     original_meal_pack_translated: MealPack | None = None
 
 

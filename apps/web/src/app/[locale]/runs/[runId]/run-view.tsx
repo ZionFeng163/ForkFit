@@ -81,7 +81,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
   const firstMeal = forked.meals[0];
 
   const [title, setTitle] = useState(forked.title || firstMeal?.name || "");
-  const [description, setDescription] = useState(result.summary || firstMeal?.notes || "");
+  const [description, setDescription] = useState(result.description || result.summary || "");
   const [ingredients, setIngredients] = useState(firstMeal?.ingredients.join(", ") || "");
   const [equipment, setEquipment] = useState(firstMeal?.equipment.join(", ") || "");
   const [cookTime, setCookTime] = useState(String(firstMeal?.cook_time_minutes || 30));
