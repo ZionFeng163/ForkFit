@@ -261,7 +261,8 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
 
       {/* Right column — comparison & info */}
       <aside className="space-y-4">
-        {/* Full before/after comparison table */}
+        {/* Full before/after comparison table — only show if changes exist */}
+        {result.change_log.length > 0 ? (
         <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
           <h2 className="text-base font-semibold text-[#2f2a24]">{t("substitutions")}</h2>
 
@@ -401,6 +402,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
             </div>
           ) : null}
         </section>
+        ) : null}
 
         {result.unresolved_items.length > 0 ? (
           <section className="rounded-lg border border-[#e8a9a0] bg-[#fff8f5] p-5">
@@ -585,6 +587,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
 
       {/* Right column — comparison & info */}
       <aside className="space-y-4">
+        {result.change_log.length > 0 && (
         <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
           <h2 className="text-base font-semibold text-[#2f2a24]">{t("substitutions")}</h2>
 
@@ -654,6 +657,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
             </div>
           ) : null}
         </section>
+        )}
 
         <FinalReviewCard review={result.final_review} />
       </aside>
