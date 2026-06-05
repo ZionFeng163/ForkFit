@@ -426,7 +426,7 @@ function SucceededView({ runId, result }: { runId: string; result: NonNullable<R
         {/* Shopping list */}
         <ShoppingList forkedMeals={forked.meals} />
 
-        <FinalReviewCard review={result.final_review} />
+        <FinalReviewCard review={result.final_review} changeLog={result.change_log} />
       </aside>
     </div>
   );
@@ -659,7 +659,7 @@ function ComparisonTable({ result }: { result: RunResultPayload }) {
         </section>
         )}
 
-        <FinalReviewCard review={result.final_review} />
+        <FinalReviewCard review={result.final_review} changeLog={result.change_log} />
       </aside>
     </div>
   );
@@ -805,11 +805,28 @@ const REVIEW_STYLE: Record<string, { color: string; bg: string; icon: typeof Che
   block: { color: "text-[#7f3525]", bg: "bg-[#fff8f5]", icon: XCircle },
 };
 
-function FinalReviewCard({ review }: { review: { agent: string; status: string; findings: { type: string; severity: string; message: string; suggested_action?: string }[] } }) {
+function FinalReviewCard({ review, changeLog }: {
+  review: { agent: string; status: string; findings: { type: string; severity: string; message: string }[] };
+  changeLog: { affected_item: string; reason: string }[];
+}) {
   const t = useTranslations("Run");
   const style = REVIEW_STYLE[review.status] || REVIEW_STYLE.pass;
   const Icon = style.icon;
   const statusLabel = t(`status${review.status.charAt(0).toUpperCase() + review.status.slice(1)}` as any, { defaultValue: review.status });
+
+  // Combine findings and change reasons
+  const items: { text: string; type: "finding" | "change" }[] = [];
+  for (const f of review.findings) {
+    items.push({ text: f.message, type: "finding" });
+  }
+  // Add unique change reasons from change_log
+  const seenReasons = new Set(review.findings.map(f => f.message));
+  for (const c of changeLog) {
+    if (c.reason && !seenReasons.has(c.reason)) {
+      seenReasons.add(c.reason);
+      items.push({ text: c.reason, type: "change" });
+    }
+  }
 
   return (
     <section className="rounded-lg border border-[#e4ded6] bg-white p-5">
@@ -818,12 +835,12 @@ function FinalReviewCard({ review }: { review: { agent: string; status: string; 
         <Icon size={12} />
         {statusLabel}
       </div>
-      {review.findings.length > 0 && (
+      {items.length > 0 && (
         <div className="mt-3 space-y-2">
-          {review.findings.map((f, i) => (
+          {items.map((item, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
-              <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${f.severity === "high" ? "bg-[#7f3525]" : f.severity === "medium" ? "bg-[#b8860b]" : "bg-[#9f9890]"}`} />
-              <span className="text-[#5a5249]">{f.message}</span>
+              <span className={`mt-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${item.type === "finding" ? "bg-[#b8860b]" : "bg-[#2f6b45]"}`} />
+              <span className="text-[#5a5249]">{item.text}</span>
             </div>
           ))}
         </div>

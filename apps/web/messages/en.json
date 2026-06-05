@@ -219,9 +219,9 @@
     },
     "viewOriginal": "View original post",
     "finalSuggestion": "Final Suggestion",
-    "statusPass": "Passed",
-    "statusWarn": "Warning",
-    "statusBlock": "Blocked",
+    "statusPass": "All good",
+    "statusWarn": "A few notes",
+    "statusBlock": "Cannot adapt",
     "addStep": "Add step",
     "removeStep": "Remove",
     "originalPostHint": "Personalized version based on this post"

@@ -219,9 +219,9 @@
     },
     "viewOriginal": "查看原帖",
     "finalSuggestion": "最终建议",
-    "statusPass": "通过",
-    "statusWarn": "有风险",
-    "statusBlock": "未通过",
+    "statusPass": "一切正常",
+    "statusWarn": "有几点建议",
+    "statusBlock": "无法适配",
     "addStep": "添加步骤",
     "removeStep": "删除",
     "originalPostHint": "基于此帖生成的个性化版本"
