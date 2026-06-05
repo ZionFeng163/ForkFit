@@ -40,13 +40,15 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def seed_admin():
+        import os
         from forkfit.api.deps import get_user_store
         from forkfit.auth.password import hash_password
         store = get_user_store()
         if not store.has_admin():
+            default_pw = os.getenv("ADMIN_PASSWORD", "admin123456")
             store.create_user(
                 username="admin",
-                password_hash=hash_password("admin123456"),
+                password_hash=hash_password(default_pw),
                 display_name="Admin",
             )
             store.set_role(store.get_user_by_username("admin").id, "admin")
