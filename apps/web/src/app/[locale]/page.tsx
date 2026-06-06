@@ -3,6 +3,9 @@ import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/app-shell";
 import { PostGridPaginated } from "@/components/post-grid-paginated";
 import { loadPosts } from "@/lib/posts";
+import { HeroSection } from "@/components/hero-section";
+import { FeaturesSection } from "@/components/features-section";
+import { HowItWorksSection } from "@/components/how-it-works-section";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -11,26 +14,16 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Hero */}
-        <div className="mb-6 rounded-xl border border-[#e4ded6] bg-gradient-to-br from-[#faf8f5] to-white p-6 sm:p-8">
-          <h1 className="text-2xl font-semibold tracking-0">{t("title")}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6a61]">
-            {t("heroDescription")}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs text-[#7a7167]">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#e4ded6] px-3 py-1">🍳 {t("heroStep1")}</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#e4ded6] px-3 py-1">⚡ {t("heroStep2")}</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#e4ded6] px-3 py-1">🍽️ {t("heroStep3")}</span>
-          </div>
-        </div>
+      {/* Landing Page Sections */}
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
 
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm text-[#6f6a61]">
-              {t("postCount", { count: total })}
-            </p>
-          </div>
+      {/* Posts Grid */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-semibold text-[#2f2a24]">{t("postCount", { count: total })}</h2>
+          <p className="mt-2 text-sm text-[#6f6a61]">发现社区里的美味菜谱</p>
         </div>
         <PostGridPaginated initialPosts={posts} totalCount={total} />
       </section>
