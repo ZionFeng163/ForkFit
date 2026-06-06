@@ -7,7 +7,9 @@
     "newPost": "New Post",
     "myPosts": "My Posts",
     "myForks": "My Recipes",
-    "profile": "Profile"
+    "profile": "Profile",
+    "login": "Log in",
+    "register": "Sign up"
   },
   "MyPosts": {
     "title": "My Posts",
@@ -31,7 +33,29 @@
     "loadMore": "Load more",
     "loading": "Loading...",
     "searchPlaceholder": "Search recipes...",
-    "noResults": "No recipes found."
+    "noResults": "No recipes found.",
+    "ctaTitle": "Ready to customize?",
+    "ctaDescription": "Community recipes × your taste = personalized",
+    "ctaButton": "Browse recipes",
+    "ctaSecondary": "Set preferences",
+    "featureTitle": "Why Choose ForkFit",
+    "featureSubtitle": "Smart adaptation for every dish",
+    "feature1Title": "Allergy Safe",
+    "feature1Desc": "Auto-detect allergens for safety",
+    "feature2Title": "One-Click Fork",
+    "feature2Desc": "Adapt recipes to your taste instantly",
+    "feature3Title": "Taste Memory",
+    "feature3Desc": "Learns your preferences over time",
+    "feature4Title": "Time Adapted",
+    "feature4Desc": "Adjusts steps based on cook time",
+    "howTitle": "Three Simple Steps",
+    "howSubtitle": "Simple steps to personalized meals",
+    "howStep1": "Pick a recipe",
+    "howStep1Desc": "Browse community recipes you like",
+    "howStep2": "Click Fork",
+    "howStep2Desc": "System auto-adjusts ingredients and steps",
+    "howStep3": "Start cooking",
+    "howStep3Desc": "Follow the customized recipe"
   },
   "Pack": {
     "back": "Discover",

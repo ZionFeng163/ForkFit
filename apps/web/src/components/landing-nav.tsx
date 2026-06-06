@@ -11,54 +11,46 @@ export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[#e4ded6] bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <img
-            src={locale === "zh" ? "/logo_zh.png" : "/logo_en.png"}
-            alt="吃什么"
-            className="h-10 w-auto"
-          />
+    <nav className="sticky top-0 z-50 bg-[#faf6f0]/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a332c] text-sm font-bold text-[#f5f0ea]">
+            吃
+          </div>
+          <span className="text-lg font-semibold text-[#3a332c]">吃什么</span>
         </Link>
 
-        {/* Desktop links */}
-        <div className="hidden items-center gap-6 md:flex">
-          <Link href="/discover" className="text-sm font-medium text-[#5f5a52] hover:text-[#2f2a24] transition-colors">
+        <div className="hidden items-center gap-8 md:flex">
+          <Link href="/discover" className="text-sm text-[#6b5e52] hover:text-[#3a332c] transition-colors">
             {t("discover")}
           </Link>
-          <Link href="/login" className="text-sm font-medium text-[#5f5a52] hover:text-[#2f2a24] transition-colors">
-            登录
+          <Link href="/login" className="text-sm text-[#6b5e52] hover:text-[#3a332c] transition-colors">
+            {t("login")}
           </Link>
           <Link
             href="/register"
-            className="rounded-full bg-[#2f2a24] px-5 py-2 text-sm font-semibold text-white hover:bg-[#463f36] transition-colors"
+            className="rounded-full bg-[#3a332c] px-6 py-2.5 text-sm font-medium text-[#faf6f0] hover:bg-[#5a4f43] transition-all duration-300 hover:shadow-md"
           >
-            注册
+            {t("register")}
           </Link>
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        <button className="md:hidden text-[#3a332c]" onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-[#e4ded6] bg-white px-4 py-4 md:hidden">
-          <div className="flex flex-col gap-3">
-            <Link href="/discover" className="text-sm font-medium text-[#5f5a52]" onClick={() => setMobileOpen(false)}>
+        <div className="border-t border-[#e8dfd6] bg-white px-6 py-6 md:hidden">
+          <div className="flex flex-col gap-4">
+            <Link href="/discover" className="text-sm text-[#6b5e52]" onClick={() => setMobileOpen(false)}>
               {t("discover")}
             </Link>
-            <Link href="/login" className="text-sm font-medium text-[#5f5a52]" onClick={() => setMobileOpen(false)}>
-              登录
+            <Link href="/login" className="text-sm text-[#6b5e52]" onClick={() => setMobileOpen(false)}>
+              {t("login")}
             </Link>
-            <Link href="/register" className="rounded-full bg-[#2f2a24] px-5 py-2 text-center text-sm font-semibold text-white" onClick={() => setMobileOpen(false)}>
-              注册
+            <Link href="/register" className="rounded-full bg-[#3a332c] px-6 py-2.5 text-center text-sm font-medium text-[#faf6f0]" onClick={() => setMobileOpen(false)}>
+              {t("register")}
             </Link>
           </div>
         </div>

@@ -7,7 +7,9 @@
     "newPost": "发帖",
     "myPosts": "我的帖子",
     "myForks": "我的定制",
-    "profile": "个人"
+    "profile": "个人",
+    "login": "登录",
+    "register": "注册"
   },
   "MyPosts": {
     "title": "我的帖子",
@@ -31,7 +33,29 @@
     "loadMore": "加载更多",
     "loading": "加载中...",
     "searchPlaceholder": "搜索菜谱...",
-    "noResults": "未找到相关菜谱。"
+    "noResults": "未找到相关菜谱。",
+    "ctaTitle": "准备好定制了吗？",
+    "ctaDescription": "社区菜谱 × 你的口味 = 专属定制",
+    "ctaButton": "浏览菜谱",
+    "ctaSecondary": "设置偏好",
+    "featureTitle": "为什么选择吃什么",
+    "featureSubtitle": "智能适配，让每道菜都适合你",
+    "feature1Title": "过敏安全",
+    "feature1Desc": "自动检测过敏源，确保安全",
+    "feature2Title": "一键定制",
+    "feature2Desc": "根据口味偏好自动调整",
+    "feature3Title": "口味记忆",
+    "feature3Desc": "越用越懂你的口味",
+    "feature4Title": "时间适配",
+    "feature4Desc": "按烹饪时间自动调整步骤",
+    "howTitle": "三步搞定",
+    "howSubtitle": "简单几步，享受专属美味",
+    "howStep1": "选择菜谱",
+    "howStep1Desc": "浏览社区菜谱，找到喜欢的菜品",
+    "howStep2": "一键定制",
+    "howStep2Desc": "系统自动调整食材和步骤",
+    "howStep3": "开始烹饪",
+    "howStep3Desc": "按定制后的菜谱享受美味"
   },
   "Pack": {
     "back": "发现",
