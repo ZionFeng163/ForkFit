@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Link, usePathname } from "@/i18n/routing";
 
 const NAV_ITEMS = [
-  { key: "discover", href: "/", icon: Home },
+  { key: "discover", href: "/discover", icon: Home },
   { key: "newPost", href: "/posts/new", icon: Plus },
   { key: "myPosts", href: "/my-posts", icon: FileText },
   { key: "myForks", href: "/my-forks", icon: GitFork },
@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 px-3">
           {NAV_ITEMS.map(({ key, href, icon: Icon }) => {
-            const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+            const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={key}
@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 flex border-t border-[#e7e2db] bg-white md:hidden">
         {NAV_ITEMS.map(({ key, href, icon: Icon }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+          const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={key}
