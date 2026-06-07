@@ -53,14 +53,14 @@ export function HeroSection() {
         >
           <Link
             href="/discover"
-            className="inline-flex items-center gap-2 rounded-full bg-[#3a332c] px-8 py-3 text-sm font-medium text-[#faf6f0] shadow-sm transition-all duration-300 hover:bg-[#5a4f43] hover:shadow-md hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-full bg-[#3a332c] px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#5a4f43] hover:shadow-md hover:-translate-y-0.5"
           >
             {t("ctaButton")}
             <ArrowRight size={16} />
           </Link>
           <Link
             href="/profile"
-            className="inline-flex items-center gap-2 rounded-full border border-[#c8b89a] bg-transparent px-8 py-3 text-sm font-medium text-[#6b5e52] transition-all duration-300 hover:bg-[#f0e8dc] hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#3a332c] bg-transparent px-8 py-3 text-sm font-semibold text-[#3a332c] transition-all duration-300 hover:bg-[#3a332c] hover:text-white hover:-translate-y-0.5"
           >
             {t("ctaSecondary")}
           </Link>

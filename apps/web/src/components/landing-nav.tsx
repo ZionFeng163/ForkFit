@@ -14,10 +14,7 @@ export function LandingNav() {
     <nav className="sticky top-0 z-50 bg-[#faf6f0]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3a332c] text-sm font-bold text-[#f5f0ea]">
-            吃
-          </div>
-          <span className="text-lg font-semibold text-[#3a332c]">吃什么</span>
+          <img src="/logo_zh.png" alt="吃什么" className="h-10 w-auto" />
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
