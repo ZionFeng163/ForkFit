@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/hero-section";
+import { MockupSection } from "@/components/mockup-section";
 import { FeaturesSection } from "@/components/features-section";
 import { HowItWorksSection } from "@/components/how-it-works-section";
 import { CTASection } from "@/components/cta-section";
@@ -10,6 +11,7 @@ export default async function Home() {
       <LandingNav />
       <main>
         <HeroSection />
+        <MockupSection />
         <FeaturesSection />
         <HowItWorksSection />
         <CTASection />
