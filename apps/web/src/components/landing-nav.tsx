@@ -26,7 +26,7 @@ export function LandingNav() {
           </Link>
           <Link
             href="/register"
-            className="rounded-full bg-[#3a332c] px-6 py-2.5 text-sm font-medium text-[#faf6f0] hover:bg-[#5a4f43] transition-all duration-300 hover:shadow-md"
+            className="rounded-full bg-[#8b6b4f] px-6 py-2.5 text-sm font-medium text-white hover:bg-[#7a5c42] transition-all duration-300 hover:shadow-sm"
           >
             {t("register")}
           </Link>
