@@ -158,3 +158,84 @@ def list_my_comments(
         ],
         "total": total,
     }
+
+
+# ── Follow / Unfollow ──
+
+
+@router.post("/{user_id}/follow")
+def follow_user(
+    user_id: str,
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    if user_id == user.id:
+        raise HTTPException(status_code=400, detail="不能关注自己")
+    store = get_user_store()
+    if not store.get_user_by_id(user_id):
+        raise HTTPException(status_code=404, detail="用户不存在")
+    store.follow(user.id, user_id)
+    return {"following": True}
+
+
+@router.delete("/{user_id}/follow")
+def unfollow_user(
+    user_id: str,
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    store.unfollow(user.id, user_id)
+    return {"following": False}
+
+
+@router.get("/{user_id}/followers")
+def list_followers(
+    user_id: str,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    store = get_user_store()
+    users, total = store.list_followers(user_id, limit=limit, offset=offset)
+    return {
+        "users": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "display_name": u.display_name,
+                "avatar_url": u.avatar_url,
+            }
+            for u in users
+        ],
+        "total": total,
+    }
+
+
+@router.get("/{user_id}/following")
+def list_following(
+    user_id: str,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    store = get_user_store()
+    users, total = store.list_following(user_id, limit=limit, offset=offset)
+    return {
+        "users": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "display_name": u.display_name,
+                "avatar_url": u.avatar_url,
+            }
+            for u in users
+        ],
+        "total": total,
+    }
+
+
+@router.get("/me/follow-stats")
+def get_my_follow_stats(
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    follower_count = store.count_followers(user.id)
+    following_count = store.count_following(user.id)
+    return {"followers": follower_count, "following": following_count}

@@ -7,7 +7,7 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from forkfit.db.models import UserRow
+from forkfit.db.models import UserRow, FollowRow
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,3 +165,92 @@ class UserStore:
         with self._session_factory() as session:
             row = session.get(UserRow, user_id)
             return row.profile_payload if row else None
+
+    # ── Follow / Unfollow ──
+
+    def follow(self, follower_id: str, following_id: str) -> None:
+        with self._session_factory() as session:
+            existing = session.execute(
+                select(FollowRow).where(
+                    FollowRow.follower_id == follower_id,
+                    FollowRow.following_id == following_id,
+                )
+            ).scalar_one_or_none()
+            if not existing:
+                session.add(FollowRow(follower_id=follower_id, following_id=following_id))
+                session.commit()
+
+    def unfollow(self, follower_id: str, following_id: str) -> None:
+        with self._session_factory() as session:
+            row = session.execute(
+                select(FollowRow).where(
+                    FollowRow.follower_id == follower_id,
+                    FollowRow.following_id == following_id,
+                )
+            ).scalar_one_or_none()
+            if row:
+                session.delete(row)
+                session.commit()
+
+    def is_following(self, follower_id: str, following_id: str) -> bool:
+        with self._session_factory() as session:
+            return session.execute(
+                select(FollowRow).where(
+                    FollowRow.follower_id == follower_id,
+                    FollowRow.following_id == following_id,
+                )
+            ).scalar_one_or_none() is not None
+
+    def count_followers(self, user_id: str) -> int:
+        with self._session_factory() as session:
+            return session.scalar(
+                select(func.count(FollowRow.follower_id)).where(FollowRow.following_id == user_id)
+            )
+
+    def count_following(self, user_id: str) -> int:
+        with self._session_factory() as session:
+            return session.scalar(
+                select(func.count(FollowRow.following_id)).where(FollowRow.follower_id == user_id)
+            )
+
+    def list_followers(self, user_id: str, limit: int = 50, offset: int = 0) -> tuple[list[UserRecord], int]:
+        with self._session_factory() as session:
+            total = session.scalar(
+                select(func.count(FollowRow.follower_id)).where(FollowRow.following_id == user_id)
+            )
+            rows = session.execute(
+                select(FollowRow).where(FollowRow.following_id == user_id)
+                .order_by(FollowRow.created_at.desc())
+                .offset(offset).limit(limit)
+            ).scalars().all()
+            users = []
+            for f in rows:
+                user_row = session.get(UserRow, f.follower_id)
+                if user_row:
+                    users.append(UserRecord(
+                        id=user_row.id, username=user_row.username,
+                        display_name=user_row.display_name, avatar_url=user_row.avatar_url,
+                        role=user_row.role, created_at=user_row.created_at,
+                    ))
+            return users, total
+
+    def list_following(self, user_id: str, limit: int = 50, offset: int = 0) -> tuple[list[UserRecord], int]:
+        with self._session_factory() as session:
+            total = session.scalar(
+                select(func.count(FollowRow.following_id)).where(FollowRow.follower_id == user_id)
+            )
+            rows = session.execute(
+                select(FollowRow).where(FollowRow.follower_id == user_id)
+                .order_by(FollowRow.created_at.desc())
+                .offset(offset).limit(limit)
+            ).scalars().all()
+            users = []
+            for f in rows:
+                user_row = session.get(UserRow, f.following_id)
+                if user_row:
+                    users.append(UserRecord(
+                        id=user_row.id, username=user_row.username,
+                        display_name=user_row.display_name, avatar_url=user_row.avatar_url,
+                        role=user_row.role, created_at=user_row.created_at,
+                    ))
+            return users, total

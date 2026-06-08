@@ -105,3 +105,12 @@ class CommentRow(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class FollowRow(Base):
+    __tablename__ = "follows"
+    follower_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    following_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserPlus, UserCheck } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { PostCard } from "@/components/post-card";
-import { getUserProfile, listUserPosts } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
+import {
+  getUserProfile,
+  listUserPosts,
+  followUser,
+  unfollowUser,
+  listFollowing,
+} from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
 type UserProfile = {
@@ -26,11 +32,13 @@ export default function UserPublicProfile({ params }: { params: Promise<{ userId
 }
 
 function UserProfileContent({ params }: { params: Promise<{ userId: string }> }) {
-  const t = useTranslations("UserProfile");
+  const { user: currentUser } = useAuth();
   const [userId, setUserId] = useState<string>("");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<RecipePost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     params.then((p) => setUserId(p.userId));
@@ -50,49 +58,100 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
       .finally(() => setLoading(false));
   }, [userId]);
 
+  // Check follow status
+  useEffect(() => {
+    if (!userId || !currentUser || userId === currentUser.id) return;
+    listFollowing(currentUser.id, 100, 0).then((res) => {
+      setIsFollowing(res.users.some((u) => u.id === userId));
+    }).catch(() => {});
+  }, [userId, currentUser]);
+
+  function handleFollow() {
+    if (!currentUser || followLoading) return;
+    setFollowLoading(true);
+    const fn = isFollowing ? unfollowUser : followUser;
+    fn(userId).then(() => {
+      setIsFollowing(!isFollowing);
+    }).finally(() => setFollowLoading(false));
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-[#9f9890]" />
+        <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="py-20 text-center text-[#6f6a61]">
-        <p>{t("notFound")}</p>
+      <div className="py-20 text-center" style={{ color: "var(--lp-muted)" }}>
+        <p>用户不存在</p>
       </div>
     );
   }
 
+  const isOwnProfile = currentUser?.id === userId;
+
   return (
-    <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <div className="mb-8 flex items-center gap-4">
-        {profile.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={profile.display_name}
-            className="h-16 w-16 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e4ded6] text-xl font-medium text-[#6f6a61]">
-            {(profile.display_name || profile.username)[0].toUpperCase()}
-          </div>
-        )}
-        <div>
-          <h1 className="text-xl font-semibold">{profile.display_name}</h1>
-          <p className="text-sm text-[#6f6a61]">@{profile.username}</p>
-          <p className="mt-1 text-sm text-[#6f6a61]">
-            {t("postCount", { count: profile.post_count })}
-          </p>
+    <section className="mx-auto max-w-[960px] px-7 pb-20">
+      {/* Profile header */}
+      <div className="flex gap-8 items-start py-8" style={{ borderBottom: "1px solid var(--lp-border)" }}>
+        <div
+          className="w-24 h-24 rounded-full grid place-items-center text-[36px] font-bold flex-shrink-0"
+          style={{
+            background: "var(--lp-accent-soft)",
+            color: "var(--lp-accent)",
+            border: "3px solid var(--lp-surface)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          }}
+        >
+          {profile.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+          ) : (
+            (profile.display_name || profile.username)[0].toUpperCase()
+          )}
         </div>
+
+        <div className="flex-1 min-w-0">
+          <h1 className="text-[22px] font-bold tracking-[-0.01em] mb-1" style={{ color: "var(--lp-fg)" }}>
+            {profile.display_name || profile.username}
+          </h1>
+          <div className="text-[13px]" style={{ color: "var(--lp-muted)" }}>
+            @{profile.username} · {profile.post_count} 篇菜谱
+          </div>
+        </div>
+
+        {!isOwnProfile && currentUser && (
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            className="flex-shrink-0 inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
+            style={{
+              background: isFollowing ? "var(--lp-surface)" : "var(--lp-accent)",
+              color: isFollowing ? "var(--lp-fg-secondary, var(--lp-muted))" : "white",
+              border: isFollowing ? "1px solid var(--lp-border)" : "none",
+            }}
+            onMouseEnter={(e) => {
+              if (isFollowing) { e.currentTarget.style.borderColor = "#e44"; e.currentTarget.style.color = "#e44"; e.currentTarget.style.background = "#fef2f2"; }
+            }}
+            onMouseLeave={(e) => {
+              if (isFollowing) { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; e.currentTarget.style.background = "var(--lp-surface)"; }
+            }}
+          >
+            {isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
+            {isFollowing ? "已关注" : "关注"}
+          </button>
+        )}
       </div>
 
+      {/* Posts */}
       {posts.length === 0 ? (
-        <p className="py-12 text-center text-sm text-[#9f9890]">{t("noPosts")}</p>
+        <div className="py-20 text-center">
+          <p className="text-sm" style={{ color: "var(--lp-muted)" }}>暂无帖子</p>
+        </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

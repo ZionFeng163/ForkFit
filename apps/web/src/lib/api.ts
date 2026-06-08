@@ -287,6 +287,32 @@ export function saveMyProfile(profile: Record<string, unknown>) {
   });
 }
 
+// --- Follow ---
+
+export function followUser(userId: string) {
+  return request<{ following: boolean }>(`/users/${userId}/follow`, { method: "POST" });
+}
+
+export function unfollowUser(userId: string) {
+  return request<{ following: boolean }>(`/users/${userId}/follow`, { method: "DELETE" });
+}
+
+export function listFollowers(userId: string, limit = 50, offset = 0) {
+  return request<{ users: { id: string; username: string; display_name: string; avatar_url: string | null }[]; total: number }>(
+    `/users/${userId}/followers?limit=${limit}&offset=${offset}`
+  );
+}
+
+export function listFollowing(userId: string, limit = 50, offset = 0) {
+  return request<{ users: { id: string; username: string; display_name: string; avatar_url: string | null }[]; total: number }>(
+    `/users/${userId}/following?limit=${limit}&offset=${offset}`
+  );
+}
+
+export function getFollowStats() {
+  return request<{ followers: number; following: number }>("/users/me/follow-stats");
+}
+
 // --- Comments ---
 
 export type Comment = {
