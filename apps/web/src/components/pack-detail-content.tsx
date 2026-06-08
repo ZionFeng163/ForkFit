@@ -558,9 +558,9 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2 text-xs" style={{ borderTop: "1px solid var(--lp-border)", color: "var(--lp-muted)" }}>
-                    <Link href={`/users/${rp.user_id}`} className="font-medium hover:underline" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }} onClick={(e) => e.stopPropagation()}>
+                    <span className="font-medium" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
                       {rp.author}
-                    </Link>
+                    </span>
                     <span>{rp.forks} {locale === "en" ? "forks" : "次复刻"}</span>
                   </div>
                 </div>
