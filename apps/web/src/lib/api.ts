@@ -112,6 +112,7 @@ export function publishRun(runId: string, data?: {
   estimated_cost?: number;
   tags?: string[];
   notes?: string;
+  steps?: string[];
 }) {
   return request<RecipePost>(`/runs/${runId}/publish`, {
     method: "POST",
