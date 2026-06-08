@@ -131,6 +131,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
   return (
     <AuthLayout>
+      {/* Tab + form container: fixed height keeps tab stable */}
+      <div style={{ minHeight: "460px" }}>
+
       {/* Tab switcher */}
       <div className="flex mb-8 rounded-xl overflow-hidden" style={{ border: "1px solid var(--lp-border)" }}>
         <button
@@ -253,6 +256,8 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
           </form>
         </>
       )}
+
+      </div>{/* end tab+form container */}
 
       {/* Social login */}
       <div className="flex items-center gap-3 my-6">
