@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
-import { mealPackFromPost } from "@/lib/meal-pack";
+import { AuthGuard } from "@/components/auth-guard";
 import { loadPost } from "@/lib/posts";
-import { ForkForm } from "./fork-form";
+import { ForkContent } from "./fork-form";
 
 type PageProps = {
-  params: Promise<{ locale: string; packId: string }>;
+  params: Promise<{ packId: string }>;
 };
 
 export default async function ForkPage({ params }: PageProps) {
@@ -19,9 +19,9 @@ export default async function ForkPage({ params }: PageProps) {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-        <ForkForm mealPack={mealPackFromPost(post)} />
-      </section>
+      <AuthGuard>
+        <ForkContent post={post} />
+      </AuthGuard>
     </AppShell>
   );
 }
