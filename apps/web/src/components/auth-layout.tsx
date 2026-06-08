@@ -49,7 +49,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Form panel — right side */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="flex-1 flex items-start justify-center px-6 py-12">
         <div className="w-full max-w-[420px]">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
