@@ -21,19 +21,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex min-h-screen bg-[#fafafa] text-[#1f1f1f]">
-      {/* Desktop sidebar — fixed to viewport height */}
-      <aside className="hidden md:flex h-screen sticky top-0 w-60 shrink-0 flex-col border-r border-[#e7e2db] bg-white">
-        <div className="px-5 pt-6 pb-4">
-          <Link href="/" className="block">
+    <div className="flex min-h-screen" style={{ background: "var(--lp-warm-100)", color: "var(--lp-fg)" }}>
+      {/* Desktop sidebar */}
+      <aside
+        className="hidden md:flex h-screen sticky top-0 w-60 shrink-0 flex-col"
+        style={{
+          background: "var(--lp-surface)",
+          borderRight: "1px solid var(--lp-border)",
+        }}
+      >
+        {/* Logo */}
+        <div className="px-5 pt-6 pb-5">
+          <Link href="/" className="flex items-center gap-2.5">
             <img
               src={locale === "zh" ? "/logo_zh.png" : "/logo_en.png"}
               alt={locale === "zh" ? "吃什么" : "ForkFit"}
-              className="h-16 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
         </div>
 
+        {/* Nav links */}
         <nav className="flex-1 px-3">
           {NAV_ITEMS.map(({ key, href, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
@@ -41,11 +49,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={key}
                 href={href}
-                className={`mb-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                  active
-                    ? "bg-[#f5f0ea] font-medium text-[#1f1f1f]"
-                    : "text-[#5f5a52] hover:bg-[#f9f6f2] hover:text-[#1f1f1f]"
-                }`}
+                className="mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150"
+                style={{
+                  background: active ? "var(--lp-accent-light)" : "transparent",
+                  color: active ? "var(--lp-accent)" : "var(--lp-muted)",
+                  fontWeight: active ? 600 : 500,
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "var(--lp-warm-100)";
+                    e.currentTarget.style.color = "var(--lp-fg)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--lp-muted)";
+                  }
+                }}
               >
                 <Icon size={18} />
                 {t(key)}
@@ -54,29 +75,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="border-t border-[#e7e2db] px-3 py-4">
+        {/* User section */}
+        <div className="px-3 py-4" style={{ borderTop: "1px solid var(--lp-border)" }}>
           {user ? (
-            <div className="flex items-center gap-2 px-3">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e4ded6] text-xs font-medium text-[#6f6a61]">
-                  {(user.display_name || user.username || "?")[0].toUpperCase()}
-                </div>
-              )}
-              <span className="min-w-0 flex-1 truncate text-xs text-[#5f5a52]">
+            <div className="flex items-center gap-2.5 px-3">
+              <div
+                className="w-8 h-8 rounded-full grid place-items-center text-[13px] font-bold flex-shrink-0"
+                style={{ background: "var(--lp-accent-soft)", color: "var(--lp-accent)" }}
+              >
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  (user.display_name || user.username || "?")[0].toUpperCase()
+                )}
+              </div>
+              <span
+                className="min-w-0 flex-1 truncate text-[13px]"
+                style={{ color: "var(--lp-muted)" }}
+              >
                 {user.display_name || user.username}
               </span>
               <button
                 onClick={logout}
-                className="shrink-0 rounded p-1 text-[#9f9890] hover:bg-[#f5f0ea] hover:text-[#5f5a52]"
-                title="Logout"
+                className="shrink-0 p-1 rounded transition-colors"
+                style={{ color: "var(--lp-muted)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--lp-fg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--lp-muted)")}
+                title="退出"
               >
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
-            <Link href="/login" className="block px-3 py-2 text-xs text-[#5f5a52] hover:text-[#1f1f1f]">
+            <Link
+              href="/login"
+              className="block px-3 py-2 text-xs font-medium"
+              style={{ color: "var(--lp-muted)" }}
+            >
               登录 / Login
             </Link>
           )}
@@ -85,40 +120,64 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        {/* Top bar — language switcher on the right */}
-        <header className="flex items-center justify-end border-b border-[#e7e2db] bg-white px-4 py-2 md:px-6">
-          <div className="flex items-center gap-2">
+        {/* Topbar — frosted glass */}
+        <header
+          className="sticky top-0 z-50 flex items-center justify-end px-6"
+          style={{
+            height: "52px",
+            background: "rgba(250,248,245,0.85)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: "1px solid var(--lp-border)",
+          }}
+        >
+          <div className="flex items-center gap-1.5">
             <Link
               href={pathname}
               locale="en"
-              className={`text-xs ${locale === "en" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
+              className="px-2 py-0.5 rounded text-xs transition-colors"
+              style={{
+                fontWeight: locale === "en" ? 600 : 400,
+                color: locale === "en" ? "var(--lp-fg)" : "var(--lp-muted)",
+              }}
             >
               EN
             </Link>
-            <span className="text-xs text-[#d0c9c0]">/</span>
+            <span className="text-xs" style={{ color: "var(--lp-border)" }}>/</span>
             <Link
               href={pathname}
               locale="zh"
-              className={`text-xs ${locale === "zh" ? "font-medium text-[#1f1f1f]" : "text-[#9f9890] hover:text-[#5f5a52]"}`}
+              className="px-2 py-0.5 rounded text-xs transition-colors"
+              style={{
+                fontWeight: locale === "zh" ? 600 : 400,
+                color: locale === "zh" ? "var(--lp-fg)" : "var(--lp-muted)",
+              }}
             >
               中文
             </Link>
           </div>
         </header>
+
         <main className="flex-1 pb-20 md:pb-0">{children}</main>
       </div>
 
-      {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 flex border-t border-[#e7e2db] bg-white md:hidden">
+      {/* Mobile bottom tabs */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 flex md:hidden z-50"
+        style={{
+          background: "var(--lp-surface)",
+          borderTop: "1px solid var(--lp-border)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
         {NAV_ITEMS.map(({ key, href, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={key}
               href={href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] ${
-                active ? "text-[#1f1f1f]" : "text-[#9f9890]"
-              }`}
+              className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px]"
+              style={{ color: active ? "var(--lp-accent)" : "var(--lp-muted)" }}
             >
               <Icon size={20} />
               {t(key)}

@@ -214,3 +214,53 @@ html {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ========== Landing Page Design Tokens ========== */
+:root {
+  --lp-bg: #fffdf9;
+  --lp-surface: #ffffff;
+  --lp-fg: #1a1714;
+  --lp-muted: #7a7168;
+  --lp-border: #e8e2da;
+  --lp-accent: #e85d3a;
+  --lp-accent-hover: #d14e2e;
+  --lp-accent-light: #fef0ec;
+  --lp-accent-soft: #f9ddd4;
+  --lp-green: #2d8a56;
+  --lp-green-light: #e8f5ee;
+  --lp-warm-50: #fefcfa;
+  --lp-warm-100: #faf6f0;
+  --lp-warm-200: #f2ece3;
+  --lp-warm-300: #e4dbd0;
+}
+
+/* Landing page footer hover */
+.footer-link:hover {
+  color: var(--lp-fg) !important;
+}
+
+/* Landing page scroll reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Discover page search input */
+.discover-search {
+  border: 1px solid var(--lp-border);
+  background: var(--lp-surface);
+  color: var(--lp-fg);
+}
+.discover-search::placeholder {
+  color: var(--lp-muted);
+}
+.discover-search:focus {
+  border-color: var(--lp-accent);
+  box-shadow: 0 0 0 3px rgba(232, 93, 58, 0.1);
+}
