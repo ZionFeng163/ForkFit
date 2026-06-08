@@ -28,7 +28,7 @@ class CreatePostRequest(BaseModel):
     title: str = Field(min_length=1, max_length=160)
     theme: str = Field(min_length=1, max_length=120)
     location: str = Field(min_length=1, max_length=120)
-    image_urls: list[str] = Field(min_length=1, max_length=8)
+    image_urls: list[str] = Field(min_length=0, max_length=8)
     description: str = Field(min_length=1, max_length=1200)
     recipe: Meal
 

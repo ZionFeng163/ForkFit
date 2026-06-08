@@ -34,7 +34,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (response.status === 401) {
-    throw new Error("Session expired");
+    throw new Error("请先登录");
   }
 
   if (!response.ok) {
@@ -47,7 +47,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         else if (Array.isArray(body.detail)) msg = body.detail.map((d: { msg?: string }) => d.msg).join(", ");
       }
     } catch {}
-    throw new Error(msg || `Request failed with ${response.status}`);
+    // Make validation errors user-friendly
+    msg = msg
+      .replace(/List should have at least 1 item after validation, not 0/g, "请至少填写一项内容")
+      .replace(/String should have at least \d+ character/g, "此项不能为空")
+      .replace(/Field required/g, "请填写必填项")
+      .replace(/value is not a valid/g, "格式不正确");
+    throw new Error(msg || "请求失败，请稍后重试");
   }
 
   return response.json() as Promise<T>;

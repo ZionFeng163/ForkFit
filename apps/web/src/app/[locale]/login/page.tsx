@@ -21,7 +21,10 @@ export default function LoginPage() {
     mutationFn: loginUser,
     onSuccess: () => {
       refresh();
-      router.push("/");
+      // Return to the page the user came from, or discover by default
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get("returnTo") || "/discover";
+      router.push(returnTo);
     },
   });
 

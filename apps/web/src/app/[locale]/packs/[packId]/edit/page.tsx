@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { AuthGuard } from "@/components/auth-guard";
 import { loadPost } from "@/lib/posts";
 import { PostEditorForm } from "../../../posts/new/post-editor-form";
 
@@ -18,9 +19,9 @@ export default async function EditPostPage({ params }: PageProps) {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <AuthGuard>
         <PostEditorForm post={post} />
-      </section>
+      </AuthGuard>
     </AppShell>
   );
 }

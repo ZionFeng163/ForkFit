@@ -1,12 +1,13 @@
 import { AppShell } from "@/components/app-shell";
+import { AuthGuard } from "@/components/auth-guard";
 import { NewPostForm } from "./post-editor-form";
 
 export default function NewPostPage() {
   return (
     <AppShell>
-      <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <AuthGuard>
         <NewPostForm />
-      </section>
+      </AuthGuard>
     </AppShell>
   );
 }

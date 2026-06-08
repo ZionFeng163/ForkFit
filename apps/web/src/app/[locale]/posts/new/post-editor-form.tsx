@@ -1,16 +1,17 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, Info, Loader2, Plus, Send, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/image-upload";
+import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/routing";
 import { createPost, extractPost, updatePost } from "@/lib/api";
 import type { CreatePostInput, RecipePost } from "@/types/forkfit";
 
+/* ─── Types ─── */
 type PostFormState = {
   title: string;
   theme: string;
@@ -18,12 +19,13 @@ type PostFormState = {
   image_urls: string[];
   description: string;
   recipe_name: string;
-  ingredients: string;
-  equipment: string;
-  cook_time_minutes: string;
+  ingredients: string[];
+  equipment: string[];
+  cook_time_minutes: number;
   estimated_cost: string;
-  tags: string;
+  tags: string[];
   notes: string;
+  steps: string[];
 };
 
 const defaultForm: PostFormState = {
@@ -33,21 +35,100 @@ const defaultForm: PostFormState = {
   image_urls: [],
   description: "",
   recipe_name: "",
-  ingredients: "",
-  equipment: "",
-  cook_time_minutes: "30",
+  ingredients: [],
+  equipment: [],
+  cook_time_minutes: 15,
   estimated_cost: "10",
-  tags: "",
+  tags: [],
   notes: "",
+  steps: ["", "", ""],
 };
 
+const TIME_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
+const DIFFICULTY_OPTIONS = [
+  { key: "easy", label: { zh: "简单", en: "Easy" } },
+  { key: "medium", label: { zh: "中等", en: "Medium" } },
+  { key: "hard", label: { zh: "较难", en: "Hard" } },
+];
+
+/* ─── Tag Input ─── */
+function TagInput({
+  tags,
+  onChange,
+  placeholder,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+  placeholder: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const val = (inputRef.current?.value || "").trim().replace(/,/g, "");
+      if (val && !tags.includes(val)) {
+        onChange([...tags, val]);
+      }
+      if (inputRef.current) inputRef.current.value = "";
+    }
+    if (e.key === "Backspace" && !(inputRef.current?.value) && tags.length) {
+      onChange(tags.slice(0, -1));
+    }
+  }
+
+  function removeTag(idx: number) {
+    onChange(tags.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div
+      className="flex flex-wrap gap-1.5 p-2 min-h-[42px] cursor-text transition-all duration-150"
+      style={{ border: "1.5px solid var(--lp-border)", borderRadius: "var(--radius-sm, 8px)", background: "var(--lp-surface)" }}
+      onClick={() => inputRef.current?.focus()}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = "var(--lp-accent)";
+        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)";
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = "var(--lp-border)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      {tags.map((tag, i) => (
+        <span
+          key={i}
+          className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-md text-[13px] font-medium"
+          style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
+        >
+          {tag}
+          <button type="button" onClick={() => removeTag(i)} className="opacity-60 hover:opacity-100">
+            <X size={12} />
+          </button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={tags.length === 0 ? placeholder : ""}
+        onKeyDown={handleKeyDown}
+        className="flex-1 min-w-[80px] border-none outline-none bg-transparent text-sm"
+        style={{ color: "var(--lp-fg)" }}
+      />
+    </div>
+  );
+}
+
+/* ─── Main Form ─── */
 export function PostEditorForm({ post }: { post?: RecipePost }) {
   const t = useTranslations("NewPost");
   const router = useRouter();
+  const { user } = useAuth();
   const isEditing = Boolean(post);
   const [form, setForm] = useState<PostFormState>(() =>
     post ? formFromPost(post) : defaultForm
   );
+  const [difficulty, setDifficulty] = useState("easy");
 
   const mutation = useMutation({
     mutationFn: (input: CreatePostInput) =>
@@ -56,11 +137,10 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
       router.push(`/packs/${savedPost.id}`);
     },
   });
+
   const extractMutation = useMutation({
     mutationFn: () => {
-      if (!post) {
-        throw new Error("Post is required.");
-      }
+      if (!post) throw new Error("Post is required.");
       return extractPost(post.id);
     },
     onSuccess: (savedPost) => {
@@ -69,195 +149,352 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     },
   });
 
-  function update(name: keyof PostFormState, value: string) {
-    setForm((current) => ({ ...current, [name]: value }));
+  function update<K extends keyof PostFormState>(key: K, value: PostFormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    mutation.mutate(buildInput(form));
+  function handleStepChange(index: number, value: string) {
+    const steps = [...form.steps];
+    steps[index] = value;
+    update("steps", steps);
+  }
+
+  function addStep() {
+    update("steps", [...form.steps, ""]);
+  }
+
+  function removeStep(index: number) {
+    if (form.steps.length <= 1) return;
+    update("steps", form.steps.filter((_, i) => i !== index));
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    mutation.mutate(buildInput(form, difficulty));
   }
 
   function submitAndExtract() {
-    if (!post) {
-      return;
-    }
-    mutation.mutate(buildInput(form), {
-      onSuccess: () => {
-        extractMutation.mutate();
-      },
+    if (!post) return;
+    mutation.mutate(buildInput(form, difficulty), {
+      onSuccess: () => extractMutation.mutate(),
     });
   }
 
+  const isPending = mutation.isPending || extractMutation.isPending;
+
   return (
     <form onSubmit={submit}>
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-0">
-          {isEditing ? t("editTitle") : t("title")}
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-[#625b52]">
-          {t("description")}
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="space-y-5">
-          <section className="space-y-4 rounded-lg border border-[#e4ded6] bg-white p-5">
-          <h2 className="text-base font-semibold">{t("mainSection")}</h2>
-          <Field label={t("titleLabel")} htmlFor="title">
-            <input
-              id="title"
-              required
-              value={form.title}
-              placeholder={t("titlePlaceholder")}
-              onChange={(event) => update("title", event.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label={t("descriptionLabel")} htmlFor="description">
-            <textarea
-              id="description"
-              required
-              rows={9}
-              value={form.description}
-              placeholder={t("descriptionPlaceholder")}
-              onChange={(event) => update("description", event.target.value)}
-              className="textarea"
-            />
-          </Field>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">{t("imageUrls")}</label>
-            <span className="block text-xs text-[#7a7167]">{t("imageHelp")}</span>
-            <ImageUpload
-              images={form.image_urls}
-              onChange={(urls) => setForm((prev) => ({ ...prev, image_urls: urls }))}
-            />
-          </div>
-        </section>
-
-        <details className="rounded-lg border border-[#e4ded6] bg-white">
-          <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-[#2f2a24]">
-            {t("detailsSection")}
-          </summary>
-          <div className="space-y-4 border-t border-[#eee8df] p-5">
-            <p className="text-sm leading-6 text-[#625b52]">{t("detailsHelp")}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={t("recipeName")} htmlFor="recipe_name">
-                <input
-                  id="recipe_name"
-                  value={form.recipe_name}
-                  placeholder={t("recipeNamePlaceholder")}
-                  onChange={(event) => update("recipe_name", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("theme")} htmlFor="theme">
-                <input
-                  id="theme"
-                  value={form.theme}
-                  placeholder={t("themePlaceholder")}
-                  onChange={(event) => update("theme", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("location")} htmlFor="location">
-                <input
-                  id="location"
-                  value={form.location}
-                  placeholder={t("locationPlaceholder")}
-                  onChange={(event) => update("location", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("cookTime")} htmlFor="cook_time_minutes">
-                <input
-                  id="cook_time_minutes"
-                  type="number"
-                  min="1"
-                  value={form.cook_time_minutes}
-                  onChange={(event) => update("cook_time_minutes", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("cost")} htmlFor="estimated_cost">
-                <input
-                  id="estimated_cost"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={form.estimated_cost}
-                  onChange={(event) => update("estimated_cost", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("ingredients")} htmlFor="ingredients" help={t("listHelp")}>
-                <input
-                  id="ingredients"
-                  value={form.ingredients}
-                  placeholder={t("ingredientsPlaceholder")}
-                  onChange={(event) => update("ingredients", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("equipment")} htmlFor="equipment" help={t("listHelp")}>
-                <input
-                  id="equipment"
-                  value={form.equipment}
-                  placeholder={t("equipmentPlaceholder")}
-                  onChange={(event) => update("equipment", event.target.value)}
-                  className="input"
-                />
-              </Field>
-              <Field label={t("tags")} htmlFor="tags" help={t("listHelp")}>
-                <input
-                  id="tags"
-                  value={form.tags}
-                  placeholder={t("tagsPlaceholder")}
-                  onChange={(event) => update("tags", event.target.value)}
-                  className="input"
-                />
-              </Field>
-            </div>
-            <Field label={t("notes")} htmlFor="notes">
-              <textarea
-                id="notes"
-                rows={4}
-                value={form.notes}
-                placeholder={t("notesPlaceholder")}
-                onChange={(event) => update("notes", event.target.value)}
-                className="textarea"
-              />
-            </Field>
-          </div>
-        </details>
-      </div>
-
-      <aside className="h-fit rounded-lg border border-[#e4ded6] bg-white p-5 lg:sticky lg:top-6">
-        <p className="text-sm leading-6 text-[#625b52]">{t("publishHelp")}</p>
-        {mutation.error || extractMutation.error ? (
-          <p className="mt-4 rounded-md border border-[#e1b7a9] bg-[#fff8f5] p-3 text-sm text-[#7f3525]">
-            {t("failed")}
-          </p>
-        ) : null}
-        <Button
-          type="submit"
-          disabled={mutation.isPending || extractMutation.isPending}
-          className="mt-5 w-full"
-        >
-          {mutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-          {isEditing ? t("save") : t("submit")}
-        </Button>
-        {isEditing ? (
+      <div className="mx-auto max-w-[960px] px-7 pb-20">
+        {/* Back */}
+        <div className="pt-6">
           <button
             type="button"
-            disabled={mutation.isPending || extractMutation.isPending}
-            onClick={submitAndExtract}
-            className="mt-3 h-10 w-full rounded-md border border-[#d8d0c6] bg-white px-4 text-sm font-medium text-[#625b52] hover:text-[#1f1f1f] disabled:opacity-50"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors"
+            style={{ color: "var(--lp-muted)" }}
           >
-            {extractMutation.isPending ? t("extracting") : t("saveAndExtract")}
+            <ArrowLeft size={16} />
+            {t("back")}
           </button>
-        ) : null}
-      </aside>
+        </div>
+
+        {/* Page header */}
+        <div className="mt-7 mb-8">
+          <h1 className="text-2xl font-bold tracking-[-0.01em] mb-1.5" style={{ color: "var(--lp-fg)" }}>
+            {isEditing ? t("editTitle") : t("title")}
+          </h1>
+          <p className="text-sm leading-[1.6]" style={{ color: "var(--lp-muted)" }}>
+            {t("description")}
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex gap-0">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex-1 h-[3px] rounded-full" style={{ background: "var(--lp-border)" }} />
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            {["基本信息", "菜谱详情", "发布"].map((label, i) => (
+              <span key={i} className="text-[11px] font-medium" style={{ color: i === 0 ? "var(--lp-accent)" : "var(--lp-muted)" }}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
+          {/* ── Left: Form ── */}
+          <div>
+            {/* Section 1: Basic Info */}
+            <div className="rounded-xl p-7 mb-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+              <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                基本信息
+              </h2>
+
+              {/* Title */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-1.5">
+                  菜谱标题 <span style={{ color: "var(--lp-accent)" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.title}
+                  onChange={(e) => update("title", e.target.value)}
+                  placeholder="例如：外婆红烧肉、五分钟快手早餐"
+                  className="form-input w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                />
+                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>取一个让人看了就想做的名字</div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-1.5">
+                  菜谱描述 <span style={{ color: "var(--lp-accent)" }}>*</span>
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={form.description}
+                  onChange={(e) => update("description", e.target.value)}
+                  placeholder="简单描述这道菜的特色、灵感来源、适合什么场景…"
+                  className="form-textarea w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150 resize-y min-h-[120px] leading-[1.65]"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                />
+              </div>
+
+              {/* Images */}
+              <div>
+                <label className="block text-[13px] font-semibold mb-1.5">菜谱图片</label>
+                <ImageUpload
+                  images={form.image_urls}
+                  onChange={(urls) => update("image_urls", urls)}
+                />
+              </div>
+            </div>
+
+            {/* Section 2: Recipe Details */}
+            <div className="rounded-xl p-7 mb-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+              <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                菜谱详情
+              </h2>
+
+              {/* Cook time */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-2">烹饪时间</label>
+                <div className="flex flex-wrap gap-2">
+                  {TIME_OPTIONS.map((min) => (
+                    <button
+                      key={min}
+                      type="button"
+                      onClick={() => update("cook_time_minutes", min)}
+                      className="px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-150"
+                      style={{
+                        border: `1.5px solid ${form.cook_time_minutes === min ? "var(--lp-accent)" : "var(--lp-border)"}`,
+                        background: form.cook_time_minutes === min ? "var(--lp-accent-light)" : "var(--lp-surface)",
+                        color: form.cook_time_minutes === min ? "var(--lp-accent)" : "var(--lp-muted)",
+                      }}
+                    >
+                      {min >= 60 ? "1 小时+" : `${min} 分钟`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Difficulty */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-2">难度</label>
+                <div className="flex gap-2">
+                  {DIFFICULTY_OPTIONS.map((d) => (
+                    <button
+                      key={d.key}
+                      type="button"
+                      onClick={() => setDifficulty(d.key)}
+                      className="flex-1 py-3 rounded-lg text-center transition-all duration-150"
+                      style={{
+                        border: `1.5px solid ${difficulty === d.key ? "var(--lp-accent)" : "var(--lp-border)"}`,
+                        background: difficulty === d.key ? "var(--lp-accent-light)" : "var(--lp-surface)",
+                      }}
+                    >
+                      <span className="text-[13px] font-semibold" style={{ color: difficulty === d.key ? "var(--lp-accent)" : "var(--lp-fg-secondary, var(--lp-muted))" }}>
+                        {d.label.zh}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ingredients */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-1.5">食材清单</label>
+                <TagInput tags={form.ingredients} onChange={(t) => update("ingredients", t)} placeholder="输入食材后按回车添加" />
+                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>逐一输入食材名称，按回车分隔</div>
+              </div>
+
+              {/* Equipment */}
+              <div className="mb-5">
+                <label className="block text-[13px] font-semibold mb-1.5">厨具</label>
+                <TagInput tags={form.equipment} onChange={(t) => update("equipment", t)} placeholder="输入厨具后按回车添加" />
+                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>例如：炒锅、烤箱、空气炸锅</div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-[13px] font-semibold mb-1.5">标签</label>
+                <TagInput tags={form.tags} onChange={(t) => update("tags", t)} placeholder="输入标签后按回车添加" />
+                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>例如：家常菜、快手菜、减脂、早餐</div>
+              </div>
+            </div>
+
+            {/* Section 3: Cooking Steps */}
+            <div className="rounded-xl p-7" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+              <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                烹饪步骤
+              </h2>
+
+              <div className="flex flex-col gap-3">
+                {form.steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div
+                      className="w-7 h-7 min-w-7 rounded-full grid place-items-center text-xs font-extrabold text-white mt-2"
+                      style={{ background: "var(--lp-accent)" }}
+                    >
+                      {i + 1}
+                    </div>
+                    <input
+                      type="text"
+                      value={step}
+                      onChange={(e) => handleStepChange(i, e.target.value)}
+                      placeholder={`第${i + 1}步`}
+                      className="flex-1 px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150"
+                      style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
+                      onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeStep(i)}
+                      className="mt-2 p-1 transition-colors"
+                      style={{ color: "var(--lp-muted)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--lp-accent)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--lp-muted)")}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addStep}
+                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150"
+                style={{ border: "1.5px dashed var(--lp-border)", color: "var(--lp-muted)", background: "transparent" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.color = "var(--lp-accent)"; e.currentTarget.style.background = "var(--lp-accent-light)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-muted)"; e.currentTarget.style.background = "transparent"; }}
+              >
+                <Plus size={14} />
+                添加步骤
+              </button>
+
+              {/* Notes */}
+              <div className="mt-5">
+                <label className="block text-[13px] font-semibold mb-1.5">小贴士</label>
+                <textarea
+                  rows={3}
+                  value={form.notes}
+                  onChange={(e) => update("notes", e.target.value)}
+                  placeholder="例如：番茄要选熟透的、蛋不要炒太老…"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150 resize-y min-h-[80px] leading-[1.65]"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right: Sidebar ── */}
+          <div className="lg:sticky lg:top-[84px]">
+            {/* Publish card */}
+            <div className="rounded-xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+              <p className="text-[13px] leading-[1.6] mb-4" style={{ color: "var(--lp-muted)" }}>
+                {t("publishHelp")}
+              </p>
+
+              {mutation.error || extractMutation.error ? (
+                <div className="mb-4 p-3 rounded-lg text-[13px]" style={{ border: "1px solid #e1b7a9", background: "#fff8f5", color: "#7f3525" }}>
+                  {mutation.error?.message || extractMutation.error?.message || t("failed")}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isPending}
+                className="w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-50"
+                style={{ background: "var(--lp-accent)", color: "white" }}
+                onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.background = "var(--lp-accent-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lp-accent)"; }}
+              >
+                {isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                {isEditing ? t("save") : t("submit")}
+              </button>
+
+              {isEditing && (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={submitAndExtract}
+                  className="w-full py-2.5 mt-2 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "transparent", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-muted)"; e.currentTarget.style.color = "var(--lp-fg)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; }}
+                >
+                  {extractMutation.isPending ? (
+                    <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" />{t("extracting")}</span>
+                  ) : t("saveAndExtract")}
+                </button>
+              )}
+            </div>
+
+            {/* Tips card */}
+            <div className="rounded-xl p-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+              <div className="text-[13px] font-bold mb-3 flex items-center gap-1.5">
+                <Info size={15} style={{ color: "var(--lp-accent)" }} />
+                发布小贴士
+              </div>
+              <ul>
+                {[
+                  "清晰的成品图能大幅提升收藏率",
+                  "食材写清用量，例如「鸡蛋 2 个」",
+                  "步骤越细越好，新手也能跟着做",
+                  "加上标签更容易被搜索到",
+                  "小贴士写上你的独门秘诀",
+                ].map((tip, i) => (
+                  <li key={i} className="flex gap-2 py-1.5 text-xs leading-[1.6]" style={{ color: "var(--lp-muted)", borderBottom: i < 4 ? "1px solid var(--lp-border)" : "none" }}>
+                    <span
+                      className="w-[18px] h-[18px] min-w-[18px] rounded-full grid place-items-center text-[10px] font-extrabold"
+                      style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)", marginTop: "1px" }}
+                    >
+                      {i + 1}
+                    </span>
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
   );
@@ -267,30 +504,33 @@ export function NewPostForm() {
   return <PostEditorForm />;
 }
 
-function buildInput(form: PostFormState): CreatePostInput {
+/* ─── Helpers ─── */
+function buildInput(form: PostFormState, difficulty: string): CreatePostInput {
   const title = form.title.trim();
   const recipeName = form.recipe_name.trim() || title;
   const description = form.description.trim();
-  const ingredients = splitList(form.ingredients);
+  const allTags = [...form.tags];
+  if (difficulty && !allTags.includes(difficulty)) allTags.unshift(difficulty);
+  const steps = form.steps.filter((s) => s.trim());
 
   return {
-      title,
-      theme: form.theme.trim() || "community recipe",
-      location: form.location.trim() || "unknown",
-      image_urls: form.image_urls.filter(Boolean),
-      description,
-      recipe: {
-        id: "main",
-        day: "post",
-        name: recipeName,
-        ingredients: ingredients.length ? ingredients : [title],
-        equipment: splitList(form.equipment),
-        cook_time_minutes: Number(form.cook_time_minutes) || 30,
-        estimated_cost: Number(form.estimated_cost) || 10,
-        tags: splitList(form.tags),
-        notes: form.notes.trim(),
-        steps: [],
-      },
+    title,
+    theme: form.theme.trim() || "community recipe",
+    location: form.location.trim() || "unknown",
+    image_urls: form.image_urls.filter(Boolean),
+    description,
+    recipe: {
+      id: "main",
+      day: "post",
+      name: recipeName,
+      ingredients: form.ingredients.length ? form.ingredients : [title],
+      equipment: form.equipment,
+      cook_time_minutes: form.cook_time_minutes || 30,
+      estimated_cost: Number(form.estimated_cost) || 10,
+      tags: allTags,
+      notes: form.notes.trim(),
+      steps,
+    },
   };
 }
 
@@ -304,39 +544,13 @@ function formFromPost(post: RecipePost): PostFormState {
     recipe_name: post.recipe.name === post.title ? "" : post.recipe.name,
     ingredients:
       post.recipe.ingredients.length === 1 && post.recipe.ingredients[0] === post.title
-        ? ""
-        : post.recipe.ingredients.join(", "),
-    equipment: post.recipe.equipment.join(", "),
-    cook_time_minutes: String(post.recipe.cook_time_minutes || 30),
+        ? []
+        : [...post.recipe.ingredients],
+    equipment: [...post.recipe.equipment],
+    cook_time_minutes: post.recipe.cook_time_minutes || 30,
     estimated_cost: String(post.recipe.estimated_cost || 10),
-    tags: post.recipe.tags.join(", "),
+    tags: post.recipe.tags.filter((t) => !["easy", "medium", "hard"].includes(t)),
     notes: post.recipe.notes,
+    steps: post.recipe.steps?.length ? [...post.recipe.steps] : ["", "", ""],
   };
-}
-
-function Field({
-  label,
-  htmlFor,
-  help,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  help?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label htmlFor={htmlFor} className="space-y-1.5 text-sm font-medium">
-      <span>{label}</span>
-      {children}
-      {help ? <span className="block text-xs text-[#7a7167]">{help}</span> : null}
-    </label>
-  );
-}
-
-function splitList(value: string) {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
 }

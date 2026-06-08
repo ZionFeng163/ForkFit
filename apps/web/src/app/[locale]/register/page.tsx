@@ -23,7 +23,7 @@ export default function RegisterPage() {
     mutationFn: registerUser,
     onSuccess: () => {
       refresh();
-      router.push("/");
+      router.push("/discover");
     },
   });
 

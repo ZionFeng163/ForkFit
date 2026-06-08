@@ -11,7 +11,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      const returnTo = window.location.pathname;
+      router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
   }, [loading, user, router]);
 
