@@ -387,6 +387,7 @@ html {
   font-size: 13px; font-weight: 600; color: var(--lp-fg);
   margin-bottom: 6px;
 }
+.field-label .required { color: var(--lp-accent); margin-left: 2px; }
 .field-hint {
   font-size: 12px; color: var(--lp-muted); margin-top: 4px; line-height: 1.5;
 }
@@ -450,6 +451,80 @@ html {
   padding: 2px 0;
 }
 .fp-tag-input::placeholder { color: var(--lp-muted); }
+
+/* Steps editor */
+.fp-steps { display: flex; flex-direction: column; gap: 12px; }
+.fp-step { display: flex; gap: 12px; align-items: flex-start; }
+.fp-step-num {
+  width: 28px; height: 28px; min-width: 28px;
+  background: var(--lp-accent); color: white;
+  border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; margin-top: 8px;
+}
+.fp-step .fp-input { flex: 1; }
+.fp-step-remove {
+  margin-top: 8px; background: none; border: none;
+  color: var(--lp-muted); cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: color 0.15s;
+}
+.fp-step-remove:hover { color: var(--lp-accent); }
+.fp-step-remove svg { width: 16px; height: 16px; display: block; }
+.fp-add-step {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: transparent;
+  border: 1.5px dashed var(--lp-border); border-radius: 8px;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+  color: var(--lp-muted); cursor: pointer;
+  transition: all 0.15s; margin-top: 4px;
+}
+.fp-add-step:hover { border-color: var(--lp-accent); color: var(--lp-accent); background: var(--lp-accent-light); }
+.fp-add-step svg { width: 14px; height: 14px; }
+
+/* Sidebar panel */
+.fp-side-panel { position: sticky; top: 84px; }
+.fp-publish-card {
+  background: var(--lp-surface); border: 1px solid var(--lp-border);
+  border-radius: 12px; padding: 24px; margin-bottom: 16px;
+}
+.fp-publish-card p { font-size: 13px; color: var(--lp-muted); line-height: 1.6; margin-bottom: 16px; }
+.fp-btn-publish {
+  width: 100%; padding: 12px 20px;
+  background: var(--lp-accent); color: white; border: none;
+  border-radius: 8px; font-family: var(--font-sans);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.fp-btn-publish:hover { background: var(--lp-accent-hover); }
+.fp-btn-publish:active { transform: scale(0.98); }
+.fp-btn-publish svg { width: 16px; height: 16px; }
+.fp-btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
+.fp-btn-draft {
+  width: 100%; padding: 10px 20px;
+  background: transparent; color: var(--lp-fg-secondary, var(--lp-muted));
+  border: 1.5px solid var(--lp-border); border-radius: 8px;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; margin-top: 8px;
+}
+.fp-btn-draft:hover { border-color: var(--lp-muted); color: var(--lp-fg); }
+
+/* Tips card */
+.fp-tips { background: var(--lp-surface); border: 1px solid var(--lp-border); border-radius: 12px; padding: 20px; }
+.fp-tips-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.fp-tips-title svg { width: 15px; height: 15px; color: var(--lp-accent); }
+.fp-tips-list { list-style: none; }
+.fp-tips-list li {
+  font-size: 12px; color: var(--lp-muted); line-height: 1.6;
+  padding: 6px 0; border-bottom: 1px solid var(--lp-border);
+  display: flex; gap: 8px;
+}
+.fp-tips-list li:last-child { border-bottom: none; }
+.fp-tips-num {
+  width: 18px; height: 18px; min-width: 18px;
+  background: var(--lp-accent-light); color: var(--lp-accent);
+  border-radius: 50%; display: grid; place-items: center;
+  font-size: 10px; font-weight: 800; margin-top: 1px;
+}
 
 /* Landing page footer hover */
 .footer-link:hover {

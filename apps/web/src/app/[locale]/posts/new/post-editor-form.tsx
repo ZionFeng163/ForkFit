@@ -339,44 +339,25 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 烹饪步骤
               </h2>
 
-              <div className="flex flex-col gap-3">
+              <div className="fp-steps">
                 {form.steps.map((step, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <div
-                      className="w-7 h-7 min-w-7 rounded-full grid place-items-center text-xs font-extrabold text-white mt-2"
-                      style={{ background: "var(--lp-accent)" }}
-                    >
-                      {i + 1}
-                    </div>
+                  <div key={i} className="fp-step">
+                    <div className="fp-step-num">{i + 1}</div>
                     <input
                       type="text"
                       value={step}
                       onChange={(e) => handleStepChange(i, e.target.value)}
                       placeholder={`第${i + 1}步`}
-                      className="flex-1 fp-input"
+                      className="fp-input"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeStep(i)}
-                      className="mt-2 p-1 transition-colors"
-                      style={{ color: "var(--lp-muted)" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--lp-accent)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--lp-muted)")}
-                    >
+                    <button type="button" onClick={() => removeStep(i)} className="fp-step-remove">
                       <X size={16} />
                     </button>
                   </div>
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={addStep}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150"
-                style={{ border: "1.5px dashed var(--lp-border)", color: "var(--lp-muted)", background: "transparent" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.color = "var(--lp-accent)"; e.currentTarget.style.background = "var(--lp-accent-light)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-muted)"; e.currentTarget.style.background = "transparent"; }}
-              >
+              <button type="button" onClick={addStep} className="fp-add-step">
                 <Plus size={14} />
                 添加步骤
               </button>
@@ -396,12 +377,10 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
           </div>
 
           {/* ── Right: Sidebar ── */}
-          <div className="lg:sticky lg:top-[84px]">
+          <div className="fp-side-panel">
             {/* Publish card */}
-            <div className="rounded-xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-              <p className="text-[13px] leading-[1.6] mb-4" style={{ color: "var(--lp-muted)" }}>
-                {t("publishHelp")}
-              </p>
+            <div className="fp-publish-card">
+              <p>{t("publishHelp")}</p>
 
               {mutation.error || extractMutation.error ? (
                 <div className="mb-4 p-3 rounded-lg text-[13px]" style={{ border: "1px solid #e1b7a9", background: "#fff8f5", color: "#7f3525" }}>
@@ -409,28 +388,13 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 </div>
               ) : null}
 
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-50"
-                style={{ background: "var(--lp-accent)", color: "white" }}
-                onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.background = "var(--lp-accent-hover)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "var(--lp-accent)"; }}
-              >
+              <button type="submit" disabled={isPending} className="fp-btn-publish">
                 {isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 {isEditing ? t("save") : t("submit")}
               </button>
 
               {isEditing && (
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={submitAndExtract}
-                  className="w-full py-2.5 mt-2 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
-                  style={{ border: "1.5px solid var(--lp-border)", background: "transparent", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-muted)"; e.currentTarget.style.color = "var(--lp-fg)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; }}
-                >
+                <button type="button" disabled={isPending} onClick={submitAndExtract} className="fp-btn-draft">
                   {extractMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" />{t("extracting")}</span>
                   ) : t("saveAndExtract")}
@@ -439,12 +403,12 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             </div>
 
             {/* Tips card */}
-            <div className="rounded-xl p-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-              <div className="text-[13px] font-bold mb-3 flex items-center gap-1.5">
-                <Info size={15} style={{ color: "var(--lp-accent)" }} />
+            <div className="fp-tips">
+              <div className="fp-tips-title">
+                <Info size={15} />
                 发布小贴士
               </div>
-              <ul>
+              <ul className="fp-tips-list">
                 {[
                   "清晰的成品图能大幅提升收藏率",
                   "食材写清用量，例如「鸡蛋 2 个」",
@@ -452,13 +416,8 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   "加上标签更容易被搜索到",
                   "小贴士写上你的独门秘诀",
                 ].map((tip, i) => (
-                  <li key={i} className="flex gap-2 py-1.5 text-xs leading-[1.6]" style={{ color: "var(--lp-muted)", borderBottom: i < 4 ? "1px solid var(--lp-border)" : "none" }}>
-                    <span
-                      className="w-[18px] h-[18px] min-w-[18px] rounded-full grid place-items-center text-[10px] font-extrabold"
-                      style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)", marginTop: "1px" }}
-                    >
-                      {i + 1}
-                    </span>
+                  <li key={i}>
+                    <span className="fp-tips-num">{i + 1}</span>
                     {tip}
                   </li>
                 ))}
