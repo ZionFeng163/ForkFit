@@ -6,6 +6,7 @@ import { Loader2, Plus } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { AuthGuard } from "@/components/auth-guard";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
 import { listUserPosts } from "@/lib/api";
@@ -50,6 +51,7 @@ export default function MyPostsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -58,15 +60,16 @@ export default function MyPostsPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  async function handleDelete(postId: string) {
-    if (!window.confirm("确定删除这篇帖子？")) return;
-    setDeleting(postId);
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(deleteTarget);
     try {
       const { deletePost } = await import("@/lib/api");
-      await deletePost(postId);
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      await deletePost(deleteTarget);
+      setPosts((prev) => prev.filter((p) => p.id !== deleteTarget));
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   }
 
@@ -255,7 +258,7 @@ export default function MyPostsPage() {
                           编辑
                         </Link>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(post.id); }}
                           disabled={deleting === post.id}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 disabled:opacity-50"
                           style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
@@ -273,6 +276,16 @@ export default function MyPostsPage() {
             </div>
           )}
         </div>
+
+        <ConfirmModal
+          open={!!deleteTarget}
+          title="删除帖子"
+          message="确定要删除这篇帖子吗？此操作不可撤销。"
+          confirmLabel="删除"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
       </AppShell>
     </AuthGuard>
   );

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArrowLeft, Bookmark, Check, GitFork, Heart, MapPin, Send, Trash2 } from "lucide-react";
 
 import { RemoteImage } from "@/components/remote-image";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
 import {
@@ -119,6 +120,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     if (!user) return;
     toggleSave(post.id).then((res) => {
       setSaved(res.saved);
+      setSaves(res.saves);
     });
   }
 
@@ -142,12 +144,15 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     }).finally(() => setCommentSubmitting(false));
   }
 
-  function handleCommentDelete(commentId: string) {
-    if (!confirm(tc("confirmDelete"))) return;
-    deleteComment(post.id, commentId).then(() => {
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
+
+  function confirmCommentDelete() {
+    if (!deleteCommentTarget) return;
+    deleteComment(post.id, deleteCommentTarget).then(() => {
+      setComments((prev) => prev.filter((c) => c.id !== deleteCommentTarget));
       setCommentTotal((prev) => prev - 1);
     });
+    setDeleteCommentTarget(null);
   }
 
   return (
@@ -485,7 +490,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
                   <div className="flex gap-3 mt-1.5">
                     {c.can_delete && (
                       <button
-                        onClick={() => handleCommentDelete(c.id)}
+                        onClick={() => setDeleteCommentTarget(c.id)}
                         className="text-[11px] transition-colors"
                         style={{ color: "var(--lp-muted)" }}
                         onMouseEnter={(e) => (e.currentTarget.style.color = "#9e3a2b")}
@@ -560,6 +565,16 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteCommentTarget}
+        title="删除评论"
+        message="确定要删除这条评论吗？"
+        confirmLabel="删除"
+        danger
+        onConfirm={confirmCommentDelete}
+        onCancel={() => setDeleteCommentTarget(null)}
+      />
     </div>
   );
 }

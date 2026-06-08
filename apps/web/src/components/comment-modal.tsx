@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2, Send, Trash2, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { listComments, createComment, deleteComment, type Comment } from "@/lib/api";
 
 type Props = {
@@ -54,12 +55,15 @@ export function CommentModal({ postId, onClose }: Props) {
     }).finally(() => setSubmitting(false));
   }
 
-  function handleDelete(commentId: string) {
-    if (!confirm(t("confirmDelete"))) return;
-    deleteComment(postId, commentId).then(() => {
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    deleteComment(postId, deleteTarget).then(() => {
+      setComments((prev) => prev.filter((c) => c.id !== deleteTarget));
       setTotal((prev) => prev - 1);
     });
+    setDeleteTarget(null);
   }
 
   return (
@@ -101,7 +105,7 @@ export function CommentModal({ postId, onClose }: Props) {
                       <span className="text-xs font-medium">{c.display_name}</span>
                       <span className="text-[11px] text-[#9f9890]">· {new Date(c.created_at).toLocaleDateString()}</span>
                       {c.can_delete ? (
-                        <button onClick={() => handleDelete(c.id)} className="ml-auto text-[#9f9890] hover:text-[#9e3a2b]">
+                        <button onClick={() => setDeleteTarget(c.id)} className="ml-auto text-[#9f9890] hover:text-[#9e3a2b]">
                           <Trash2 size={12} />
                         </button>
                       ) : null}
@@ -138,6 +142,16 @@ export function CommentModal({ postId, onClose }: Props) {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="删除评论"
+        message="确定要删除这条评论吗？"
+        confirmLabel="删除"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
