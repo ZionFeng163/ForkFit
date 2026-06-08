@@ -79,22 +79,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="px-3 py-4" style={{ borderTop: "1px solid var(--lp-border)" }}>
           {user ? (
             <div className="flex items-center gap-2.5 px-3">
-              <div
-                className="w-8 h-8 rounded-full grid place-items-center text-[13px] font-bold flex-shrink-0"
-                style={{ background: "var(--lp-accent-soft)", color: "var(--lp-accent)" }}
-              >
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  (user.display_name || user.username || "?")[0].toUpperCase()
-                )}
-              </div>
-              <span
-                className="min-w-0 flex-1 truncate text-[13px]"
-                style={{ color: "var(--lp-muted)" }}
-              >
-                {user.display_name || user.username}
-              </span>
+              <Link href="/profile" className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg transition-colors hover:bg-[var(--lp-warm-100)] px-2 py-1 -ml-2">
+                <div
+                  className="w-8 h-8 rounded-full grid place-items-center text-[13px] font-bold flex-shrink-0"
+                  style={{ background: "var(--lp-accent-soft)", color: "var(--lp-accent)" }}
+                >
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    (user.display_name || user.username || "?")[0].toUpperCase()
+                  )}
+                </div>
+                <span
+                  className="min-w-0 flex-1 truncate text-[13px]"
+                  style={{ color: "var(--lp-muted)" }}
+                >
+                  {user.display_name || user.username}
+                </span>
+              </Link>
               <button
                 onClick={logout}
                 className="shrink-0 p-1 rounded transition-colors"

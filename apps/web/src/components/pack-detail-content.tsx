@@ -265,12 +265,14 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
 
       {/* Author row */}
       <div className="flex items-center gap-3 py-5 mt-1" style={{ borderTop: "1px solid var(--lp-border)" }}>
-        <div
-          className="w-10 h-10 rounded-full grid place-items-center text-[15px] font-bold flex-shrink-0"
-          style={{ background: "var(--lp-accent-soft)", color: "var(--lp-accent)" }}
-        >
-          {post.author?.[0] || "?"}
-        </div>
+        <Link href={`/users/${post.user_id}`}>
+          <div
+            className="w-10 h-10 rounded-full grid place-items-center text-[15px] font-bold flex-shrink-0 transition-transform hover:scale-105"
+            style={{ background: "var(--lp-accent-soft)", color: "var(--lp-accent)" }}
+          >
+            {post.author?.[0] || "?"}
+          </div>
+        </Link>
         <div className="flex-1">
           <Link href={`/users/${post.user_id}`} className="text-sm font-semibold hover:underline" style={{ color: "var(--lp-fg)" }}>
             {post.author}
@@ -556,7 +558,9 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2 text-xs" style={{ borderTop: "1px solid var(--lp-border)", color: "var(--lp-muted)" }}>
-                    <span className="font-medium" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>{rp.author}</span>
+                    <Link href={`/users/${rp.user_id}`} className="font-medium hover:underline" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }} onClick={(e) => e.stopPropagation()}>
+                      {rp.author}
+                    </Link>
                     <span>{rp.forks} {locale === "en" ? "forks" : "次复刻"}</span>
                   </div>
                 </div>

@@ -180,9 +180,14 @@ export function PostCard({ post }: { post: RecipePost }) {
           className="flex items-center justify-between px-4 py-2.5 text-xs"
           style={{ color: "var(--lp-muted)" }}
         >
-          <span className="font-medium" style={{ color: "var(--lp-fg)" }}>
+          <Link
+            href={`/users/${post.user_id}`}
+            className="font-medium hover:underline"
+            style={{ color: "var(--lp-fg)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {post.author}
-          </span>
+          </Link>
           <div className="flex items-center gap-0.5">
             <button
               onClick={handleLike}

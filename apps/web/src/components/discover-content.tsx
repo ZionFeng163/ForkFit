@@ -272,13 +272,17 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-4 pt-4" style={{ borderTop: "1px solid var(--lp-border)" }}>
-                  <div
-                    className="w-7 h-7 rounded-full grid place-items-center text-[11px] font-bold"
-                    style={{ background: "var(--lp-warm-100)", color: "var(--lp-muted)" }}
-                  >
-                    {featuredPost.author?.[0] || "?"}
-                  </div>
-                  <span className="text-[13px] font-medium">{featuredPost.author}</span>
+                  <Link href={`/users/${featuredPost.user_id}`}>
+                    <div
+                      className="w-7 h-7 rounded-full grid place-items-center text-[11px] font-bold transition-transform hover:scale-105"
+                      style={{ background: "var(--lp-warm-100)", color: "var(--lp-muted)" }}
+                    >
+                      {featuredPost.author?.[0] || "?"}
+                    </div>
+                  </Link>
+                  <Link href={`/users/${featuredPost.user_id}`} className="text-[13px] font-medium hover:underline">
+                    {featuredPost.author}
+                  </Link>
                   {featuredPost.created_at && (
                     <span className="text-xs" style={{ color: "var(--lp-muted)" }}>
                       · {timeAgo(featuredPost.created_at)}

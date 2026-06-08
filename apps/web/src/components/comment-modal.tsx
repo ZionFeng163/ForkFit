@@ -6,6 +6,7 @@ import { Loader2, Send, Trash2, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { Link } from "@/i18n/routing";
 import { listComments, createComment, deleteComment, type Comment } from "@/lib/api";
 
 type Props = {
@@ -109,16 +110,20 @@ export function CommentModal({ postId, onClose, onCommentCountChange }: Props) {
             <div className="space-y-3">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2.5">
-                  {c.avatar_url ? (
-                    <img src={c.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e4ded6] text-[11px] font-medium text-[#6f6a61]">
-                      {(c.display_name || c.username || "?")[0].toUpperCase()}
-                    </div>
-                  )}
+                  <Link href={`/users/${c.user_id}`} onClick={(e) => e.stopPropagation()}>
+                    {c.avatar_url ? (
+                      <img src={c.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e4ded6] text-[11px] font-medium text-[#6f6a61]">
+                        {(c.display_name || c.username || "?")[0].toUpperCase()}
+                      </div>
+                    )}
+                  </Link>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium">{c.display_name}</span>
+                      <Link href={`/users/${c.user_id}`} className="text-xs font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
+                        {c.display_name}
+                      </Link>
                       <span className="text-[11px] text-[#9f9890]">· {new Date(c.created_at).toLocaleDateString()}</span>
                       {c.can_delete ? (
                         <button onClick={() => setDeleteTarget(c.id)} className="ml-auto text-[#9f9890] hover:text-[#9e3a2b]">
