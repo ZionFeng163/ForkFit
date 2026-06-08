@@ -6,6 +6,7 @@ import { Loader2, Plus, GitFork, Pencil, Eye } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { AuthGuard } from "@/components/auth-guard";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
 import { listSavedRuns, unsaveRun } from "@/lib/api";
@@ -52,19 +53,26 @@ export default function MyForksPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     listSavedRuns().then(setRuns).finally(() => setLoading(false));
   }, [user]);
 
-  async function handleDelete(runId: string) {
-    setDeleting(runId);
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(deleteTarget);
+    setError(null);
     try {
-      await unsaveRun(runId);
-      setRuns((prev) => prev.filter((r) => r.run_id !== runId));
+      await unsaveRun(deleteTarget);
+      setRuns((prev) => prev.filter((r) => r.run_id !== deleteTarget));
+    } catch (e: any) {
+      setError(e.message || "移除失败，请稍后重试");
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   }
 
@@ -313,7 +321,7 @@ export default function MyForksPage() {
                           </Link>
                         ) : null}
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(run.run_id); }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(run.run_id); }}
                           disabled={deleting === run.run_id}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 disabled:opacity-50"
                           style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
@@ -329,6 +337,23 @@ export default function MyForksPage() {
             </div>
           )}
         </div>
+
+        {error && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+            {error}
+            <button onClick={() => setError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
+          </div>
+        )}
+
+        <ConfirmModal
+          open={!!deleteTarget}
+          title="移除定制"
+          message="确定要从我的定制中移除吗？"
+          confirmLabel="移除"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
       </AppShell>
     </AuthGuard>
   );

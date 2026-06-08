@@ -36,6 +36,7 @@ export function PostCard({ post }: { post: RecipePost }) {
   const [liked, setLiked] = useState(post.liked ?? false);
   const [saves, setSaves] = useState(post.saves);
   const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.comment_count ?? 0);
 
   useEffect(() => {
     setLiked(post.liked ?? false);
@@ -201,14 +202,18 @@ export function PostCard({ post }: { post: RecipePost }) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
             >
               <MessageSquare size={14} />
-              {post.comment_count ?? 0}
+              {commentCount}
             </button>
           </div>
         </div>
       </Link>
 
       {showComments && (
-        <CommentModal postId={post.id} onClose={() => setShowComments(false)} />
+        <CommentModal
+          postId={post.id}
+          onClose={() => setShowComments(false)}
+          onCommentCountChange={(delta) => setCommentCount((c) => c + delta)}
+        />
       )}
     </div>
   );

@@ -42,6 +42,7 @@ export function RunView({ runId }: { runId: string }) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Init fields from result
   useEffect(() => {
@@ -74,13 +75,15 @@ export function RunView({ runId }: { runId: string }) {
       });
       setPublished(true);
       setTimeout(() => router.push(`/packs/${post.id}`), 1500);
-    } catch {}
+    } catch (e: any) {
+      setActionError(e.message || "发布失败，请稍后重试");
+    }
     setPublishing(false);
   }
 
   async function handleSave() {
     setSaving(true);
-    try { await saveRun(runId); } catch {}
+    try { await saveRun(runId); } catch (e: any) { setActionError(e.message || "保存失败"); }
     setSaving(false);
   }
 
@@ -151,6 +154,13 @@ export function RunView({ runId }: { runId: string }) {
           <ArrowLeft size={18} /> 返回我的定制
         </Link>
       </div>
+
+      {actionError && (
+        <div className="mb-4 px-4 py-3 rounded-xl text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
+          {actionError}
+          <button onClick={() => setActionError(null)} className="ml-auto opacity-70 hover:opacity-100">×</button>
+        </div>
+      )}
 
       {/* Header + editable fields */}
       <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>

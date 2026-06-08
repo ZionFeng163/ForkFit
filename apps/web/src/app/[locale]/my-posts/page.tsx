@@ -49,9 +49,10 @@ export default function MyPostsPage() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<RecipePost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+  const [filter, setFilter] = useState<"all" | "published">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -63,23 +64,20 @@ export default function MyPostsPage() {
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(deleteTarget);
+    setError(null);
     try {
       const { deletePost } = await import("@/lib/api");
       await deletePost(deleteTarget);
       setPosts((prev) => prev.filter((p) => p.id !== deleteTarget));
+    } catch (e: any) {
+      setError(e.message || "删除失败，请稍后重试");
     } finally {
       setDeleting(null);
       setDeleteTarget(null);
     }
   }
 
-  const filtered = filter === "all" ? posts : posts.filter((p) => {
-    // All posts from API are "published" since there's no draft status yet
-    return filter === "published";
-  });
-
-  const publishedCount = posts.length;
-  const draftCount = 0;
+  const filtered = posts;
 
   return (
     <AuthGuard>
@@ -111,8 +109,7 @@ export default function MyPostsPage() {
           <div className="flex items-center gap-2.5 py-5 flex-wrap">
             {([
               { key: "all" as const, label: `全部 (${posts.length})` },
-              { key: "published" as const, label: `已发布 (${publishedCount})` },
-              { key: "draft" as const, label: `草稿 (${draftCount})` },
+              { key: "published" as const, label: `已发布 (${posts.length})` },
             ]).map((f) => (
               <button
                 key={f.key}
@@ -147,10 +144,10 @@ export default function MyPostsPage() {
                 </svg>
               </div>
               <h3 className="text-base font-semibold mb-1.5" style={{ color: "var(--lp-fg)" }}>
-                {filter === "draft" ? "没有草稿" : t("empty")}
+                {t("empty")}
               </h3>
               <p className="text-[13px] mb-5" style={{ color: "var(--lp-muted)" }}>
-                {filter === "draft" ? "所有帖子都已发布" : "发布你的第一道菜谱吧"}
+                发布你的第一道菜谱吧
               </p>
               <Link
                 href="/posts/new"
@@ -286,6 +283,13 @@ export default function MyPostsPage() {
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
         />
+
+        {error && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+            {error}
+            <button onClick={() => setError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
+          </div>
+        )}
       </AppShell>
     </AuthGuard>
   );

@@ -11,9 +11,10 @@ import { listComments, createComment, deleteComment, type Comment } from "@/lib/
 type Props = {
   postId: string;
   onClose: () => void;
+  onCommentCountChange?: (delta: number) => void;
 };
 
-export function CommentModal({ postId, onClose }: Props) {
+export function CommentModal({ postId, onClose, onCommentCountChange }: Props) {
   const t = useTranslations("Comments");
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -21,8 +22,15 @@ export function CommentModal({ postId, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Lock body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   useEffect(() => {
     listComments(postId).then((res) => {
@@ -48,10 +56,14 @@ export function CommentModal({ postId, onClose }: Props) {
     e.preventDefault();
     if (!content.trim() || !user) return;
     setSubmitting(true);
+    setError(null);
     createComment(postId, content.trim()).then((c) => {
       setComments((prev) => [...prev, c]);
       setTotal((prev) => prev + 1);
+      onCommentCountChange?.(1);
       setContent("");
+    }).catch((e) => {
+      setError(e.message || "评论发送失败");
     }).finally(() => setSubmitting(false));
   }
 
@@ -59,11 +71,15 @@ export function CommentModal({ postId, onClose }: Props) {
 
   function confirmDelete() {
     if (!deleteTarget) return;
-    deleteComment(postId, deleteTarget).then(() => {
-      setComments((prev) => prev.filter((c) => c.id !== deleteTarget));
-      setTotal((prev) => prev - 1);
-    });
+    const id = deleteTarget;
     setDeleteTarget(null);
+    deleteComment(postId, id).then(() => {
+      setComments((prev) => prev.filter((c) => c.id !== id));
+      setTotal((prev) => prev - 1);
+      onCommentCountChange?.(-1);
+    }).catch((e) => {
+      setError(e.message || "删除失败");
+    });
   }
 
   return (
@@ -117,6 +133,13 @@ export function CommentModal({ postId, onClose }: Props) {
             </div>
           )}
         </div>
+
+        {error && (
+          <div className="mx-5 mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#fef0ef", color: "#7f3525" }}>
+            {error}
+            <button onClick={() => setError(null)} className="ml-2 opacity-70 hover:opacity-100">×</button>
+          </div>
+        )}
 
         {/* Input */}
         {user ? (

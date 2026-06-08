@@ -56,6 +56,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Editable result fields
   const [editTitle, setEditTitle] = useState("");
@@ -183,14 +184,16 @@ export function ForkContent({ post }: { post: RecipePost }) {
       });
       setPublished(true);
       setTimeout(() => router.push(`/packs/${published.id}`), 1500);
-    } catch {}
+    } catch (e: any) {
+      setActionError(e.message || "发布失败，请稍后重试");
+    }
     setPublishing(false);
   }
 
   async function handleSave() {
     if (!runId) return;
     setSaving(true);
-    try { await saveRun(runId); } catch {}
+    try { await saveRun(runId); } catch (e: any) { setActionError(e.message || "保存失败"); }
     setSaving(false);
   }
 
@@ -396,6 +399,13 @@ export function ForkContent({ post }: { post: RecipePost }) {
                 </button>
               </div>
             </div>
+
+            {actionError && (
+              <div className="mb-4 px-4 py-3 rounded-xl text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
+                {actionError}
+                <button onClick={() => setActionError(null)} className="ml-auto opacity-70 hover:opacity-100">×</button>
+              </div>
+            )}
 
             {/* Editable fields */}
             <div className="space-y-4">
