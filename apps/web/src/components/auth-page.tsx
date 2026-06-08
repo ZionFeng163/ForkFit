@@ -166,98 +166,92 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
       )}
 
       {/* ===== LOGIN ===== */}
-      {tab === "login" && (
-        <>
-          <div className="mb-6">
-            <h1 className="text-xl font-bold mb-1" style={{ color: "var(--lp-fg)" }}>欢迎回来</h1>
-            <p className="text-sm" style={{ color: "var(--lp-muted)" }}>登录你的账号，继续探索美味</p>
-          </div>
+      <div style={{ display: tab === "login" ? "block" : "none" }}>
+        <div className="mb-6">
+          <h1 className="text-xl font-bold mb-1" style={{ color: "var(--lp-fg)" }}>欢迎回来</h1>
+          <p className="text-sm" style={{ color: "var(--lp-muted)" }}>登录你的账号，继续探索美味</p>
+        </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <InputField label="邮箱或用户名" icon={Mail} value={loginUser} onChange={setLoginUser} placeholder="请输入邮箱或用户名" />
-            <InputField
-              label="密码" icon={Lock} type={showLoginPass ? "text" : "password"}
-              value={loginPass} onChange={setLoginPass} placeholder="请输入密码"
-              rightButton={
-                <button type="button" onClick={() => setShowLoginPass(!showLoginPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
-                  {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              }
-            />
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--lp-muted)" }}>
-                <input type="checkbox" defaultChecked className="w-4 h-4 rounded accent-[var(--lp-accent)]" />
-                记住我
-              </label>
-              <a href="#" className="text-[13px] font-medium" style={{ color: "var(--lp-accent)" }}>忘记密码？</a>
-            </div>
-            <button type="submit" disabled={isPending}
-              className="w-full h-[46px] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
-              style={{ background: "var(--lp-accent)", color: "white" }}>
-              {loginMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-              登录
-            </button>
-          </form>
-          {/* Spacer to match register form height */}
-          <div style={{ height: "80px" }} />
-        </>
-      )}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <InputField label="邮箱或用户名" icon={Mail} value={loginUser} onChange={setLoginUser} placeholder="请输入邮箱或用户名" />
+          <InputField
+            label="密码" icon={Lock} type={showLoginPass ? "text" : "password"}
+            value={loginPass} onChange={setLoginPass} placeholder="请输入密码"
+            rightButton={
+              <button type="button" onClick={() => setShowLoginPass(!showLoginPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
+                {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
+          />
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--lp-muted)" }}>
+              <input type="checkbox" defaultChecked className="w-4 h-4 rounded accent-[var(--lp-accent)]" />
+              记住我
+            </label>
+            <a href="#" className="text-[13px] font-medium" style={{ color: "var(--lp-accent)" }}>忘记密码？</a>
+          </div>
+          <button type="submit" disabled={isPending}
+            className="w-full h-[46px] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+            style={{ background: "var(--lp-accent)", color: "white" }}>
+            {loginMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+            登录
+          </button>
+        </form>
+      </div>
 
       {/* ===== REGISTER ===== */}
-      {tab === "register" && (
-        <>
-          <div className="mb-6">
-            <h1 className="text-xl font-bold mb-1" style={{ color: "var(--lp-fg)" }}>创建账号</h1>
-            <p className="text-sm" style={{ color: "var(--lp-muted)" }}>加入「吃什么」，让 AI 帮你解决每天吃什么</p>
-          </div>
+      <div style={{ display: tab === "register" ? "block" : "none" }}>
+        <div className="mb-6">
+          <h1 className="text-xl font-bold mb-1" style={{ color: "var(--lp-fg)" }}>创建账号</h1>
+          <p className="text-sm" style={{ color: "var(--lp-muted)" }}>加入「吃什么」，让 AI 帮你解决每天吃什么</p>
+        </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <InputField label="昵称" icon={User} value={regName} onChange={setRegName} placeholder="给自己起个名字" />
-            <InputField label="用户名" required icon={Mail} value={regUser} onChange={setRegUser} placeholder="3-60 个字符，字母数字下划线" />
-            <div>
-              <InputField
-                label="密码" required icon={Lock} type={showRegPass ? "text" : "password"}
-                value={regPass} onChange={setRegPass} placeholder="至少 6 位"
-                rightButton={
-                  <button type="button" onClick={() => setShowRegPass(!showRegPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
-                    {showRegPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                }
-              />
-              {regPass && (
-                <div className="mt-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="flex-1 h-[3px] rounded-full transition-all duration-300"
-                        style={{ background: i <= strength.level ? (strength.level >= 3 ? "var(--lp-green)" : "var(--lp-accent)") : "var(--lp-border)" }} />
-                    ))}
-                  </div>
-                  <div className="text-[11px] mt-1" style={{ color: "var(--lp-muted)" }}>{strength.label}</div>
-                </div>
-              )}
-            </div>
+        <form onSubmit={handleRegister} className="space-y-4">
+          <InputField label="昵称" icon={User} value={regName} onChange={setRegName} placeholder="给自己起个名字" />
+          <InputField label="用户名" required icon={Mail} value={regUser} onChange={setRegUser} placeholder="3-60 个字符，字母数字下划线" />
+          <div>
             <InputField
-              label="确认密码" required icon={Shield} type={showRegConfirm ? "text" : "password"}
-              value={regConfirm} onChange={setRegConfirm} placeholder="再次输入密码"
-              error={passwordMismatch ? "两次输入的密码不一致" : undefined}
+              label="密码" required icon={Lock} type={showRegPass ? "text" : "password"}
+              value={regPass} onChange={setRegPass} placeholder="至少 6 位"
               rightButton={
-                <button type="button" onClick={() => setShowRegConfirm(!showRegConfirm)}
+                <button type="button" onClick={() => setShowRegPass(!showRegPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
-                  {showRegConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showRegPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }
             />
-            <button type="submit" disabled={isPending || passwordMismatch}
-              className="w-full h-[46px] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
-              style={{ background: "var(--lp-accent)", color: "white" }}>
-              {registerMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-              创建账号
-            </button>
-          </form>
-        </>
-      )}
+            {regPass && (
+              <div className="mt-2">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex-1 h-[3px] rounded-full transition-all duration-300"
+                      style={{ background: i <= strength.level ? (strength.level >= 3 ? "var(--lp-green)" : "var(--lp-accent)") : "var(--lp-border)" }} />
+                  ))}
+                </div>
+                <div className="text-[11px] mt-1" style={{ color: "var(--lp-muted)" }}>{strength.label}</div>
+              </div>
+            )}
+          </div>
+          <InputField
+            label="确认密码" required icon={Shield} type={showRegConfirm ? "text" : "password"}
+            value={regConfirm} onChange={setRegConfirm} placeholder="再次输入密码"
+            error={passwordMismatch ? "两次输入的密码不一致" : undefined}
+            rightButton={
+              <button type="button" onClick={() => setShowRegConfirm(!showRegConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
+                {showRegConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
+          />
+          <button type="submit" disabled={isPending || passwordMismatch}
+            className="w-full h-[46px] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50"
+            style={{ background: "var(--lp-accent)", color: "white" }}>
+            {registerMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+            创建账号
+          </button>
+        </form>
+      </div>
 
       </div>{/* end tab+form container */}
 
