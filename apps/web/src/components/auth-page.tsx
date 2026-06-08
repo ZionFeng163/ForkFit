@@ -162,6 +162,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
         </div>
       )}
 
+      {/* Form content with min-height to prevent tab jump */}
+      <div style={{ minHeight: "420px" }}>
+
       {/* ===== LOGIN ===== */}
       {tab === "login" && (
         <>
@@ -253,6 +256,8 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
           </form>
         </>
       )}
+
+      </div>{/* end min-height wrapper */}
 
       {/* Social login */}
       <div className="flex items-center gap-3 my-6">
