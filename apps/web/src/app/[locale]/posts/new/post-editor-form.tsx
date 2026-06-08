@@ -82,27 +82,11 @@ function TagInput({
   }
 
   return (
-    <div
-      className="flex flex-wrap gap-1.5 p-2 min-h-[42px] cursor-text transition-all duration-150"
-      style={{ border: "1.5px solid var(--lp-border)", borderRadius: "var(--radius-sm, 8px)", background: "var(--lp-surface)" }}
-      onClick={() => inputRef.current?.focus()}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = "var(--lp-accent)";
-        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)";
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "var(--lp-border)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    >
+    <div className="fp-tag-wrap" onClick={() => inputRef.current?.focus()}>
       {tags.map((tag, i) => (
-        <span
-          key={i}
-          className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-md text-[13px] font-medium"
-          style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
-        >
+        <span key={i} className="fp-tag-item">
           {tag}
-          <button type="button" onClick={() => removeTag(i)} className="opacity-60 hover:opacity-100">
+          <button type="button" onClick={() => removeTag(i)} className="fp-tag-remove">
             <X size={12} />
           </button>
         </span>
@@ -112,8 +96,7 @@ function TagInput({
         type="text"
         placeholder={tags.length === 0 ? placeholder : ""}
         onKeyDown={handleKeyDown}
-        className="flex-1 min-w-[80px] border-none outline-none bg-transparent text-sm"
-        style={{ color: "var(--lp-fg)" }}
+        className="fp-tag-input"
       />
     </div>
   );
@@ -245,10 +228,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   value={form.title}
                   onChange={(e) => update("title", e.target.value)}
                   placeholder="例如：外婆红烧肉、五分钟快手早餐"
-                  className="form-input w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150"
-                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                  className="fp-input"
                 />
                 <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>取一个让人看了就想做的名字</div>
               </div>
@@ -264,10 +244,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   value={form.description}
                   onChange={(e) => update("description", e.target.value)}
                   placeholder="简单描述这道菜的特色、灵感来源、适合什么场景…"
-                  className="form-textarea w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150 resize-y min-h-[120px] leading-[1.65]"
-                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                  className="fp-textarea"
                 />
               </div>
 
@@ -376,10 +353,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                       value={step}
                       onChange={(e) => handleStepChange(i, e.target.value)}
                       placeholder={`第${i + 1}步`}
-                      className="flex-1 px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150"
-                      style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                      className="flex-1 fp-input"
                     />
                     <button
                       type="button"
@@ -415,10 +389,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   value={form.notes}
                   onChange={(e) => update("notes", e.target.value)}
                   placeholder="例如：番茄要选熟透的、蛋不要炒太老…"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-all duration-150 resize-y min-h-[80px] leading-[1.65]"
-                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(232,93,58,0.1)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}
+                  className="fp-textarea"
                 />
               </div>
             </div>
