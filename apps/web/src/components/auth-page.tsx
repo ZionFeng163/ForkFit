@@ -199,6 +199,8 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
               登录
             </button>
           </form>
+          {/* Spacer to match register form height */}
+          <div style={{ height: "80px" }} />
         </>
       )}
 
