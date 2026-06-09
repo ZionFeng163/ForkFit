@@ -184,6 +184,7 @@
     "softPreferences": "Soft preferences"
   },
   "NewPost": {
+    "back": "Back",
     "title": "Create post",
     "editTitle": "Edit post",
     "description": "Write the dish like a normal post. Details can stay empty for now.",

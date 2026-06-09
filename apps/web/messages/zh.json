@@ -184,6 +184,7 @@
     "softPreferences": "软偏好"
   },
   "NewPost": {
+    "back": "返回",
     "title": "发布菜谱",
     "editTitle": "编辑菜谱",
     "description": "写清楚这道菜适合谁、怎么吃。详细食材和时间可以先不填。",
