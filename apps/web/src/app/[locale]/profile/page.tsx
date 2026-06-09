@@ -17,6 +17,7 @@ import {
   listFollowers,
   getFollowStats,
   getUserProfile,
+  saveMyProfile,
 } from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
@@ -57,6 +58,12 @@ function ProfileContent() {
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [totalLikes, setTotalLikes] = useState(0);
 
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     getUserProfile(user.id).then(setProfile).catch(() => {});
@@ -66,6 +73,22 @@ function ProfileContent() {
       setTotalLikes(res.posts.reduce((sum, p) => sum + p.saves, 0));
     }).catch(() => {});
   }, [user]);
+
+  function startEdit() {
+    setEditBio(profile?.bio || "");
+    setEditLocation(profile?.location || "");
+    setEditing(true);
+  }
+
+  async function saveProfile() {
+    setSaving(true);
+    try {
+      await saveMyProfile({ bio: editBio, location: editLocation });
+      setProfile((prev) => prev ? { ...prev, bio: editBio, location: editLocation } : prev);
+      setEditing(false);
+    } catch {}
+    setSaving(false);
+  }
 
   if (!user) return null;
 
@@ -108,36 +131,86 @@ function ProfileContent() {
               </span>
             )}
           </div>
-          {profile?.bio && (
-            <p className="text-sm leading-[1.6] mb-3 max-w-[480px]" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-              {profile.bio}
-            </p>
+          {editing ? (
+            <div className="space-y-3 mb-3 max-w-[480px]">
+              <div>
+                <label className="block text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>简介</label>
+                <input
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  placeholder="写点什么介绍自己..."
+                  className="w-full h-[38px] px-3.5 rounded-lg text-sm outline-none"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                />
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>地点</label>
+                <input
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  placeholder="例如：上海"
+                  className="w-full h-[38px] px-3.5 rounded-lg text-sm outline-none"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {profile?.bio && (
+                <p className="text-sm leading-[1.6] mb-3 max-w-[480px]" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
+                  {profile.bio}
+                </p>
+              )}
+              <div className="flex items-center gap-4 text-[13px] flex-wrap" style={{ color: "var(--lp-muted)" }}>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-xs" style={{ color: "var(--lp-muted)" }}>@{user.username}</span>
+                </span>
+                {profile?.location && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin size={14} />
+                    {profile.location}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <Calendar size={14} />
+                  {locale === "en" ? "Joined" : "加入于"} {profile?.created_at ? new Date(profile.created_at).getFullYear() : new Date().getFullYear()}
+                </span>
+              </div>
+            </>
           )}
-          <div className="flex items-center gap-4 text-[13px] flex-wrap" style={{ color: "var(--lp-muted)" }}>
-            <span className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: "var(--lp-muted)" }}>@{user.username}</span>
-            </span>
-            {profile?.location && (
-              <span className="flex items-center gap-1.5">
-                <MapPin size={14} />
-                {profile.location}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Calendar size={14} />
-              {locale === "en" ? "Joined" : "加入于"} {profile?.created_at ? new Date(profile.created_at).getFullYear() : new Date().getFullYear()}
-            </span>
-          </div>
         </div>
 
-        <Link
-          href="/posts/new"
-          className="flex-shrink-0 inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
-          style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-        >
-          <Plus size={14} />
-          发布菜谱
-        </Link>
+        <div className="flex-shrink-0 flex gap-2">
+          {editing ? (
+            <>
+              <button
+                onClick={saveProfile}
+                disabled={saving}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold text-white transition-all duration-150 disabled:opacity-50"
+                style={{ background: "var(--lp-accent)" }}
+              >
+                {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+                保存
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
+                style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
+              >
+                取消
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={startEdit}
+              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
+              style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+            >
+              <Edit size={14} />
+              编辑资料
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
