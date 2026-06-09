@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft, Check, CheckCircle2, ChevronDown,
   Loader2, Pencil, Send, Sparkles, Star, X,
@@ -12,7 +12,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { useAuth } from "@/components/auth-provider";
 import { Link, useRouter } from "@/i18n/routing";
 import {
-  createRun, getRun, publishRun, saveRun, extractMyPreferences,
+  createRun, getRun, publishRun, saveRun, extractMyPreferences, listPosts,
 } from "@/lib/api";
 import {
   loadUserProfileForm,
@@ -26,6 +26,14 @@ const GRADIENTS = [
   "linear-gradient(135deg, #eef4fd, #d4e4f9)",
 ];
 
+function getGradient(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % GRADIENTS.length;
+  const strokes = ["#e85d3a", "#2d8a56", "#4a8ac9"];
+  return { gradient: GRADIENTS[idx], stroke: strokes[idx] };
+}
+
 const QUICK_PILLS = [
   { label: "更辣一点" },
   { label: "减少食材" },
@@ -36,6 +44,7 @@ const QUICK_PILLS = [
 
 export function ForkContent({ post }: { post: RecipePost }) {
   const t = useTranslations("Fork");
+  const locale = useLocale();
   const router = useRouter();
   const { user } = useAuth();
   const firstMeal = post.recipe;
@@ -57,6 +66,14 @@ export function ForkContent({ post }: { post: RecipePost }) {
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<RecipePost[]>([]);
+
+  // Fetch related posts
+  useEffect(() => {
+    listPosts(4, 0).then((posts) => {
+      setRelatedPosts(posts.filter((p) => p.id !== post.id).slice(0, 3));
+    }).catch(() => {});
+  }, [post.id]);
 
   // Editable result fields
   const [editTitle, setEditTitle] = useState("");
@@ -122,13 +139,32 @@ export function ForkContent({ post }: { post: RecipePost }) {
       if (next.has(idx)) next.delete(idx); else next.add(idx);
       return next;
     });
-    setChatMessages((prev) => [...prev, { role: "user", text: QUICK_PILLS[idx].label }]);
-    setTimeout(() => {
-      setChatMessages((prev) => [...prev, {
-        role: "assistant",
-        text: `好的，已为你「${QUICK_PILLS[idx].label}」。继续告诉我你还想怎么改？`,
-      }]);
-    }, 800);
+    const pillText = QUICK_PILLS[idx].label;
+    setChatMessages((prev) => [...prev, { role: "user", text: pillText }]);
+    // If no run yet, create one with this pill as the request
+    if (!runId) {
+      setCreating(true);
+      const profile = loadUserProfileForm();
+      createRun({
+        user_profile: profileFormToUserProfile(profile),
+        meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
+        locale: "zh",
+      }).then((resp) => {
+        setRunId(resp.run_id);
+        setRunStatus(resp.status);
+        setChatMessages((prev) => [...prev, { role: "assistant", text: `好的，AI 正在根据「${pillText}」为你调整这道菜，请稍候...` }]);
+      }).catch((e) => {
+        setChatMessages((prev) => [...prev, { role: "assistant", text: `定制失败：${e.message}` }]);
+      }).finally(() => setCreating(false));
+    } else {
+      // Run already exists, just show acknowledgment
+      setTimeout(() => {
+        setChatMessages((prev) => [...prev, {
+          role: "assistant",
+          text: `好的，已为你「${pillText}」。继续告诉我你还想怎么改？`,
+        }]);
+      }, 800);
+    }
   }
 
   async function handleSend() {
@@ -370,11 +406,19 @@ export function ForkContent({ post }: { post: RecipePost }) {
             style={{ background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))", border: "1.5px solid var(--lp-border)" }}>
             <Sparkles size={18} /> 从我的帖子提取口味
           </button>
-          <Link href="/profile"
+          <button
+            type="button"
+            onClick={() => {
+              setCustomizeOpen(true);
+              setChatMessages((prev) => [...prev, {
+                role: "assistant",
+                text: "你可以在下方直接告诉我你的口味偏好，比如「不吃香菜」、「喜欢酸辣」、「不要内脏」，我会记住并在以后的定制中自动应用。",
+              }]);
+            }}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
             style={{ background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))", border: "1.5px solid var(--lp-border)" }}>
             编辑口味偏好
-          </Link>
+          </button>
         </div>
       )}
 
@@ -553,29 +597,38 @@ export function ForkContent({ post }: { post: RecipePost }) {
       )}
 
       {/* Related */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-        <h2 className="text-base font-bold mb-5" style={{ color: "var(--lp-fg)" }}>你可能也想定制</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {["番茄牛腩煲", "菌菇养生锅", "酸汤肥牛"].map((name, i) => (
-            <div key={i} className="rounded-xl overflow-hidden cursor-pointer transition-all duration-200" style={{ border: "1px solid var(--lp-border)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "var(--lp-shadow-sm)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}>
-              <div className="h-[100px] grid place-items-center" style={{ background: GRADIENTS[i] }}>
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={["#e85d3a", "#2d8a56", "#c9a030"][i]} strokeWidth="1.2" opacity="0.5">
-                  <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 5 4 6.5V22l4-2.5c.6.2 1.3.5 2 .5 5.52 0 10-4 10-8s-4.48-8-10-8z" />
-                </svg>
-              </div>
-              <div className="px-3.5 py-3">
-                <div className="text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>{name}</div>
-                <div className="flex gap-2.5 text-xs" style={{ color: "var(--lp-muted)" }}>
-                  <span>{["45 分钟", "30 分钟", "20 分钟"][i]}</span>
-                  <span>{["中等", "简单", "简单"][i]}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+      {relatedPosts.length > 0 && (
+        <div className="rounded-2xl p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+          <h2 className="text-base font-bold mb-5" style={{ color: "var(--lp-fg)" }}>
+            {locale === "en" ? "You might also want to customize" : "你可能也想定制"}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {relatedPosts.map((rp) => {
+              const { gradient, stroke } = getGradient(rp.id);
+              return (
+                <Link key={rp.id} href={`/packs/${rp.id}/fork`}>
+                  <div className="rounded-xl overflow-hidden transition-all duration-200" style={{ border: "1px solid var(--lp-border)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.boxShadow = "var(--lp-shadow-sm)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.boxShadow = "none"; }}>
+                    <div className="h-[100px] grid place-items-center" style={{ background: gradient }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.2" opacity="0.5">
+                        <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 5 4 6.5V22l4-2.5c.6.2 1.3.5 2 .5 5.52 0 10-4 10-8s-4.48-8-10-8z" />
+                      </svg>
+                    </div>
+                    <div className="px-3.5 py-3">
+                      <div className="text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>{rp.title}</div>
+                      <div className="flex gap-2.5 text-xs" style={{ color: "var(--lp-muted)" }}>
+                        {rp.recipe.cook_time_minutes > 0 && <span>{rp.recipe.cook_time_minutes} 分钟</span>}
+                        <span>{rp.forks} 次复刻</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

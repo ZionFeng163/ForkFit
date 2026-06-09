@@ -108,11 +108,24 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
   const router = useRouter();
   const { user } = useAuth();
   const isEditing = Boolean(post);
-  const [form, setForm] = useState<PostFormState>(() =>
-    post ? formFromPost(post) : defaultForm
-  );
+  const [form, setForm] = useState<PostFormState>(() => {
+    if (post) return formFromPost(post);
+    // Try to load draft from localStorage
+    try {
+      const raw = localStorage.getItem("forkfit.draft");
+      if (raw) {
+        const draft = JSON.parse(raw);
+        return { ...defaultForm, ...draft };
+      }
+    } catch {}
+    return defaultForm;
+  });
   const [difficulty, setDifficulty] = useState("easy");
   const [draftSaved, setDraftSaved] = useState(false);
+  const [hasDraft, setHasDraft] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("forkfit.draft");
+  });
 
   const mutation = useMutation({
     mutationFn: (input: CreatePostInput) =>
@@ -154,6 +167,8 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    localStorage.removeItem("forkfit.draft");
+    setHasDraft(false);
     mutation.mutate(buildInput(form, difficulty));
   }
 

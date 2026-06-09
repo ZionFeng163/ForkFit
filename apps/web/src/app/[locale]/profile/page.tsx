@@ -130,16 +130,13 @@ function ProfileContent() {
           </div>
         </div>
 
-        <Link
-          href="/profile"
-          className="flex-shrink-0 inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
-          style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-muted)"; e.currentTarget.style.background = "var(--lp-warm-100)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.background = "var(--lp-surface)"; }}
+        <span
+          className="flex-shrink-0 inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold"
+          style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-muted)", cursor: "not-allowed", opacity: 0.6 }}
         >
           <Edit size={14} />
-          编辑资料
-        </Link>
+          编辑资料（开发中）
+        </span>
       </div>
 
       {/* Stats */}
