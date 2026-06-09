@@ -49,24 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={key}
                 href={href}
-                className="mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150"
-                style={{
-                  background: active ? "var(--lp-accent-light)" : "transparent",
-                  color: active ? "var(--lp-accent)" : "var(--lp-muted)",
-                  fontWeight: active ? 600 : 500,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "var(--lp-warm-100)";
-                    e.currentTarget.style.color = "var(--lp-fg)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "var(--lp-muted)";
-                  }
-                }}
+                className={`sidebar-nav-link ${active ? "sidebar-nav-active" : ""}`}
               >
                 <Icon size={18} />
                 {t(key)}

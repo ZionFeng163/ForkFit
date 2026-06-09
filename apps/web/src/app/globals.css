@@ -234,6 +234,30 @@ html {
   --lp-warm-300: #e4dbd0;
 }
 
+/* Sidebar nav links */
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lp-muted);
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+  text-decoration: none;
+}
+.sidebar-nav-link:hover {
+  background: var(--lp-warm-100);
+  color: var(--lp-fg);
+}
+.sidebar-nav-active {
+  background: var(--lp-accent-light) !important;
+  color: var(--lp-accent) !important;
+  font-weight: 600;
+}
+
 /* ========== AUTH PAGE STYLES ========== */
 .auth-input {
   width: 100%;
