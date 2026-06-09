@@ -86,7 +86,15 @@ export function ForkContent({ post }: { post: RecipePost }) {
 
   useEffect(() => {
     if (!runId || runStatus === "succeeded" || runStatus === "failed" || runStatus === "needs_input") return;
+    let pollCount = 0;
+    const MAX_POLLS = 120; // 2 minutes at 1s interval
     const interval = setInterval(async () => {
+      pollCount++;
+      if (pollCount > MAX_POLLS) {
+        clearInterval(interval);
+        setRunError("定制超时，请刷新页面重试");
+        return;
+      }
       try {
         const run = await getRun(runId);
         setRunStatus(run.status);

@@ -17,8 +17,14 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
   const [dragover, setDragover] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const upload = useCallback(async (file: File) => {
     if (!user) return;
+    if (file.size > MAX_FILE_SIZE) {
+      alert("图片大小不能超过 10MB");
+      return;
+    }
     setUploading(true);
     try {
       const formData = new FormData();
