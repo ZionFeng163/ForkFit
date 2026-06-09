@@ -120,7 +120,18 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     } catch {}
     return defaultForm;
   });
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useState(() => {
+    if (post?.recipe?.difficulty) return post.recipe.difficulty;
+    try {
+      const raw = localStorage.getItem("forkfit.draft");
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.difficulty) return draft.difficulty;
+        if (draft.recipe?.difficulty) return draft.recipe.difficulty;
+      }
+    } catch {}
+    return "easy";
+  });
   const [draftSaved, setDraftSaved] = useState(false);
   const [hasDraft, setHasDraft] = useState(() => {
     if (typeof window === "undefined") return false;

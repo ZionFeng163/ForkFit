@@ -83,6 +83,7 @@ def get_user_profile(user_id: str) -> dict:
         "bio": user.bio,
         "location": user.location,
         "post_count": post_count,
+        "created_at": user.created_at.isoformat(),
     }
 
 

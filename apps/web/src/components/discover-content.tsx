@@ -81,6 +81,7 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
       .then((fresh) => {
         if (offset === 0) {
           setPosts(fresh);
+          setTotalCount(fresh.length < PAGE_SIZE ? fresh.length : totalCount_);
         } else {
           setPosts((prev) => [...prev, ...fresh]);
         }

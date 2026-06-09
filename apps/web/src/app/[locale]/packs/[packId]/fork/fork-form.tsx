@@ -141,30 +141,22 @@ export function ForkContent({ post }: { post: RecipePost }) {
     });
     const pillText = QUICK_PILLS[idx].label;
     setChatMessages((prev) => [...prev, { role: "user", text: pillText }]);
-    // If no run yet, create one with this pill as the request
-    if (!runId) {
-      setCreating(true);
-      const profile = loadUserProfileForm();
-      createRun({
-        user_profile: profileFormToUserProfile(profile),
-        meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
-        locale: "zh",
-      }).then((resp) => {
-        setRunId(resp.run_id);
-        setRunStatus(resp.status);
-        setChatMessages((prev) => [...prev, { role: "assistant", text: `好的，AI 正在根据「${pillText}」为你调整这道菜，请稍候...` }]);
-      }).catch((e) => {
-        setChatMessages((prev) => [...prev, { role: "assistant", text: `定制失败：${e.message}` }]);
-      }).finally(() => setCreating(false));
-    } else {
-      // Run already exists, just show acknowledgment
-      setTimeout(() => {
-        setChatMessages((prev) => [...prev, {
-          role: "assistant",
-          text: `好的，已为你「${pillText}」。继续告诉我你还想怎么改？`,
-        }]);
-      }, 800);
-    }
+    // Always create a new run with this pill as the request
+    setCreating(true);
+    setRunResult(null);
+    setRunError(null);
+    const profile = loadUserProfileForm();
+    createRun({
+      user_profile: profileFormToUserProfile(profile),
+      meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
+      locale: "zh",
+    }).then((resp) => {
+      setRunId(resp.run_id);
+      setRunStatus(resp.status);
+      setChatMessages((prev) => [...prev, { role: "assistant", text: `好的，AI 正在根据「${pillText}」为你调整这道菜，请稍候...` }]);
+    }).catch((e) => {
+      setChatMessages((prev) => [...prev, { role: "assistant", text: `定制失败：${e.message}` }]);
+    }).finally(() => setCreating(false));
   }
 
   async function handleSend() {
@@ -173,30 +165,40 @@ export function ForkContent({ post }: { post: RecipePost }) {
     setChatInput("");
     setChatMessages((prev) => [...prev, { role: "user", text }]);
 
-    if (!runId) {
-      setCreating(true);
-      try {
-        const profile = loadUserProfileForm();
-        const resp = await createRun({
-          user_profile: profileFormToUserProfile(profile),
-          meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
-          locale: "zh",
-        });
-        setRunId(resp.run_id);
-        setRunStatus(resp.status);
-        setChatMessages((prev) => [...prev, { role: "assistant", text: "AI 正在根据你的要求定制这道菜，请稍候..." }]);
-      } catch (err: any) {
-        setChatMessages((prev) => [...prev, { role: "assistant", text: `定制失败：${err.message}` }]);
-      }
-      setCreating(false);
+    // Always create a new run with the user's message
+    setCreating(true);
+    setRunResult(null);
+    setRunError(null);
+    try {
+      const profile = loadUserProfileForm();
+      const resp = await createRun({
+        user_profile: profileFormToUserProfile(profile),
+        meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
+        locale: "zh",
+      });
+      setRunId(resp.run_id);
+      setRunStatus(resp.status);
+      setChatMessages((prev) => [...prev, { role: "assistant", text: "AI 正在根据你的要求定制这道菜，请稍候..." }]);
+    } catch (err: any) {
+      setChatMessages((prev) => [...prev, { role: "assistant", text: `定制失败：${err.message}` }]);
     }
+    setCreating(false);
   }
 
   async function handleExtract() {
     setChatMessages((prev) => [...prev, { role: "user", text: "从我的帖子提取口味" }]);
     try {
-      await extractMyPreferences("zh");
-      setChatMessages((prev) => [...prev, { role: "assistant", text: "已从你之前的帖子中提取口味偏好并应用到这道菜。" }]);
+      const result = await extractMyPreferences("zh");
+      const prefs = result.preferences;
+      const summary = [];
+      if (prefs.likes) summary.push(`喜欢：${Array.isArray(prefs.likes) ? prefs.likes.join("、") : prefs.likes}`);
+      if (prefs.dislikes) summary.push(`不喜欢：${Array.isArray(prefs.dislikes) ? prefs.dislikes.join("、") : prefs.dislikes}`);
+      if (prefs.allergies) summary.push(`过敏：${Array.isArray(prefs.allergies) ? prefs.allergies.join("、") : prefs.allergies}`);
+      if (prefs.diet_rules) summary.push(`饮食限制：${Array.isArray(prefs.diet_rules) ? prefs.diet_rules.join("、") : prefs.diet_rules}`);
+      const msg = summary.length > 0
+        ? `已从你之前的帖子中提取口味偏好：\n${summary.join("\n")}\n\n已应用到这道菜的定制中。`
+        : "已从你之前的帖子中提取口味偏好并应用到这道菜。";
+      setChatMessages((prev) => [...prev, { role: "assistant", text: msg }]);
     } catch {
       setChatMessages((prev) => [...prev, { role: "assistant", text: "提取失败，请稍后重试。" }]);
     }
