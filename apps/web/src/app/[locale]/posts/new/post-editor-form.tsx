@@ -193,12 +193,14 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
         {/* Progress bar */}
         <div className="mb-8">
-          <div className="flex gap-0">
+          <div style={{ display: "flex", gap: 0 }}>
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="fp-progress-step"
                 style={{
+                  flex: 1,
+                  height: "3px",
+                  borderRadius: "999px",
                   background: i < 1
                     ? "var(--lp-accent)"
                     : i === 1

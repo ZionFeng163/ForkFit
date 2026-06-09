@@ -456,6 +456,8 @@ html {
 .fp-progress-step {
   flex: 1;
   height: 3px;
+  min-height: 3px;
+  background: var(--lp-border) !important;
   transition: background 0.3s;
 }
 
