@@ -1,143 +1,134 @@
-# ForkFit Agent Core
+# ForkFit — AI 个性化菜谱定制平台
 
-ForkFit is a small agent-core prototype for personalizing community meal packs.
+ForkFit 是一个 AI 驱动的菜谱定制平台。用户可以从社区菜谱中选择一道菜，AI 会根据个人口味偏好、过敏源、厨具和时间限制，自动生成个性化的版本。
 
-The MVP implements three bounded agents:
+## 功能概览
 
-- `UserAgent`: interprets an explicit user profile and reviews taste fit.
-- `ConstraintAgent`: uses the configured LLM to audit hard constraints from extracted constraints only.
-- `AdapterAgent`: applies minimal changes to create a personalized fork.
-- `ForkFitLangGraphWorkflow`: runs the actual LangGraph flow from input loading
-  through final validation.
-- `ConstraintGuard`: deterministic final validation. It is a guardrail, not an
-  Agent.
+### 前端页面
+- **落地页** (`/`) — 产品介绍、功能展示、CTA
+- **发现页** (`/discover`) — 社区菜谱浏览、搜索、分类筛选、今日推荐
+- **菜谱详情** (`/packs/{id}`) — 菜谱信息、食材清单、烹饪步骤、评论、相关推荐
+- **复刻定制** (`/packs/{id}/fork`) — AI 对话式定制、实时结果预览
+- **发布菜谱** (`/posts/new`) — 表单发布、图片上传、草稿保存
+- **编辑菜谱** (`/packs/{id}/edit`) — 编辑已有菜谱
+- **个人主页** (`/profile`) — 菜谱/收藏/关注/粉丝 tabs
+- **用户主页** (`/users/{id}`) — 他人主页、关注/取关
+- **我的帖子** (`/my-posts`) — 帖子管理、编辑、删除
+- **我的定制** (`/my-forks`) — 定制记录管理
+- **登录/注册** (`/login`, `/register`) — 分屏布局、Tab 切换
+- **管理后台** (`/admin`) — 用户/帖子管理
 
-The first web MVP lives in `apps/web`. It provides a seeded community meal-pack
-feed, pack details, a Fork form, and a run result page that talks to the backend
-API.
+### 后端 API
+- **认证** — JWT 登录/注册/登出
+- **菜谱 CRUD** — 创建、读取、更新、删除、提取
+- **互动** — 点赞、收藏、评论
+- **定制** — 创建 Run、轮询状态、发布结果
+- **用户** — 关注/取关、个人资料、偏好提取
+- **管理** — 用户/帖子批量管理
 
-Run tests:
+## 快速启动
+
+### Docker 一键启动（推荐）
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests
+# 构建并启动所有服务
+docker compose up -d --build
+
+# 查看状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f backend
 ```
 
-Run the demo. This calls the configured Bailian model through the LangGraph flow:
+服务地址：
+- 前端: http://localhost:3001
+- 后端 API: http://localhost:8000/docs
+- PostgreSQL: localhost:5432
+- Redis: localhost:6379
+- Kafka: localhost:9092
+
+### 本地开发
 
 ```bash
-PYTHONPATH=src python3 examples/run_demo.py
-```
-
-Run the real LangGraph + Bailian flow:
-
-```bash
-python3 scripts/run_real_langgraph.py
-```
-
-## Local API config
-
-Copy `.env.example` to `.env` and set:
-
-- `BAILIAN_API_KEY`
-- `BAILIAN_MODEL`
-- `BAILIAN_BASE_URL`
-
-`UserAgent`, `ConstraintAgent`, and `AdapterAgent` use the configured Bailian
-model. Final validation uses `ConstraintGuard`, a deterministic safety guardrail.
-ForkFit sends `enable_thinking=false` and per-agent `max_tokens` caps for Qwen
-JSON calls to avoid slow, high-token reasoning output.
-
-Each workflow result includes a trace:
-
-- `trace.steps`: LangGraph node duration and status.
-- `trace.llm_calls`: model, agent name, duration, token usage, and status.
-
-Run a real Bailian smoke test:
-
-```bash
-python3 scripts/smoke_bailian.py
-```
-
-## Backend API
-
-The backend API requires real Postgres and Redis:
-
-```bash
-DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/forkfit \
+# 后端
+cd src/forkfit
+pip install -e .
+DATABASE_URL=postgresql+psycopg://forkfit:forkfit@localhost:5432/forkfit \
 REDIS_URL=redis://localhost:6379/0 \
-python3 scripts/run_api.py
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
+python scripts/run_api.py
+
+# Worker（新终端）
+python scripts/run_worker.py
+
+# 前端
+cd apps/web
+npm install
+npm run dev
+# 打开 http://localhost:3000
 ```
 
-Start a worker in a separate process:
-
-```bash
-DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/forkfit \
-REDIS_URL=redis://localhost:6379/0 \
-python3 scripts/run_worker.py
-```
-
-Do not use SQLite or in-memory stores for API operation. Install and run
-Postgres and Redis before using the backend API.
-
-## One-command local dev
-
-Use the fixed local startup script for normal development:
+### 一键本地启动
 
 ```bash
 bash scripts/dev_start.sh
 ```
 
-It starts the app in this order:
+## 项目结构
 
-- Postgres on `localhost:5432`
-- Redis on `localhost:6379`
-- API on `http://127.0.0.1:8000`
-- Worker for the `forkfit-runs` queue
-- Web app on `http://127.0.0.1:3000/en`
-
-The script uses the `forkfit-agent` conda environment by default. Override it
-when needed:
-
-```bash
-CONDA_ENV=your-env bash scripts/dev_start.sh
+```
+ForkFit/
+├── apps/web/              # Next.js 前端
+│   ├── src/app/           # 页面路由
+│   ├── src/components/    # 组件
+│   ├── src/lib/           # API、工具函数
+│   └── messages/          # i18n 翻译
+├── src/forkfit/           # Python 后端
+│   ├── api/               # FastAPI 路由
+│   ├── stores/            # 数据库操作
+│   ├── agents/            # LangGraph AI 代理
+│   └── db/                # SQLAlchemy 模型
+├── scripts/               # 启动脚本
+├── docker-compose.yml     # Docker 编排
+└── .env.example           # 环境变量模板
 ```
 
-Check or stop the tracked app processes:
+## 技术栈
+
+**前端:** Next.js 16 + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui + next-intl (i18n)
+
+**后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + Kafka + LangGraph + Bailian (Qwen LLM)
+
+**基础设施:** Docker Compose + PostgreSQL 16 + Redis 7 + Kafka (Confluent)
+
+## 测试
 
 ```bash
-bash scripts/dev_status.sh
-bash scripts/dev_stop.sh
+# Python 后端测试
+PYTHONPATH=src python3 -m unittest discover -s tests
+
+# 前端类型检查
+cd apps/web && npx tsc --noEmit
 ```
 
-Logs and PID files live under `.forkfit-dev/`. The stop script leaves Postgres
-and Redis running because they are shared local services.
+## 环境变量
 
-## Web app
+复制 `.env.example` 为 `.env` 并配置：
 
-The frontend is a Next.js app in `apps/web`:
+- `BAILIAN_API_KEY` — 百炼 API Key
+- `BAILIAN_MODEL` — 模型名称
+- `BAILIAN_BASE_URL` — API 地址
+- `LANGSMITH_TRACING` — LangSmith 追踪（可选）
+
+## 数据库
+
+首次启动时 `Base.metadata.create_all()` 会自动创建所有表。如需手动迁移：
 
 ```bash
-cd apps/web
-npm run dev
+docker compose exec postgres psql -U forkfit -d forkfit -c "
+  ALTER TABLE posts ADD COLUMN IF NOT EXISTS likes integer DEFAULT 0;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS bio varchar(500) DEFAULT '';
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS location varchar(100) DEFAULT '';
+"
 ```
-
-Open `http://127.0.0.1:3000`. Frontend requests to `/api/backend/*` are proxied
-to `http://127.0.0.1:8000/*` by default. Use `FORKFIT_API_BASE_URL` when the API
-is on another port.
-
-## LangSmith tracing
-
-ForkFit keeps its local trace in Postgres and can also export summary metrics to
-LangSmith. Set these values in `.env` to enable upload:
-
-```bash
-LANGSMITH_TRACING=true
-LANGSMITH_API_KEY=your-langsmith-key
-LANGSMITH_PROJECT=forkfit
-```
-
-The exporter sends run status, total duration, LLM call count, per-node
-durations, and per-agent token/duration metrics. It does not send full prompts
-or raw user profiles. ForkFit disables LangGraph's automatic LangSmith tracing
-around workflow execution, so enabled tracing only uploads the sanitized
-`forkfit.workflow` summary run.
