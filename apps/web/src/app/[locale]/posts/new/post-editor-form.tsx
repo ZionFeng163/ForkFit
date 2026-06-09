@@ -112,6 +112,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     post ? formFromPost(post) : defaultForm
   );
   const [difficulty, setDifficulty] = useState("easy");
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (input: CreatePostInput) =>
@@ -409,8 +410,21 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 {isEditing ? t("save") : t("submit")}
               </button>
 
+              <button
+                type="button"
+                onClick={() => {
+                  const data = JSON.stringify(buildInput(form, difficulty));
+                  localStorage.setItem("forkfit.draft", data);
+                  setDraftSaved(true);
+                  setTimeout(() => setDraftSaved(false), 2000);
+                }}
+                className="fp-btn-draft"
+              >
+                {draftSaved ? "✓ 已保存" : "存为草稿"}
+              </button>
+
               {isEditing && (
-                <button type="button" disabled={isPending} onClick={submitAndExtract} className="fp-btn-draft">
+                <button type="button" disabled={isPending} onClick={submitAndExtract} className="fp-btn-draft" style={{ marginTop: "8px" }}>
                   {extractMutation.isPending ? (
                     <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" />{t("extracting")}</span>
                   ) : t("saveAndExtract")}
