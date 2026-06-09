@@ -66,12 +66,17 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
     }).catch(() => {});
   }, [userId, currentUser]);
 
+  const [followError, setFollowError] = useState<string | null>(null);
+
   function handleFollow() {
     if (!currentUser || followLoading) return;
     setFollowLoading(true);
+    setFollowError(null);
     const fn = isFollowing ? unfollowUser : followUser;
     fn(userId).then(() => {
       setIsFollowing(!isFollowing);
+    }).catch((e) => {
+      setFollowError(e.message || "操作失败");
     }).finally(() => setFollowLoading(false));
   }
 
@@ -142,6 +147,12 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
             {isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
             {isFollowing ? "已关注" : "关注"}
           </button>
+        )}
+        {followError && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+            {followError}
+            <button onClick={() => setFollowError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
+          </div>
         )}
       </div>
 

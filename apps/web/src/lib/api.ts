@@ -34,6 +34,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (response.status === 401) {
+    // Redirect to login on client side
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname;
+      window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+    }
     throw new Error("请先登录");
   }
 
