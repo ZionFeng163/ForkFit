@@ -168,10 +168,7 @@ export function PostCard({ post }: { post: RecipePost }) {
                 {post.recipe.cook_time_minutes} 分钟
               </span>
             )}
-            <span className="flex items-center gap-1">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
-              简单
-            </span>
+            
           </div>
         </div>
 

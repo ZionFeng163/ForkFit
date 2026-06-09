@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Calendar, Edit, Heart, Loader2, MapPin, Plus, Star, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -50,6 +50,7 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
+  const locale = useLocale();
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("recipes");
   const [profile, setProfile] = useState<{ post_count: number } | null>(null);
@@ -60,8 +61,9 @@ function ProfileContent() {
     if (!user) return;
     getUserProfile(user.id).then(setProfile).catch(() => {});
     getFollowStats().then(setStats).catch(() => {});
-    listLikedPosts(100, 0).then((posts) => {
-      setTotalLikes(posts.reduce((sum, p) => sum + p.saves, 0));
+    // Calculate total likes from user's own posts (sum of saves on their posts)
+    listUserPosts(user.id, 100, 0).then((res) => {
+      setTotalLikes(res.posts.reduce((sum, p) => sum + p.saves, 0));
     }).catch(() => {});
   }, [user]);
 
@@ -96,25 +98,23 @@ function ProfileContent() {
             <h1 className="text-[22px] font-bold tracking-[-0.01em]" style={{ color: "var(--lp-fg)" }}>
               {user.display_name || user.username}
             </h1>
-            <span
-              className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[11px] font-semibold"
-              style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
-            >
-              <Star size={12} fill="currentColor" />
-              活跃创作者
-            </span>
+            {profile && profile.post_count > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[11px] font-semibold"
+                style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
+              >
+                <Star size={12} fill="currentColor" />
+                {locale === "en" ? "Active creator" : "活跃创作者"}
+              </span>
+            )}
           </div>
-          <p className="text-sm leading-[1.6] mb-3 max-w-[480px]" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-            美食爱好者，喜欢研究简单又好吃的做法。相信做饭是一件幸福的事。
-          </p>
           <div className="flex items-center gap-4 text-[13px] flex-wrap" style={{ color: "var(--lp-muted)" }}>
             <span className="flex items-center gap-1.5">
-              <MapPin size={14} />
-              上海
+              <span className="text-xs" style={{ color: "var(--lp-muted)" }}>@{user.username}</span>
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar size={14} />
-              {new Date(user.id ? Date.now() - 86400000 * 365 : Date.now()).getFullYear()} 年加入
+              {locale === "en" ? "Joined" : "加入于"} {new Date(user.id ? Date.now() - 86400000 * 365 : Date.now()).getFullYear()}
             </span>
           </div>
         </div>
