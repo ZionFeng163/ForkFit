@@ -242,6 +242,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 <input
                   type="text"
                   required
+                  maxLength={160}
                   value={form.title}
                   onChange={(e) => update("title", e.target.value)}
                   placeholder="例如：外婆红烧肉、五分钟快手早餐"
@@ -258,6 +259,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 <textarea
                   required
                   rows={4}
+                  maxLength={1200}
                   value={form.description}
                   onChange={(e) => update("description", e.target.value)}
                   placeholder="简单描述这道菜的特色、灵感来源、适合什么场景…"

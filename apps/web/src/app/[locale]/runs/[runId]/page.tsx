@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { AuthGuard } from "@/components/auth-guard";
 import { RunView } from "./run-view";
 
 type PageProps = {
@@ -10,9 +11,9 @@ export default async function RunPage({ params }: PageProps) {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <AuthGuard>
         <RunView runId={runId} />
-      </section>
+      </AuthGuard>
     </AppShell>
   );
 }

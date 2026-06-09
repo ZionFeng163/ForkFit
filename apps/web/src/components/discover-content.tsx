@@ -70,10 +70,12 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
   const [totalCount_, setTotalCount] = useState(totalCount);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const fetchPosts = useCallback((q: string, tag: string, offset: number) => {
     setLoading(true);
+    setFetchError(null);
     const apiTag = tag === "all" ? "" : tag;
     listPosts(PAGE_SIZE, offset, q, apiTag)
       .then((fresh) => {
@@ -82,6 +84,9 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
         } else {
           setPosts((prev) => [...prev, ...fresh]);
         }
+      })
+      .catch((e) => {
+        setFetchError(e.message || "加载失败，请稍后重试");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -114,6 +119,8 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
       const apiTag = activeCategory === "all" ? "" : activeCategory;
       const nextPosts = await listPosts(PAGE_SIZE, posts.length, search, apiTag);
       setPosts((prev) => [...prev, ...nextPosts]);
+    } catch (e: any) {
+      setFetchError(e.message || "加载更多失败");
     } finally {
       setLoading(false);
     }
@@ -308,7 +315,13 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
         ))}
       </div>
 
-      {posts.length === 0 && !loading ? (
+      {fetchError && (
+        <div className="my-4 px-4 py-3 rounded-xl text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
+          {fetchError}
+        </div>
+      )}
+
+      {posts.length === 0 && !loading && !fetchError ? (
         <p className="py-12 text-center text-sm" style={{ color: "var(--lp-muted)" }}>
           {t("noResults")}
         </p>
