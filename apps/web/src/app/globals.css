@@ -236,8 +236,8 @@ html {
 
 /* Sidebar nav links */
 .sidebar-nav-link {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
@@ -246,7 +246,7 @@ html {
   color: var(--lp-muted);
   transition: all 0.2s ease;
   margin-bottom: 4px;
-  text-decoration: none;
+  text-decoration: none !important;
 }
 .sidebar-nav-link:hover {
   background: var(--lp-warm-100);
@@ -255,7 +255,7 @@ html {
 .sidebar-nav-active {
   background: var(--lp-accent-light) !important;
   color: var(--lp-accent) !important;
-  font-weight: 600;
+  font-weight: 600 !important;
 }
 
 /* ========== AUTH PAGE STYLES ========== */

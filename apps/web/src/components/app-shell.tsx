@@ -49,7 +49,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={key}
                 href={href}
-                className={`sidebar-nav-link ${active ? "sidebar-nav-active" : ""}`}
+                className="sidebar-nav-link"
+                style={{
+                  background: active ? "var(--lp-accent-light)" : undefined,
+                  color: active ? "var(--lp-accent)" : undefined,
+                  fontWeight: active ? 600 : undefined,
+                }}
               >
                 <Icon size={18} />
                 {t(key)}
