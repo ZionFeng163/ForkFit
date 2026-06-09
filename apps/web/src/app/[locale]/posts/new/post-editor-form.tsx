@@ -194,13 +194,27 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex gap-0">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex-1 h-[3px] rounded-full" style={{ background: "var(--lp-border)" }} />
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="fp-progress-step"
+                style={{
+                  background: i < 1
+                    ? "var(--lp-accent)"
+                    : i === 1
+                    ? "linear-gradient(90deg, var(--lp-accent) 0%, var(--lp-border) 100%)"
+                    : "var(--lp-border)",
+                }}
+              />
             ))}
           </div>
           <div className="flex justify-between mt-2">
             {["基本信息", "菜谱详情", "发布"].map((label, i) => (
-              <span key={i} className="text-[11px] font-medium" style={{ color: i === 0 ? "var(--lp-accent)" : "var(--lp-muted)" }}>
+              <span
+                key={i}
+                className="text-[11px] font-medium transition-colors"
+                style={{ color: i === 0 ? "var(--lp-accent)" : "var(--lp-muted)" }}
+              >
                 {label}
               </span>
             ))}
