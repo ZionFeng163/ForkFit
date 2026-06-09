@@ -492,6 +492,7 @@ function buildInput(form: PostFormState, difficulty: string): CreatePostInput {
       tags: allTags,
       notes: form.notes.trim(),
       steps,
+      difficulty,
     },
   };
 }

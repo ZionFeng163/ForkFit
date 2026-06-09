@@ -48,6 +48,7 @@ class PostResponse(BaseModel):
     description: str
     recipe: Meal
     saves: int
+    likes: int
     forks: int
     created_at: str
     liked: bool = False

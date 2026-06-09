@@ -51,6 +51,8 @@ class UserRow(Base):
     password_hash: Mapped[str] = mapped_column(String(120), nullable=False)
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    bio: Mapped[str] = mapped_column(String(500), default="", nullable=False)
+    location: Mapped[str] = mapped_column(String(100), default="", nullable=False)
     role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     extracted_preferences: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     profile_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
@@ -72,6 +74,7 @@ class PostRow(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     recipe_payload: Mapped[dict] = mapped_column(JSON(none_as_null=False), nullable=False)
     saves: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    likes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     forks: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

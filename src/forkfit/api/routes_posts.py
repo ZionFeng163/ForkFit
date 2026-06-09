@@ -166,6 +166,7 @@ def _post_response(post: PostRecord, interaction: tuple[bool, bool] | None = Non
         description=post.description,
         recipe=post.recipe,
         saves=post.saves,
+        likes=post.likes,
         forks=post.forks,
         created_at=post.created_at.isoformat(),
         liked=liked,
@@ -189,10 +190,10 @@ async def toggle_like(
     store: PostgresPostStore = Depends(get_post_store),
 ) -> dict:
     try:
-        liked, saves = store.toggle_like(user.id, post_id)
+        liked, likes, saves = store.toggle_like(user.id, post_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Post not found.")
-    return {"liked": liked, "saves": saves}
+    return {"liked": liked, "likes": likes, "saves": saves}
 
 
 @router.post("/{post_id}/save")

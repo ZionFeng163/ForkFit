@@ -16,6 +16,8 @@ class UserRecord:
     username: str
     display_name: str
     avatar_url: str | None
+    bio: str
+    location: str
     role: str
     created_at: datetime
 
@@ -47,6 +49,8 @@ class UserStore:
                 username=row.username,
                 display_name=row.display_name,
                 avatar_url=row.avatar_url,
+                bio=row.bio,
+                location=row.location,
                 role=row.role,
                 created_at=row.created_at,
             )
@@ -63,6 +67,8 @@ class UserStore:
                 username=row.username,
                 display_name=row.display_name,
                 avatar_url=row.avatar_url,
+                bio=row.bio,
+                location=row.location,
                 role=row.role,
                 created_at=row.created_at,
             )
@@ -77,6 +83,8 @@ class UserStore:
                 username=row.username,
                 display_name=row.display_name,
                 avatar_url=row.avatar_url,
+                bio=row.bio,
+                location=row.location,
                 role=row.role,
                 created_at=row.created_at,
             )
@@ -118,7 +126,9 @@ class UserStore:
             session.commit()
             session.refresh(row)
             return UserRecord(id=row.id, username=row.username, display_name=row.display_name,
-                              avatar_url=row.avatar_url, role=row.role, created_at=row.created_at)
+                              avatar_url=row.avatar_url,
+                bio=row.bio,
+                location=row.location, role=row.role, created_at=row.created_at)
 
     def delete_user(self, user_id: str) -> bool:
         with self._session_factory() as session:

@@ -20,6 +20,7 @@ class Meal:
     tags: list[str] = field(default_factory=list)
     notes: str = ""
     steps: list[str] = field(default_factory=list)
+    difficulty: str = "medium"
 
     def clone(self) -> "Meal":
         return deepcopy(self)

@@ -29,6 +29,7 @@ class PostRecord:
     description: str
     recipe: Meal
     saves: int
+    likes: int
     forks: int
     created_at: datetime
 
@@ -124,8 +125,8 @@ class PostgresPostStore:
             session.delete(row)
             session.commit()
 
-    def toggle_like(self, user_id: str, post_id: str) -> tuple[bool, int]:
-        """Toggle like. Returns (liked, new_saves_count)."""
+    def toggle_like(self, user_id: str, post_id: str) -> tuple[bool, int, int]:
+        """Toggle like. Returns (liked, new_likes_count, new_saves_count)."""
         with self.session_factory() as session:
             existing = session.get(PostLikeRow, (user_id, post_id))
             post = session.get(PostRow, post_id)
@@ -133,12 +134,14 @@ class PostgresPostStore:
                 raise KeyError(f"Unknown post_id: {post_id}")
             if existing:
                 session.delete(existing)
+                post.likes = max(0, post.likes - 1)
                 session.commit()
-                return False, post.saves
+                return False, post.likes, post.saves
             else:
                 session.add(PostLikeRow(user_id=user_id, post_id=post_id))
+                post.likes += 1
                 session.commit()
-                return True, post.saves
+                return True, post.likes, post.saves
 
     def toggle_save(self, user_id: str, post_id: str) -> tuple[bool, int]:
         """Toggle bookmark. Returns (saved, new_saves_count)."""
@@ -149,10 +152,12 @@ class PostgresPostStore:
                 raise KeyError(f"Unknown post_id: {post_id}")
             if existing:
                 session.delete(existing)
+                post.saves = max(0, post.saves - 1)
                 session.commit()
                 return False, post.saves
             else:
                 session.add(PostSaveRow(user_id=user_id, post_id=post_id))
+                post.saves += 1
                 session.commit()
                 return True, post.saves
 
@@ -268,6 +273,7 @@ def _record_from_row(row: PostRow) -> PostRecord:
         description=row.description,
         recipe=meal_from_dict(row.recipe_payload),
         saves=row.saves,
+        likes=row.likes,
         forks=row.forks,
         created_at=row.created_at,
     )

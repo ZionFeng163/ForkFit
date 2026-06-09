@@ -62,6 +62,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
   // Post state
   const [liked, setLiked] = useState(post.liked ?? false);
   const [saves, setSaves] = useState(post.saves);
+  const [likes, setLikes] = useState(post.likes ?? 0);
   const [saved, setSaved] = useState(post.saved ?? false);
 
   // Ingredients
@@ -112,6 +113,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     if (!user) return;
     toggleLike(post.id).then((res) => {
       setLiked(res.liked);
+      setLikes(res.likes);
       setSaves(res.saves);
     });
   }
@@ -258,7 +260,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
             }}
           >
             <Heart size={16} className={liked ? "fill-current" : ""} />
-            {saves}
+            {likes}
           </button>
         </div>
       </div>

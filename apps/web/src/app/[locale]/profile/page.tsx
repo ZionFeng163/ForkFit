@@ -53,7 +53,7 @@ function ProfileContent() {
   const locale = useLocale();
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("recipes");
-  const [profile, setProfile] = useState<{ post_count: number } | null>(null);
+  const [profile, setProfile] = useState<{ post_count: number; bio: string; location: string } | null>(null);
   const [stats, setStats] = useState({ followers: 0, following: 0 });
   const [totalLikes, setTotalLikes] = useState(0);
 
@@ -108,10 +108,21 @@ function ProfileContent() {
               </span>
             )}
           </div>
+          {profile?.bio && (
+            <p className="text-sm leading-[1.6] mb-3 max-w-[480px]" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
+              {profile.bio}
+            </p>
+          )}
           <div className="flex items-center gap-4 text-[13px] flex-wrap" style={{ color: "var(--lp-muted)" }}>
             <span className="flex items-center gap-1.5">
               <span className="text-xs" style={{ color: "var(--lp-muted)" }}>@{user.username}</span>
             </span>
+            {profile?.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin size={14} />
+                {profile.location}
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <Calendar size={14} />
               {locale === "en" ? "Joined" : "加入于"} {new Date(user.id ? Date.now() - 86400000 * 365 : Date.now()).getFullYear()}

@@ -80,6 +80,8 @@ def get_user_profile(user_id: str) -> dict:
         "username": user.username,
         "display_name": user.display_name,
         "avatar_url": user.avatar_url,
+        "bio": user.bio,
+        "location": user.location,
         "post_count": post_count,
     }
 

@@ -35,13 +35,15 @@ export function PostCard({ post }: { post: RecipePost }) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(post.liked ?? false);
   const [saves, setSaves] = useState(post.saves);
+  const [likes, setLikes] = useState(post.likes ?? 0);
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comment_count ?? 0);
 
   useEffect(() => {
     setLiked(post.liked ?? false);
     setSaves(post.saves);
-  }, [post.liked, post.saves]);
+    setLikes(post.likes ?? 0);
+  }, [post.liked, post.saves, post.likes]);
 
   function handleLike(e: React.MouseEvent) {
     e.preventDefault();
@@ -49,6 +51,7 @@ export function PostCard({ post }: { post: RecipePost }) {
     if (!user) return;
     toggleLike(post.id).then((res) => {
       setLiked(res.liked);
+      setLikes(res.likes);
       setSaves(res.saves);
     });
   }
@@ -189,7 +192,7 @@ export function PostCard({ post }: { post: RecipePost }) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
             >
               <Heart size={14} className={liked ? "fill-current" : ""} />
-              {saves}
+              {likes}
             </button>
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowComments(true); }}

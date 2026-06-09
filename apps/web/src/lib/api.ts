@@ -234,7 +234,7 @@ export function batchDeleteAdminPosts(ids: string[]) {
 // --- Interactions ---
 
 export function toggleLike(postId: string) {
-  return request<{ liked: boolean; saves: number }>(`/posts/${postId}/like`, {
+  return request<{ liked: boolean; likes: number; saves: number }>(`/posts/${postId}/like`, {
     method: "POST",
   });
 }
@@ -256,7 +256,7 @@ export function listSavedPosts(limit = 20, offset = 0) {
 // --- User profiles ---
 
 export function getUserProfile(userId: string) {
-  return request<{ id: string; username: string; display_name: string; avatar_url: string | null; post_count: number }>(`/users/${userId}`);
+  return request<{ id: string; username: string; display_name: string; avatar_url: string | null; bio: string; location: string; post_count: number }>(`/users/${userId}`);
 }
 
 export function listUserPosts(userId: string, limit = 20, offset = 0) {

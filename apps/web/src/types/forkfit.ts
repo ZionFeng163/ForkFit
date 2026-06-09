@@ -11,6 +11,7 @@ export type Meal = {
   tags: string[];
   notes: string;
   steps: string[];
+  difficulty: string;
 };
 
 export type MealPack = {
@@ -115,6 +116,7 @@ export type RecipePost = {
   location: string;
   image_urls: string[];
   saves: number;
+  likes: number;
   forks: number;
   description: string;
   recipe: Meal;
@@ -140,6 +142,8 @@ export type UserInfoResponse = {
   username: string;
   display_name: string;
   avatar_url: string | null;
+  bio: string;
+  location: string;
   role: string;
 };
 
