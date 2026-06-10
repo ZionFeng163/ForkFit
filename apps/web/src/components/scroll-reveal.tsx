@@ -15,33 +15,25 @@ export function ScrollReveal({ children, className = "", delay = 0 }: ScrollReve
     const el = ref.current;
     if (!el) return;
 
-    // Check if element is already in viewport on mount
+    // Immediately reveal elements already in viewport
     const rect = el.getBoundingClientRect();
-    const inView = rect.top < window.innerHeight && rect.bottom > 0;
-
-    if (inView) {
-      // Element is already visible — reveal with delay for animation
-      const timer = setTimeout(() => {
-        el.classList.add("revealed");
-      }, delay + 100);
-      return () => clearTimeout(timer);
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setTimeout(() => el.classList.add("revealed"), delay + 50);
+      return;
     }
 
-    // Element is below viewport — use IntersectionObserver
+    // Use IntersectionObserver for elements below viewport
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setTimeout(() => {
-              entry.target.classList.add("revealed");
-            }, delay);
+            setTimeout(() => entry.target.classList.add("revealed"), delay);
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -20px 0px" }
+      { threshold: 0.1 }
     );
-
     observer.observe(el);
     return () => observer.disconnect();
   }, [delay]);
