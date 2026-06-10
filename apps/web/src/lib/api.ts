@@ -293,6 +293,14 @@ export function saveMyProfile(profile: Record<string, unknown>) {
   });
 }
 
+export function updateMe(data: { display_name?: string; bio?: string; location?: string }) {
+  return request<{ id: string; username: string; display_name: string; avatar_url: string | null; bio: string; location: string }>(`/users/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 // --- Follow ---
 
 export function followUser(userId: string) {

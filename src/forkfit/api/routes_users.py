@@ -67,6 +67,35 @@ def save_my_profile(
     return {"ok": True}
 
 
+@router.put("/me")
+def update_me(
+    body: dict,
+    user: CurrentUser = Depends(current_user),
+) -> dict:
+    store = get_user_store()
+    updates = {}
+    if "display_name" in body:
+        updates["display_name"] = body["display_name"]
+    if "avatar_url" in body:
+        updates["avatar_url"] = body["avatar_url"]
+    if "bio" in body:
+        updates["bio"] = body["bio"]
+    if "location" in body:
+        updates["location"] = body["location"]
+    if updates:
+        updated = store.update_user(user.id, **updates)
+        if updated:
+            return {
+                "id": updated.id,
+                "username": updated.username,
+                "display_name": updated.display_name,
+                "avatar_url": updated.avatar_url,
+                "bio": updated.bio,
+                "location": updated.location,
+            }
+    return {"ok": True}
+
+
 @router.get("/{user_id}")
 def get_user_profile(user_id: str) -> dict:
     store = get_user_store()

@@ -18,6 +18,7 @@ import {
   getFollowStats,
   getUserProfile,
   saveMyProfile,
+  updateMe,
 } from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
@@ -60,6 +61,7 @@ function ProfileContent() {
 
   // Edit state
   const [editing, setEditing] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [saving, setSaving] = useState(false);
@@ -75,6 +77,7 @@ function ProfileContent() {
   }, [user]);
 
   function startEdit() {
+    setEditDisplayName(user?.display_name || "");
     setEditBio(profile?.bio || "");
     setEditLocation(profile?.location || "");
     setEditing(true);
@@ -83,8 +86,16 @@ function ProfileContent() {
   async function saveProfile() {
     setSaving(true);
     try {
-      await saveMyProfile({ bio: editBio, location: editLocation });
-      setProfile((prev) => prev ? { ...prev, bio: editBio, location: editLocation } : prev);
+      await updateMe({
+        display_name: editDisplayName || user?.display_name || "",
+        bio: editBio,
+        location: editLocation,
+      });
+      // Refresh user data
+      if (user) {
+        const updated = await getUserProfile(user.id);
+        setProfile(updated);
+      }
       setEditing(false);
     } catch {}
     setSaving(false);
@@ -119,7 +130,7 @@ function ProfileContent() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
             <h1 className="text-[22px] font-bold tracking-[-0.01em]" style={{ color: "var(--lp-fg)" }}>
-              {user.display_name || user.username}
+              {editing ? editDisplayName || user.display_name : (user.display_name || user.username)}
             </h1>
             {profile && profile.post_count > 0 && (
               <span
@@ -133,6 +144,16 @@ function ProfileContent() {
           </div>
           {editing ? (
             <div className="space-y-3 mb-3 max-w-[480px]">
+              <div>
+                <label className="block text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>显示名称</label>
+                <input
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  placeholder="你的名字"
+                  className="w-full h-[38px] px-3.5 rounded-lg text-sm outline-none"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                />
+              </div>
               <div>
                 <label className="block text-[13px] font-semibold mb-1" style={{ color: "var(--lp-fg)" }}>简介</label>
                 <input
