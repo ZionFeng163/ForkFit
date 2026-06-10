@@ -80,10 +80,15 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
     listPosts(PAGE_SIZE, offset, q, apiTag)
       .then((fresh) => {
         if (offset === 0) {
-          setPosts(fresh);
+          // Deduplicate by ID
+          const seen = new Set<string>();
+          setPosts(fresh.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; }));
           setTotalCount(fresh.length < PAGE_SIZE ? fresh.length : totalCount_);
         } else {
-          setPosts((prev) => [...prev, ...fresh]);
+          setPosts((prev) => {
+            const seen = new Set(prev.map((p) => p.id));
+            return [...prev, ...fresh.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })];
+          });
         }
       })
       .catch((e) => {
