@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 
 import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
-import { getRun, publishRun, saveRun } from "@/lib/api";
+import { getRun, getPost, publishRun, saveRun } from "@/lib/api";
 import type { RunResultPayload } from "@/types/forkfit";
 
 export function RunView({ runId }: { runId: string }) {
@@ -55,6 +55,13 @@ export function RunView({ runId }: { runId: string }) {
     setEditTags(forkedMeal.tags.join(", "));
     setEditNotes(forkedMeal.notes || "");
     setEditSteps(forkedMeal.steps?.length ? [...forkedMeal.steps] : []);
+    // Load original post's images as default
+    const originalId = result.original_meal_pack.id;
+    if (originalId) {
+      getPost(originalId).then((post) => {
+        if (post.image_urls.length > 0) setEditImages(post.image_urls);
+      }).catch(() => {});
+    }
   }, [result]);
 
   async function handlePublish() {

@@ -219,7 +219,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       const published = await publishRun(runId, {
         title: editTitle,
         description: editDesc,
-        image_urls: editImages,
+        image_urls: editImages.length > 0 ? editImages : post.image_urls,
         recipe_name: editTitle,
         ingredients: splitList(editIngredients),
         equipment: splitList(editEquipment),
