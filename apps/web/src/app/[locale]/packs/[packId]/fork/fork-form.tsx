@@ -132,9 +132,15 @@ export function ForkContent({ post }: { post: RecipePost }) {
       const result = await extractMyPreferences("zh");
       const prefs = result.preferences;
       const parts: string[] = [];
-      if (prefs.likes) parts.push(`喜欢：${Array.isArray(prefs.likes) ? prefs.likes.join("、") : prefs.likes}`);
-      if (prefs.dislikes) parts.push(`不喜欢：${Array.isArray(prefs.dislikes) ? prefs.dislikes.join("、") : prefs.dislikes}`);
-      if (prefs.allergies) parts.push(`过敏：${Array.isArray(prefs.allergies) ? prefs.allergies.join("、") : prefs.allergies}`);
+      const fmt = (v: unknown) => Array.isArray(v) ? v.filter(Boolean).join("、") : (v || "");
+      const likes = fmt(prefs.likes);
+      const dislikes = fmt(prefs.dislikes);
+      const allergies = fmt(prefs.allergies);
+      const dietRules = fmt(prefs.diet_rules);
+      if (likes) parts.push(`喜欢：${likes}`);
+      if (dislikes) parts.push(`不喜欢：${dislikes}`);
+      if (allergies) parts.push(`过敏：${allergies}`);
+      if (dietRules) parts.push(`饮食限制：${dietRules}`);
       if (parts.length > 0) {
         setRequirement((prev) => prev ? prev + "\n" + parts.join("\n") : parts.join("\n"));
       }
@@ -245,9 +251,22 @@ export function ForkContent({ post }: { post: RecipePost }) {
             onChange={(e) => setRequirement(e.target.value)}
             placeholder="例如：少放盐、换成鸡胸肉、多加蔬菜、做成素食版本…"
             rows={4}
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-y min-h-[100px] leading-[1.65] mb-4"
+            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-y min-h-[100px] leading-[1.65] mb-3"
             style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
           />
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["少放盐", "更辣一点", "减少食材", "素食版本", "缩短时间", "多加蔬菜", "换成鸡胸肉", "去掉花生"].map((preset) => (
+              <button key={preset} type="button"
+                onClick={() => setRequirement((prev) => prev ? prev + "、" + preset : preset)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150"
+                style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.color = "var(--lp-accent)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; }}>
+                + {preset}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-3 flex-wrap">
             <button onClick={handleStart} disabled={creating || isRunning}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50"
