@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/routing";
+import { getLoginHref } from "@/lib/auth-navigation";
 import { useEffect } from "react";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -11,8 +12,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      const returnTo = window.location.pathname;
-      router.replace(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+      router.replace(getLoginHref(window.location));
     }
   }, [loading, user, router]);
 

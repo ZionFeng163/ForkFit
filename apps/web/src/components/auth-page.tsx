@@ -2,13 +2,15 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Eye, EyeOff, Mail, Lock, User, Shield } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/routing";
 import { loginUser as apiLogin, registerUser } from "@/lib/api";
+import { getSafeReturnTo } from "@/lib/auth-navigation";
 
 function getPasswordStrength(pw: string): { level: number; label: string } {
   if (!pw) return { level: 0, label: "" };
@@ -27,7 +29,7 @@ function getPasswordStrength(pw: string): { level: number; label: string } {
 function InputField({
   label, required, icon: Icon, type = "text", value, onChange, placeholder, rightButton, error,
 }: {
-  label: string; required?: boolean; icon: any; type?: string;
+  label: string; required?: boolean; icon: LucideIcon; type?: string;
   value: string; onChange: (v: string) => void; placeholder: string;
   rightButton?: React.ReactNode; error?: string;
 }) {
@@ -56,11 +58,13 @@ function InputField({
 export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "register" }) {
   const t = useTranslations("Auth");
   const router = useRouter();
-  const { refresh } = useAuth();
+  const { user, loading, refresh } = useAuth();
   const [tab, setTab] = useState(defaultTab);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   // Login state
   const [loginUser, setLoginUser] = useState("");
@@ -80,19 +84,25 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
   const loginMutation = useMutation({
     mutationFn: apiLogin,
     onSuccess: () => {
-      refresh();
-      const params = new URLSearchParams(window.location.search);
-      router.push(params.get("returnTo") || "/discover");
+      void refresh();
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: () => {
-      refresh();
-      router.push("/discover");
+      void refresh();
     },
   });
+
+  useEffect(() => {
+    if (!mounted || loading || !user) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    router.replace(getSafeReturnTo(params.get("returnTo")));
+  }, [loading, mounted, router, user]);
 
   function handleLogin(e: FormEvent) {
     e.preventDefault();

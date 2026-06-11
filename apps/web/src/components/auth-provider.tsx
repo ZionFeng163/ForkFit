@@ -9,20 +9,21 @@ import {
 } from "react";
 
 import { getCurrentUser, logoutUser } from "@/lib/api";
+import { getLocalizedLoginUrl } from "@/lib/auth-navigation";
 import type { UserInfoResponse } from "@/types/forkfit";
 
 type AuthContextType = {
   user: UserInfoResponse | null;
   loading: boolean;
-  refresh: () => void;
-  logout: () => void;
+  refresh: () => Promise<UserInfoResponse | null>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  refresh: () => {},
-  logout: () => {},
+  refresh: async () => null,
+  logout: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -30,24 +31,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     getCurrentUser()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+      .then((currentUser) => {
+        if (active) setUser(currentUser);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     setLoading(true);
-    getCurrentUser()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      return currentUser;
+    } catch {
+      setUser(null);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const logout = useCallback(() => {
-    logoutUser().catch(() => {});
-    setUser(null);
-    window.location.href = "/login";
+  const logout = useCallback(async () => {
+    try {
+      await logoutUser();
+    } finally {
+      setUser(null);
+      window.location.replace(getLocalizedLoginUrl(window.location, false));
+    }
   }, []);
 
   return (

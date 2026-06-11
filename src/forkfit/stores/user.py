@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from forkfit.db.models import UserRow, FollowRow
@@ -99,15 +99,34 @@ class UserStore:
                 return None
             return (row.id, row.password_hash)
 
-    def list_users(self, limit: int = 50, offset: int = 0) -> tuple[list[UserRecord], int]:
+    def list_users(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        search: str = "",
+    ) -> tuple[list[UserRecord], int]:
         with self._session_factory() as session:
-            total = session.scalar(select(func.count(UserRow.id)))
+            query = select(UserRow)
+            count_query = select(func.count(UserRow.id))
+            if search:
+                pattern = f"%{search.strip()}%"
+                condition = or_(
+                    UserRow.username.ilike(pattern),
+                    UserRow.display_name.ilike(pattern),
+                )
+                query = query.where(condition)
+                count_query = count_query.where(condition)
+
+            total = session.scalar(count_query)
             rows = session.execute(
-                select(UserRow).order_by(UserRow.created_at.desc()).offset(offset).limit(limit)
+                query.order_by(UserRow.created_at.desc(), UserRow.id.desc())
+                .offset(offset)
+                .limit(limit)
             ).scalars().all()
             return (
                 [UserRecord(id=r.id, username=r.username, display_name=r.display_name,
-                            avatar_url=r.avatar_url, role=r.role, created_at=r.created_at) for r in rows],
+                            avatar_url=r.avatar_url, bio=r.bio, location=r.location,
+                            role=r.role, created_at=r.created_at) for r in rows],
                 total,
             )
 

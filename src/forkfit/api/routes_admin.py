@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from forkfit.api.deps import get_post_store, get_run_store, get_user_store, require_admin
 from forkfit.auth.models import CurrentUser
@@ -47,13 +49,13 @@ class AdminRunInfo(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
-    display_name: str | None = None
-    avatar_url: str | None = None
-    role: str | None = None
+    display_name: str | None = Field(default=None, min_length=1, max_length=120)
+    avatar_url: str | None = Field(default=None, max_length=500)
+    role: Literal["user", "admin"] | None = None
 
 
 class BatchDeleteRequest(BaseModel):
-    ids: list[str]
+    ids: list[str] = Field(min_length=1, max_length=100)
 
 
 # --- Endpoints ---
@@ -65,12 +67,10 @@ def admin_stats(_admin: CurrentUser = Depends(require_admin)) -> AdminStats:
     run_store = get_run_store()
     _, post_total = post_store.list_posts(limit=1, offset=0)
 
-    # Today's counts
-    from datetime import datetime, timezone, timedelta
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_new_posts = post_store.count_posts_since(today_start) if hasattr(post_store, 'count_posts_since') else 0
-    today_runs = run_store.count_runs_since(today_start) if hasattr(run_store, 'count_runs_since') else 0
-    total_runs = run_store.count_all_runs() if hasattr(run_store, 'count_all_runs') else 0
+    today_new_posts = post_store.count_posts_since(today_start)
+    today_runs = run_store.count_runs_since(today_start)
+    total_runs = run_store.count_all_runs()
 
     return AdminStats(
         user_count=user_store.get_user_count(),
@@ -84,12 +84,13 @@ def admin_stats(_admin: CurrentUser = Depends(require_admin)) -> AdminStats:
 
 @router.get("/users")
 def admin_list_users(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    q: str = Query(default="", max_length=120),
     _admin: CurrentUser = Depends(require_admin),
 ) -> dict:
     store = get_user_store()
-    users, total = store.list_users(limit=limit, offset=offset)
+    users, total = store.list_users(limit=limit, offset=offset, search=q)
     return {
         "users": [
             {"id": u.id, "username": u.username, "display_name": u.display_name,
@@ -116,17 +117,24 @@ def admin_update_user(
     body: UpdateUserRequest,
     _admin: CurrentUser = Depends(require_admin),
 ) -> dict:
+    if user_id == _admin.id and body.role and body.role != "admin":
+        raise HTTPException(status_code=400, detail="You cannot remove your own admin role")
+
     store = get_user_store()
     fields = {k: v for k, v in body.model_dump().items() if v is not None}
     user = store.update_user(user_id, **fields)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"id": user.id, "username": user.username, "display_name": user.display_name,
-            "avatar_url": user.avatar_url, "role": user.role}
+            "avatar_url": user.avatar_url, "role": user.role,
+            "created_at": user.created_at.isoformat()}
 
 
 @router.delete("/users/{user_id}")
 def admin_delete_user(user_id: str, _admin: CurrentUser = Depends(require_admin)) -> dict:
+    if user_id == _admin.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+
     store = get_user_store()
     if not store.delete_user(user_id):
         raise HTTPException(status_code=404, detail="User not found")
@@ -135,6 +143,9 @@ def admin_delete_user(user_id: str, _admin: CurrentUser = Depends(require_admin)
 
 @router.post("/users/batch-delete")
 def admin_batch_delete_users(body: BatchDeleteRequest, _admin: CurrentUser = Depends(require_admin)) -> dict:
+    if _admin.id in body.ids:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+
     store = get_user_store()
     deleted = 0
     for uid in body.ids:
@@ -145,12 +156,13 @@ def admin_batch_delete_users(body: BatchDeleteRequest, _admin: CurrentUser = Dep
 
 @router.get("/posts")
 def admin_list_posts(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    q: str = Query(default="", max_length=160),
     _admin: CurrentUser = Depends(require_admin),
 ) -> dict:
     store = get_post_store()
-    posts, total = store.list_posts(limit=limit, offset=offset)
+    posts, total = store.list_posts(limit=limit, offset=offset, search=q)
     return {
         "posts": [
             {"id": p.id, "title": p.title, "author": p.author,
@@ -164,7 +176,10 @@ def admin_list_posts(
 @router.delete("/posts/{post_id}")
 def admin_delete_post(post_id: str, _admin: CurrentUser = Depends(require_admin)) -> dict:
     store = get_post_store()
-    store.delete_post(post_id)
+    try:
+        store.delete_post(post_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Post not found") from None
     return {"detail": "Post deleted"}
 
 
@@ -176,23 +191,23 @@ def admin_batch_delete_posts(body: BatchDeleteRequest, _admin: CurrentUser = Dep
         try:
             store.delete_post(pid)
             deleted += 1
-        except Exception:
+        except KeyError:
             pass
     return {"deleted": deleted}
 
 
 @router.get("/runs")
 def admin_list_runs(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     _admin: CurrentUser = Depends(require_admin),
 ) -> dict:
     store = get_run_store()
-    runs = store.list_all_runs(limit=limit, offset=offset) if hasattr(store, 'list_all_runs') else []
+    runs = store.list_all_runs(limit=limit, offset=offset)
     return {"runs": [
         {"id": r.id, "user_id": r.user_id, "status": r.status, "created_at": r.created_at.isoformat()}
         for r in runs
-    ], "total": len(runs)}
+    ], "total": store.count_all_runs()}
 
 
 # --- Health check ---
@@ -280,7 +295,7 @@ def _check_bailian() -> tuple[bool, float, str]:
     try:
         from forkfit.config import get_settings
         settings = get_settings()
-        if not settings.langsmith_api_key and not __import__('os').getenv('BAILIAN_API_KEY'):
+        if not __import__('os').getenv('BAILIAN_API_KEY'):
             return False, 0, "No API key configured"
         # Just check if the client can be initialized
         from forkfit.llm import BailianLLMClient
@@ -307,34 +322,46 @@ class AdminActivityResponse(BaseModel):
 
 @router.get("/activity", response_model=AdminActivityResponse)
 def admin_activity(_admin: CurrentUser = Depends(require_admin)) -> AdminActivityResponse:
-    activities = []
+    activities: list[tuple[datetime, ActivityItem]] = []
 
     # Recent posts
     post_store = get_post_store()
     posts, _ = post_store.list_posts(limit=5, offset=0)
     for p in posts:
-        activities.append(ActivityItem(
-            type="post",
-            text=f"用户「{p.author}」发布了新菜谱「{p.title}」",
-            time=_relative_time(p.created_at),
-            color="green",
+        activities.append((
+            p.created_at,
+            ActivityItem(
+                type="post",
+                text=f"用户「{p.author}」发布了新菜谱「{p.title}」",
+                time=_relative_time(p.created_at),
+                color="green",
+            ),
         ))
 
     # Recent runs
     run_store = get_run_store()
-    runs = run_store.list_all_runs(limit=5) if hasattr(run_store, 'list_all_runs') else []
+    runs = run_store.list_all_runs(limit=5)
     for r in runs:
         status_text = {"succeeded": "完成", "failed": "失败", "running": "正在运行"}.get(r.status, r.status)
-        activities.append(ActivityItem(
-            type="run",
-            text=f"AI 定制任务 {status_text}：{r.id[:16]}...",
-            time=_relative_time(r.created_at),
-            color="blue" if r.status == "succeeded" else "orange" if r.status == "running" else "red",
+        activities.append((
+            r.created_at,
+            ActivityItem(
+                type="run",
+                text=f"AI 定制任务 {status_text}：{r.id[:16]}...",
+                time=_relative_time(r.created_at),
+                color="blue" if r.status == "succeeded" else "orange" if r.status == "running" else "red",
+            ),
         ))
 
-    # Sort by time (most recent first) and limit
-    # Activities are already sorted by created_at desc from the queries
-    return AdminActivityResponse(activities=activities[:10])
+    activities.sort(
+        key=lambda item: (
+            item[0].replace(tzinfo=timezone.utc)
+            if item[0].tzinfo is None
+            else item[0]
+        ),
+        reverse=True,
+    )
+    return AdminActivityResponse(activities=[item for _, item in activities[:10]])
 
 
 def _relative_time(dt) -> str:

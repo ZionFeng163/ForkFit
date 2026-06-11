@@ -14,8 +14,13 @@ import type {
   UserInfoResponse,
   UserProfile,
 } from "@/types/forkfit";
+import { getLocalizedLoginUrl, stripLocalePrefix } from "@/lib/auth-navigation";
 
 const API_PROXY_PREFIX = "/api/backend";
+
+type RequestOptions = RequestInit & {
+  redirectOnUnauthorized?: boolean;
+};
 
 function apiUrl(path: string) {
   if (typeof window !== "undefined") {
@@ -25,22 +30,22 @@ function apiUrl(path: string) {
   return `${apiBase}${path}`;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestOptions): Promise<T> {
+  const { redirectOnUnauthorized = true, ...fetchInit } = init ?? {};
   const response = await fetch(apiUrl(path), {
-    ...init,
+    ...fetchInit,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...Object.fromEntries(Object.entries(init?.headers ?? {})),
+      ...Object.fromEntries(Object.entries(fetchInit.headers ?? {})),
     },
   });
 
   if (response.status === 401) {
-    // Redirect to login on client side, but NOT if already on login page
-    if (typeof window !== "undefined") {
-      const currentPath = window.location.pathname;
-      if (!currentPath.includes("/login")) {
-        window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+    if (redirectOnUnauthorized && typeof window !== "undefined") {
+      const currentPath = stripLocalePrefix(window.location.pathname);
+      if (currentPath !== "/login" && currentPath !== "/register") {
+        window.location.replace(getLocalizedLoginUrl(window.location));
       }
     }
     throw new Error("请先登录");
@@ -88,7 +93,9 @@ export function loginUser(input: { username: string; password: string }) {
 }
 
 export function getCurrentUser() {
-  return request<UserInfoResponse>("/auth/me");
+  return request<UserInfoResponse>("/auth/me", {
+    redirectOnUnauthorized: false,
+  });
 }
 
 export function logoutUser() {
@@ -206,8 +213,13 @@ export function getAdminActivity() {
   return request<AdminActivityResponse>("/admin/activity");
 }
 
-export function listAdminUsers(limit = 50, offset = 0) {
-  return request<{ users: AdminUser[]; total: number }>(`/admin/users?limit=${limit}&offset=${offset}`);
+export function listAdminUsers(limit = 50, offset = 0, q = "") {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (q) params.set("q", q);
+  return request<{ users: AdminUser[]; total: number }>(`/admin/users?${params}`);
 }
 
 export function updateAdminUser(userId: string, data: { display_name?: string; avatar_url?: string; role?: string }) {
@@ -221,8 +233,13 @@ export function deleteAdminUser(userId: string) {
   return request<void>(`/admin/users/${userId}`, { method: "DELETE" });
 }
 
-export function listAdminPosts(limit = 50, offset = 0) {
-  return request<{ posts: AdminPost[]; total: number }>(`/admin/posts?limit=${limit}&offset=${offset}`);
+export function listAdminPosts(limit = 50, offset = 0, q = "") {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (q) params.set("q", q);
+  return request<{ posts: AdminPost[]; total: number }>(`/admin/posts?${params}`);
 }
 
 export function deleteAdminPost(postId: string) {

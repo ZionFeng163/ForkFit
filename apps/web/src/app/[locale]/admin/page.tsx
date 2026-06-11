@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Shield } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Shield } from "lucide-react";
 
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuth } from "@/components/auth-provider";
+import { ConfirmModal } from "@/components/confirm-modal";
 import {
   getAdminStats,
   getAdminHealth,
@@ -104,6 +105,7 @@ function AdminLayout() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
   const [clock, setClock] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Clock
   useEffect(() => {
@@ -212,7 +214,7 @@ function AdminLayout() {
             <span className="text-xs text-[#7c7a73]">{clock}</span>
           </div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => setRefreshKey((value) => value + 1)}
             className="flex items-center gap-1.5 rounded-lg border border-[#e8e6e0] bg-white px-3 py-1.5 text-xs font-medium text-[#7c7a73] transition-colors hover:border-[#e85d3a] hover:text-[#e85d3a]"
           >
             {Icons.refresh}
@@ -222,10 +224,12 @@ function AdminLayout() {
 
         {/* Content */}
         <div className="p-8">
-          {tab === "dashboard" && <DashboardTab />}
-          {tab === "services" && <ServicesTab />}
-          {tab === "content" && <ContentTab />}
-          {tab === "users" && <UsersTab />}
+          {tab === "dashboard" && <DashboardTab refreshKey={refreshKey} />}
+          {tab === "services" && <ServicesTab refreshKey={refreshKey} />}
+          {tab === "content" && <ContentTab refreshKey={refreshKey} />}
+          {tab === "users" && (
+            <UsersTab refreshKey={refreshKey} currentUserId={user.id} />
+          )}
         </div>
       </main>
     </div>
@@ -233,29 +237,39 @@ function AdminLayout() {
 }
 
 // ── Dashboard Tab ───────────────────────────────────────────────
-function DashboardTab() {
+function DashboardTab({ refreshKey }: { refreshKey: number }) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const refresh = useCallback(() => {
     setLoading(true);
+    setError("");
     Promise.all([getAdminStats(), getAdminHealth(), getAdminActivity()])
       .then(([s, h, a]) => {
         setStats(s);
         setHealth(h.services);
         setActivities(a.activities);
       })
+      .catch((reason: Error) => {
+        setError(reason.message || "后台数据加载失败");
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    const timer = window.setTimeout(refresh, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh, refreshKey]);
 
   if (loading) return <Loading />;
-  if (!stats) return null;
+  if (error || !stats) {
+    return <ErrorState message={error || "后台数据加载失败"} onRetry={refresh} />;
+  }
 
-  const allOk = health.every((s) => s.status === "ok");
+  const allOk = health.length > 0 && health.every((s) => s.status === "ok");
 
   return (
     <>
@@ -263,27 +277,28 @@ function DashboardTab() {
       <div className="mb-6 grid grid-cols-4 gap-4">
         <StatCard
           icon={Icons.postsStat}
-          label="今日新增菜谱"
-          value={stats.today_new_posts}
-          trend={{ value: "+8.1%", up: true }}
+          label="菜谱总数"
+          value={stats.post_count}
+          detail={`今日新增 ${stats.today_new_posts}`}
         />
         <StatCard
           icon={Icons.usersStat}
           label="总用户数"
           value={stats.user_count}
-          trend={{ value: "+12.3%", up: true }}
+          detail="已注册账号"
         />
         <StatCard
           icon={Icons.runsStat}
           label="AI 定制次数"
           value={stats.total_runs}
-          trend={{ value: "+23.7%", up: true }}
+          detail={`今日新增 ${stats.today_runs}`}
         />
         <StatCard
           icon={Icons.clockStat}
           label="活跃任务"
           value={stats.active_runs}
           highlight={stats.active_runs > 0}
+          detail={stats.active_runs > 0 ? "正在处理中" : "当前无排队任务"}
         />
       </div>
 
@@ -366,19 +381,31 @@ function DashboardTab() {
 }
 
 // ── Services Tab ────────────────────────────────────────────────
-function ServicesTab() {
+function ServicesTab({ refreshKey }: { refreshKey: number }) {
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError("");
     getAdminHealth()
       .then((r) => setHealth(r.services))
+      .catch((reason: Error) => {
+        setError(reason.message || "服务状态加载失败");
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <Loading />;
+  useEffect(() => {
+    const timer = window.setTimeout(refresh, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh, refreshKey]);
 
-  const allOk = health.every((s) => s.status === "ok");
+  if (loading) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={refresh} />;
+
+  const allOk = health.length > 0 && health.every((s) => s.status === "ok");
 
   // Map backend health to display cards
   const serviceCards = health.map((svc) => {
@@ -583,50 +610,103 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
 }
 
 // ── Content Tab ─────────────────────────────────────────────────
-function ContentTab() {
+function ContentTab({ refreshKey }: { refreshKey: number }) {
   const [posts, setPosts] = useState<AdminPost[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pendingDelete, setPendingDelete] = useState<AdminPost | "batch" | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const limit = 10;
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const fetchPosts = useCallback(() => {
     setLoading(true);
-    listAdminPosts(limit, page * limit)
+    setError("");
+    listAdminPosts(limit, page * limit, debouncedSearch)
       .then((res) => {
-        let filtered = res.posts;
-        if (search) {
-          const q = search.toLowerCase();
-          filtered = filtered.filter(
-            (p) => p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q)
-          );
-        }
-        setPosts(filtered);
+        setPosts(res.posts);
         setTotal(res.total);
+        setSelectedIds(new Set());
+      })
+      .catch((reason: Error) => {
+        setError(reason.message || "菜谱列表加载失败");
       })
       .finally(() => setLoading(false));
-  }, [page, search]);
+  }, [debouncedSearch, page]);
 
-  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+  useEffect(() => {
+    const timer = window.setTimeout(fetchPosts, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchPosts, refreshKey]);
 
-  function handleDelete(p: AdminPost) {
-    if (!confirm(`确定删除菜谱「${p.title}」？`)) return;
-    deleteAdminPost(p.id).then(() => {
-      setPosts((prev) => prev.filter((x) => x.id !== p.id));
-      setTotal((prev) => prev - 1);
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const ids = pendingDelete === "batch"
+      ? Array.from(selectedIds)
+      : [pendingDelete.id];
+
+    setActionPending(true);
+    setError("");
+    setMessage("");
+    try {
+      if (pendingDelete === "batch") {
+        const result = await batchDeleteAdminPosts(ids);
+        setMessage(`已删除 ${result.deleted} 篇菜谱`);
+      } else {
+        await deleteAdminPost(pendingDelete.id);
+        setMessage(`已删除「${pendingDelete.title}」`);
+      }
+      setPendingDelete(null);
+      setSelectedIds(new Set());
+      if (ids.length >= posts.length && page > 0) {
+        setPage((value) => value - 1);
+      } else {
+        fetchPosts();
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "删除失败");
+    } finally {
+      setActionPending(false);
+    }
+  }
+
+  const totalPages = Math.ceil(total / limit);
+  const pageNumbers = getPageNumbers(page, totalPages);
+  const allSelected = posts.length > 0 && posts.every((post) => selectedIds.has(post.id));
+
+  function toggleSelection(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   }
 
-  if (loading) return <Loading />;
-
-  const totalPages = Math.ceil(total / limit);
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(posts.map((post) => post.id)));
+  }
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#e8e6e0] bg-white">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b border-[#e8e6e0] px-5 py-4">
-        <span className="text-sm font-semibold text-[#1a1917]">菜谱管理</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e6e0] px-5 py-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-[#1a1917]">菜谱管理</span>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setPendingDelete("batch")}
+              className="rounded-md border border-[#d94452] px-2.5 py-1 text-xs font-medium text-[#d94452]"
+            >
+              删除所选（{selectedIds.size}）
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
           {Icons.search}
           <input
@@ -639,10 +719,21 @@ function ContentTab() {
         </div>
       </div>
 
+      <FeedbackBanner error={error} message={message} />
+
       {/* Table */}
-      <table className="w-full border-collapse">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[720px] border-collapse">
         <thead>
           <tr className="border-b border-[#e8e6e0] bg-[#f5f4f0]">
+            <th className="w-12 px-5 py-3 text-left">
+              <input
+                type="checkbox"
+                aria-label="选择当前页全部菜谱"
+                checked={allSelected}
+                onChange={toggleAll}
+              />
+            </th>
             <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               菜谱
             </th>
@@ -660,8 +751,8 @@ function ContentTab() {
         <tbody>
           {posts.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
-                暂无菜谱
+              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
+                {loading ? "正在加载..." : search ? "没有匹配的菜谱" : "暂无菜谱"}
               </td>
             </tr>
           )}
@@ -670,6 +761,14 @@ function ContentTab() {
               key={p.id}
               className="border-b border-[#e8e6e0] transition-colors last:border-0 hover:bg-[#f5f4f0]"
             >
+              <td className="px-5 py-3.5">
+                <input
+                  type="checkbox"
+                  aria-label={`选择菜谱 ${p.title}`}
+                  checked={selectedIds.has(p.id)}
+                  onChange={() => toggleSelection(p.id)}
+                />
+              </td>
               <td className="px-5 py-3.5 text-sm font-semibold text-[#1a1917]">{p.title}</td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
@@ -684,7 +783,7 @@ function ContentTab() {
               </td>
               <td className="px-5 py-3.5 text-right">
                 <button
-                  onClick={() => handleDelete(p)}
+                  onClick={() => setPendingDelete(p)}
                   className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452]"
                 >
                   删除
@@ -694,6 +793,7 @@ function ContentTab() {
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between border-t border-[#e8e6e0] px-5 py-3 text-xs text-[#7c7a73]">
@@ -704,14 +804,15 @@ function ContentTab() {
           <PaginationBtn onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
             ‹
           </PaginationBtn>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const p = i;
-            return (
-              <PaginationBtn key={p} active={p === page} onClick={() => setPage(p)}>
-                {p + 1}
-              </PaginationBtn>
-            );
-          })}
+          {pageNumbers.map((pageNumber) => (
+            <PaginationBtn
+              key={pageNumber}
+              active={pageNumber === page}
+              onClick={() => setPage(pageNumber)}
+            >
+              {pageNumber + 1}
+            </PaginationBtn>
+          ))}
           <PaginationBtn
             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
             disabled={page >= totalPages - 1}
@@ -720,64 +821,149 @@ function ContentTab() {
           </PaginationBtn>
         </div>
       </div>
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title={pendingDelete === "batch" ? "批量删除菜谱" : "删除菜谱"}
+        message={
+          pendingDelete === "batch"
+            ? `确定删除选中的 ${selectedIds.size} 篇菜谱吗？此操作无法撤销。`
+            : pendingDelete
+              ? `确定删除「${pendingDelete.title}」吗？此操作无法撤销。`
+              : ""
+        }
+        confirmLabel={actionPending ? "删除中..." : "删除"}
+        danger
+        onConfirm={() => { if (!actionPending) void confirmDelete(); }}
+        onCancel={() => { if (!actionPending) setPendingDelete(null); }}
+      />
     </div>
   );
 }
 
 // ── Users Tab ───────────────────────────────────────────────────
-function UsersTab() {
+type UserAction =
+  | { type: "delete"; user: AdminUser }
+  | { type: "batch-delete" }
+  | { type: "role"; user: AdminUser; role: "user" | "admin" };
+
+function UsersTab({
+  refreshKey,
+  currentUserId,
+}: {
+  refreshKey: number;
+  currentUserId: string;
+}) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pendingAction, setPendingAction] = useState<UserAction | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const limit = 10;
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
-    listAdminUsers(limit, page * limit)
+    setError("");
+    listAdminUsers(limit, page * limit, debouncedSearch)
       .then((res) => {
-        let filtered = res.users;
-        if (search) {
-          const q = search.toLowerCase();
-          filtered = filtered.filter(
-            (u) =>
-              u.username.toLowerCase().includes(q) ||
-              u.display_name.toLowerCase().includes(q)
-          );
-        }
-        setUsers(filtered);
+        setUsers(res.users);
         setTotal(res.total);
+        setSelectedIds(new Set());
+      })
+      .catch((reason: Error) => {
+        setError(reason.message || "用户列表加载失败");
       })
       .finally(() => setLoading(false));
-  }, [page, search]);
+  }, [debouncedSearch, page]);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    const timer = window.setTimeout(fetchUsers, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchUsers, refreshKey]);
 
-  function handleDelete(u: AdminUser) {
-    if (!confirm(`确定删除用户「${u.username}」？`)) return;
-    deleteAdminUser(u.id).then(() => {
-      setUsers((prev) => prev.filter((x) => x.id !== u.id));
-      setTotal((prev) => prev - 1);
-    });
+  async function confirmAction() {
+    if (!pendingAction) return;
+    setActionPending(true);
+    setError("");
+    setMessage("");
+
+    try {
+      if (pendingAction.type === "role") {
+        const updated = await updateAdminUser(pendingAction.user.id, {
+          role: pendingAction.role,
+        });
+        setUsers((current) => current.map((user) => (
+          user.id === updated.id ? { ...user, role: updated.role } : user
+        )));
+        setMessage(`已将 ${updated.username} 设为${updated.role === "admin" ? "管理员" : "普通用户"}`);
+      } else {
+        const ids = pendingAction.type === "batch-delete"
+          ? Array.from(selectedIds)
+          : [pendingAction.user.id];
+        if (pendingAction.type === "batch-delete") {
+          const result = await batchDeleteAdminUsers(ids);
+          setMessage(`已删除 ${result.deleted} 个用户`);
+        } else {
+          await deleteAdminUser(pendingAction.user.id);
+          setMessage(`已删除用户 ${pendingAction.user.username}`);
+        }
+        setSelectedIds(new Set());
+        if (ids.length >= users.length && page > 0) {
+          setPage((value) => value - 1);
+        } else {
+          fetchUsers();
+        }
+      }
+      setPendingAction(null);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "操作失败");
+    } finally {
+      setActionPending(false);
+    }
   }
-
-  function toggleRole(u: AdminUser) {
-    const newRole = u.role === "admin" ? "user" : "admin";
-    updateAdminUser(u.id, { role: newRole }).then((updated) => {
-      setUsers((prev) => prev.map((x) => (x.id === updated.id ? { ...x, role: updated.role } : x)));
-    });
-  }
-
-  if (loading) return <Loading />;
 
   const totalPages = Math.ceil(total / limit);
+  const pageNumbers = getPageNumbers(page, totalPages);
+  const selectableUsers = users.filter((user) => user.id !== currentUserId);
+  const allSelected = selectableUsers.length > 0
+    && selectableUsers.every((user) => selectedIds.has(user.id));
+
+  function toggleSelection(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelectedIds(
+      allSelected ? new Set() : new Set(selectableUsers.map((user) => user.id)),
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-xl border border-[#e8e6e0] bg-white">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b border-[#e8e6e0] px-5 py-4">
-        <span className="text-sm font-semibold text-[#1a1917]">用户管理</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e6e0] px-5 py-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-[#1a1917]">用户管理</span>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setPendingAction({ type: "batch-delete" })}
+              className="rounded-md border border-[#d94452] px-2.5 py-1 text-xs font-medium text-[#d94452]"
+            >
+              删除所选（{selectedIds.size}）
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
           {Icons.search}
           <input
@@ -790,10 +976,21 @@ function UsersTab() {
         </div>
       </div>
 
+      <FeedbackBanner error={error} message={message} />
+
       {/* Table */}
-      <table className="w-full border-collapse">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] border-collapse">
         <thead>
           <tr className="border-b border-[#e8e6e0] bg-[#f5f4f0]">
+            <th className="w-12 px-5 py-3 text-left">
+              <input
+                type="checkbox"
+                aria-label="选择当前页全部用户"
+                checked={allSelected}
+                onChange={toggleAll}
+              />
+            </th>
             <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               用户
             </th>
@@ -802,9 +999,6 @@ function UsersTab() {
             </th>
             <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               注册时间
-            </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
-              状态
             </th>
             <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               操作
@@ -815,7 +1009,7 @@ function UsersTab() {
           {users.length === 0 && (
             <tr>
               <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
-                暂无用户
+                {loading ? "正在加载..." : search ? "没有匹配的用户" : "暂无用户"}
               </td>
             </tr>
           )}
@@ -825,23 +1019,39 @@ function UsersTab() {
               className="border-b border-[#e8e6e0] transition-colors last:border-0 hover:bg-[#f5f4f0]"
             >
               <td className="px-5 py-3.5">
+                <input
+                  type="checkbox"
+                  aria-label={`选择用户 ${u.username}`}
+                  checked={selectedIds.has(u.id)}
+                  disabled={u.id === currentUserId}
+                  onChange={() => toggleSelection(u.id)}
+                />
+              </td>
+              <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#fef0ec] text-[11px] font-bold text-[#e85d3a]">
                     {u.display_name[0]}
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-[#1a1917]">{u.display_name}</div>
-                    <div className="text-[11px] text-[#7c7a73]">{u.username}</div>
+                    <div className="text-[11px] text-[#7c7a73]">
+                      @{u.username}{u.id === currentUserId ? " · 当前账号" : ""}
+                    </div>
                   </div>
                 </div>
               </td>
               <td className="px-5 py-3.5">
                 <button
-                  onClick={() => toggleRole(u)}
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  onClick={() => setPendingAction({
+                    type: "role",
+                    user: u,
+                    role: u.role === "admin" ? "user" : "admin",
+                  })}
+                  disabled={u.id === currentUserId}
+                  className={`rounded-md border px-2.5 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
                     u.role === "admin"
-                      ? "bg-[#2d8a56] text-white"
-                      : "bg-[#f5f4f0] text-[#7c7a73]"
+                      ? "border-[#2d8a56] text-[#2d8a56]"
+                      : "border-[#e8e6e0] text-[#7c7a73]"
                   }`}
                 >
                   {u.role === "admin" ? "管理员" : "用户"}
@@ -850,15 +1060,11 @@ function UsersTab() {
               <td className="px-5 py-3.5 text-sm text-[#7c7a73]">
                 {new Date(u.created_at).toLocaleDateString("zh-CN")}
               </td>
-              <td className="px-5 py-3.5">
-                <span className="inline-flex rounded-full bg-[#e8f5ee] px-2.5 py-0.5 text-xs font-semibold text-[#2d8a56]">
-                  正常
-                </span>
-              </td>
               <td className="px-5 py-3.5 text-right">
                 <button
-                  onClick={() => handleDelete(u)}
-                  className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452]"
+                  onClick={() => setPendingAction({ type: "delete", user: u })}
+                  disabled={u.id === currentUserId}
+                  className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   删除
                 </button>
@@ -867,6 +1073,7 @@ function UsersTab() {
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between border-t border-[#e8e6e0] px-5 py-3 text-xs text-[#7c7a73]">
@@ -877,14 +1084,15 @@ function UsersTab() {
           <PaginationBtn onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
             ‹
           </PaginationBtn>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const p = i;
-            return (
-              <PaginationBtn key={p} active={p === page} onClick={() => setPage(p)}>
-                {p + 1}
-              </PaginationBtn>
-            );
-          })}
+          {pageNumbers.map((pageNumber) => (
+            <PaginationBtn
+              key={pageNumber}
+              active={pageNumber === page}
+              onClick={() => setPage(pageNumber)}
+            >
+              {pageNumber + 1}
+            </PaginationBtn>
+          ))}
           <PaginationBtn
             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
             disabled={page >= totalPages - 1}
@@ -893,6 +1101,30 @@ function UsersTab() {
           </PaginationBtn>
         </div>
       </div>
+
+      <ConfirmModal
+        open={pendingAction !== null}
+        title={
+          pendingAction?.type === "role"
+            ? "修改用户角色"
+            : pendingAction?.type === "batch-delete"
+              ? "批量删除用户"
+              : "删除用户"
+        }
+        message={
+          pendingAction?.type === "role"
+            ? `确定将 ${pendingAction.user.username} 设为${pendingAction.role === "admin" ? "管理员" : "普通用户"}吗？`
+            : pendingAction?.type === "batch-delete"
+              ? `确定删除选中的 ${selectedIds.size} 个用户吗？此操作无法撤销。`
+              : pendingAction?.type === "delete"
+                ? `确定删除用户 ${pendingAction.user.username} 吗？此操作无法撤销。`
+                : ""
+        }
+        confirmLabel={actionPending ? "处理中..." : "确认"}
+        danger={pendingAction?.type !== "role"}
+        onConfirm={() => { if (!actionPending) void confirmAction(); }}
+        onCancel={() => { if (!actionPending) setPendingAction(null); }}
+      />
     </div>
   );
 }
@@ -902,14 +1134,14 @@ function StatCard({
   icon,
   label,
   value,
-  trend,
   highlight,
+  detail,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
-  trend?: { value: string; up: boolean };
   highlight?: boolean;
+  detail: string;
 }) {
   return (
     <div className="rounded-xl border border-[#e8e6e0] bg-white p-5 transition-shadow hover:shadow-md">
@@ -923,20 +1155,9 @@ function StatCard({
       >
         {value.toLocaleString()}
       </div>
-      {trend && (
-        <span
-          className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${
-            trend.up ? "bg-[#e8f5ee] text-[#2d8a56]" : "bg-[#fde8ea] text-[#d94452]"
-          }`}
-        >
-          {trend.up ? "↑" : "↓"} {trend.value}
-        </span>
-      )}
-      {highlight && (
-        <span className="inline-flex items-center rounded-full bg-[#fef9ec] px-2 py-0.5 text-xs font-semibold text-[#c9a030]">
-          需要关注
-        </span>
-      )}
+      <div className={highlight ? "text-xs text-[#c9a030]" : "text-xs text-[#7c7a73]"}>
+        {detail}
+      </div>
     </div>
   );
 }
@@ -973,4 +1194,76 @@ function Loading() {
       <Loader2 size={24} className="animate-spin text-[#9f9890]" />
     </div>
   );
+}
+
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-[#edc8c4] bg-[#fff7f5] p-5">
+      <div className="flex items-start gap-3">
+        <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#d94452]" />
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-[#7f3525]">数据加载失败</div>
+          <div className="mt-1 text-xs text-[#7f3525]">{message}</div>
+        </div>
+        <button
+          onClick={onRetry}
+          className="rounded-md border border-[#edc8c4] bg-white px-3 py-1.5 text-xs font-medium text-[#7f3525]"
+        >
+          重试
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackBanner({
+  error,
+  message,
+}: {
+  error: string;
+  message: string;
+}) {
+  if (!error && !message) return null;
+
+  return (
+    <div
+      className={`flex items-center gap-2 border-b px-5 py-3 text-xs ${
+        error
+          ? "border-[#edc8c4] bg-[#fff7f5] text-[#7f3525]"
+          : "border-[#cce4d5] bg-[#f2faf5] text-[#256b43]"
+      }`}
+    >
+      {error ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+      {error || message}
+    </div>
+  );
+}
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedValue(value), delay);
+    return () => window.clearTimeout(timer);
+  }, [delay, value]);
+
+  return debouncedValue;
+}
+
+function getPageNumbers(currentPage: number, totalPages: number): number[] {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index);
+  }
+
+  const start = Math.min(
+    Math.max(0, currentPage - 2),
+    totalPages - 5,
+  );
+  return Array.from({ length: 5 }, (_, index) => start + index);
 }
