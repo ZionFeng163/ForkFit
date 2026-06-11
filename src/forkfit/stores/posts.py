@@ -231,6 +231,12 @@ class PostgresPostStore:
             )
             return [_record_from_row(row) for row in rows], total
 
+    def count_posts_since(self, since: datetime) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(PostRow.id)).filter(
+                PostRow.created_at >= since,
+            ).scalar()
+
     def ensure_preset_posts(self) -> None:
         with self.session_factory() as session:
             for post in PRESET_POSTS:

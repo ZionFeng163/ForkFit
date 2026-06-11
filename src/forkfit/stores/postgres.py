@@ -167,6 +167,16 @@ class PostgresRunStore:
             )
             return [_record_from_row(row) for row in rows]
 
+    def count_runs_since(self, since: datetime) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(RunRow.id)).filter(
+                RunRow.created_at >= since,
+            ).scalar()
+
+    def count_all_runs(self) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(RunRow.id)).scalar()
+
 
 def _require_row(session: Session, run_id: str) -> RunRow:
     row = session.get(RunRow, run_id)

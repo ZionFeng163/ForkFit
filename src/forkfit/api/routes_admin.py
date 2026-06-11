@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -15,6 +17,9 @@ class AdminStats(BaseModel):
     user_count: int
     post_count: int
     active_runs: int
+    total_runs: int
+    today_new_posts: int
+    today_runs: int
 
 
 class AdminUserInfo(BaseModel):
@@ -59,10 +64,21 @@ def admin_stats(_admin: CurrentUser = Depends(require_admin)) -> AdminStats:
     post_store = get_post_store()
     run_store = get_run_store()
     _, post_total = post_store.list_posts(limit=1, offset=0)
+
+    # Today's counts
+    from datetime import datetime, timezone, timedelta
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_new_posts = post_store.count_posts_since(today_start) if hasattr(post_store, 'count_posts_since') else 0
+    today_runs = run_store.count_runs_since(today_start) if hasattr(run_store, 'count_runs_since') else 0
+    total_runs = run_store.count_all_runs() if hasattr(run_store, 'count_all_runs') else 0
+
     return AdminStats(
         user_count=user_store.get_user_count(),
         post_count=post_total,
         active_runs=run_store.count_global_active_runs(),
+        total_runs=total_runs,
+        today_new_posts=today_new_posts,
+        today_runs=today_runs,
     )
 
 
@@ -177,3 +193,167 @@ def admin_list_runs(
         {"id": r.id, "user_id": r.user_id, "status": r.status, "created_at": r.created_at.isoformat()}
         for r in runs
     ], "total": len(runs)}
+
+
+# --- Health check ---
+
+class ServiceHealth(BaseModel):
+    name: str
+    status: str  # "ok" | "warn" | "error"
+    latency_ms: float
+    details: str = ""
+
+
+class AdminHealthResponse(BaseModel):
+    services: list[ServiceHealth]
+
+
+@router.get("/health", response_model=AdminHealthResponse)
+def admin_health(_admin: CurrentUser = Depends(require_admin)) -> AdminHealthResponse:
+    services = []
+
+    # PostgreSQL
+    pg_ok, pg_latency, pg_detail = _check_postgres()
+    services.append(ServiceHealth(name="PostgreSQL", status="ok" if pg_ok else "error", latency_ms=pg_latency, details=pg_detail))
+
+    # Redis
+    redis_ok, redis_latency, redis_detail = _check_redis()
+    services.append(ServiceHealth(name="Redis", status="ok" if redis_ok else "error", latency_ms=redis_latency, details=redis_detail))
+
+    # Kafka
+    kafka_ok, kafka_latency, kafka_detail = _check_kafka()
+    services.append(ServiceHealth(name="Kafka", status="ok" if kafka_ok else "warn", latency_ms=kafka_latency, details=kafka_detail))
+
+    # Bailian API
+    llm_ok, llm_latency, llm_detail = _check_bailian()
+    services.append(ServiceHealth(name="Bailian API", status="ok" if llm_ok else "warn", latency_ms=llm_latency, details=llm_detail))
+
+    return AdminHealthResponse(services=services)
+
+
+def _check_postgres() -> tuple[bool, float, str]:
+    try:
+        from forkfit.config import get_settings
+        from forkfit.db.session import make_session_factory
+        settings = get_settings()
+        factory = make_session_factory(settings.database_url)
+        started = time.perf_counter()
+        with factory() as session:
+            session.execute(__import__('sqlalchemy').text("SELECT 1"))
+        latency = round((time.perf_counter() - started) * 1000, 1)
+        return True, latency, "Connected"
+    except Exception as e:
+        return False, 0, str(e)[:100]
+
+
+def _check_redis() -> tuple[bool, float, str]:
+    try:
+        from forkfit.config import get_settings
+        import redis as redis_lib
+        settings = get_settings()
+        client = redis_lib.from_url(settings.redis_url, socket_timeout=3)
+        started = time.perf_counter()
+        client.ping()
+        latency = round((time.perf_counter() - started) * 1000, 1)
+        info = client.info("memory")
+        used_mb = round(info.get("used_memory", 0) / 1024 / 1024, 1)
+        return True, latency, f"{used_mb}MB used"
+    except Exception as e:
+        return False, 0, str(e)[:100]
+
+
+def _check_kafka() -> tuple[bool, float, str]:
+    try:
+        from forkfit.config import get_settings
+        from forkfit.kafka_utils import get_producer
+        settings = get_settings()
+        started = time.perf_counter()
+        producer = get_producer(bootstrap_servers=settings.kafka_bootstrap_servers)
+        producer.flush(timeout=3)
+        latency = round((time.perf_counter() - started) * 1000, 1)
+        return True, latency, "Connected"
+    except Exception as e:
+        return False, 0, str(e)[:100]
+
+
+def _check_bailian() -> tuple[bool, float, str]:
+    try:
+        from forkfit.config import get_settings
+        settings = get_settings()
+        if not settings.langsmith_api_key and not __import__('os').getenv('BAILIAN_API_KEY'):
+            return False, 0, "No API key configured"
+        # Just check if the client can be initialized
+        from forkfit.llm import BailianLLMClient
+        started = time.perf_counter()
+        client = BailianLLMClient()
+        latency = round((time.perf_counter() - started) * 1000, 1)
+        return True, latency, f"Model: {client.model}"
+    except Exception as e:
+        return False, 0, str(e)[:100]
+
+
+# --- Activity feed ---
+
+class ActivityItem(BaseModel):
+    type: str  # "post" | "run" | "system"
+    text: str
+    time: str
+    color: str  # "green" | "blue" | "orange" | "red"
+
+
+class AdminActivityResponse(BaseModel):
+    activities: list[ActivityItem]
+
+
+@router.get("/activity", response_model=AdminActivityResponse)
+def admin_activity(_admin: CurrentUser = Depends(require_admin)) -> AdminActivityResponse:
+    activities = []
+
+    # Recent posts
+    post_store = get_post_store()
+    posts, _ = post_store.list_posts(limit=5, offset=0)
+    for p in posts:
+        activities.append(ActivityItem(
+            type="post",
+            text=f"用户「{p.author}」发布了新菜谱「{p.title}」",
+            time=_relative_time(p.created_at),
+            color="green",
+        ))
+
+    # Recent runs
+    run_store = get_run_store()
+    runs = run_store.list_all_runs(limit=5) if hasattr(run_store, 'list_all_runs') else []
+    for r in runs:
+        status_text = {"succeeded": "完成", "failed": "失败", "running": "正在运行"}.get(r.status, r.status)
+        activities.append(ActivityItem(
+            type="run",
+            text=f"AI 定制任务 {status_text}：{r.id[:16]}...",
+            time=_relative_time(r.created_at),
+            color="blue" if r.status == "succeeded" else "orange" if r.status == "running" else "red",
+        ))
+
+    # Sort by time (most recent first) and limit
+    # Activities are already sorted by created_at desc from the queries
+    return AdminActivityResponse(activities=activities[:10])
+
+
+def _relative_time(dt) -> str:
+    """Convert datetime to relative time string in Chinese."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    diff = now - dt
+    seconds = int(diff.total_seconds())
+    if seconds < 60:
+        return "刚刚"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes} 分钟前"
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours} 小时前"
+    days = hours // 24
+    if days < 30:
+        return f"{days} 天前"
+    return dt.strftime("%Y-%m-%d")

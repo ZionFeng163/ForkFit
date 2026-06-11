@@ -151,6 +151,9 @@ export type AdminStats = {
   user_count: number;
   post_count: number;
   active_runs: number;
+  total_runs: number;
+  today_new_posts: number;
+  today_runs: number;
 };
 
 export type AdminUser = {
@@ -174,4 +177,26 @@ export type AuthResponse = {
   access_token: string;
   token_type: string;
   user: UserInfoResponse;
+};
+
+export type ServiceHealth = {
+  name: string;
+  status: "ok" | "warn" | "error";
+  latency_ms: number;
+  details: string;
+};
+
+export type AdminHealthResponse = {
+  services: ServiceHealth[];
+};
+
+export type ActivityItem = {
+  type: "post" | "run" | "system";
+  text: string;
+  time: string;
+  color: "green" | "blue" | "orange" | "red";
+};
+
+export type AdminActivityResponse = {
+  activities: ActivityItem[];
 };

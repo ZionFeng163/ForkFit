@@ -109,21 +109,25 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     }).catch(() => {});
   }, [post.id]);
 
+  const [actionError, setActionError] = useState<string | null>(null);
+
   function handleLike() {
     if (!user) return;
+    setActionError(null);
     toggleLike(post.id).then((res) => {
       setLiked(res.liked);
       setLikes(res.likes);
       setSaves(res.saves);
-    });
+    }).catch((e) => setActionError(e.message || "操作失败"));
   }
 
   function handleSave() {
     if (!user) return;
+    setActionError(null);
     toggleSave(post.id).then((res) => {
       setSaved(res.saved);
       setSaves(res.saves);
-    });
+    }).catch((e) => setActionError(e.message || "操作失败"));
   }
 
   function toggleIngredient(idx: number) {
@@ -143,18 +147,19 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
       setComments((prev) => [...prev, c]);
       setCommentTotal((prev) => prev + 1);
       setCommentText("");
-    }).finally(() => setCommentSubmitting(false));
+    }).catch((e) => setActionError(e.message || "评论发送失败")).finally(() => setCommentSubmitting(false));
   }
 
   const [deleteCommentTarget, setDeleteCommentTarget] = useState<string | null>(null);
 
   function confirmCommentDelete() {
     if (!deleteCommentTarget) return;
-    deleteComment(post.id, deleteCommentTarget).then(() => {
-      setComments((prev) => prev.filter((c) => c.id !== deleteCommentTarget));
-      setCommentTotal((prev) => prev - 1);
-    });
+    const id = deleteCommentTarget;
     setDeleteCommentTarget(null);
+    deleteComment(post.id, id).then(() => {
+      setComments((prev) => prev.filter((c) => c.id !== id));
+      setCommentTotal((prev) => prev - 1);
+    }).catch((e) => setActionError(e.message || "删除失败"));
   }
 
   return (
@@ -196,6 +201,13 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
           </div>
         )}
       </div>
+
+      {actionError && (
+        <div className="mt-4 px-4 py-3 rounded-xl text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
+          {actionError}
+          <button onClick={() => setActionError(null)} className="ml-auto opacity-70 hover:opacity-100">×</button>
+        </div>
+      )}
 
       {/* Recipe header */}
       <div className="pt-7 flex items-start justify-between gap-6 flex-wrap">

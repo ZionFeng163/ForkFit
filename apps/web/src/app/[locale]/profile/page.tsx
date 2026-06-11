@@ -65,6 +65,7 @@ function ProfileContent() {
   const [editBio, setEditBio] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -85,6 +86,7 @@ function ProfileContent() {
 
   async function saveProfile() {
     setSaving(true);
+    setError(null);
     try {
       await updateMe({
         display_name: editDisplayName || user?.display_name || "",
@@ -97,7 +99,9 @@ function ProfileContent() {
         setProfile(updated);
       }
       setEditing(false);
-    } catch {}
+    } catch (e: any) {
+      setError(e.message || "保存失败");
+    }
     setSaving(false);
   }
 
@@ -200,6 +204,13 @@ function ProfileContent() {
             </>
           )}
         </div>
+
+        {error && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+            {error}
+            <button onClick={() => setError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
+          </div>
+        )}
 
         <div className="flex-shrink-0 flex gap-2">
           {editing ? (

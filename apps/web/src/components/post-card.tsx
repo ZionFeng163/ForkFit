@@ -53,7 +53,7 @@ export function PostCard({ post }: { post: RecipePost }) {
       setLiked(res.liked);
       setLikes(res.likes);
       setSaves(res.saves);
-    });
+    }).catch(() => {});
   }
 
   const hasImage = post.image_urls.length > 0;

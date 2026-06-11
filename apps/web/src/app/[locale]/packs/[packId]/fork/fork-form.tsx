@@ -144,7 +144,9 @@ export function ForkContent({ post }: { post: RecipePost }) {
       if (parts.length > 0) {
         setRequirement((prev) => prev ? prev + "\n" + parts.join("\n") : parts.join("\n"));
       }
-    } catch {}
+    } catch (e: any) {
+      setActionError(e.message || "提取偏好失败");
+    }
     setExtracting(false);
   }
 
@@ -176,10 +178,19 @@ export function ForkContent({ post }: { post: RecipePost }) {
   }
 
   // Save
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   async function handleSave() {
     if (!runId) return;
     setSaving(true);
-    try { await saveRun(runId); } catch (e: any) { setActionError(e.message || "保存失败"); }
+    setActionError(null);
+    try {
+      await saveRun(runId);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (e: any) {
+      setActionError(e.message || "保存失败");
+    }
     setSaving(false);
   }
 
@@ -383,8 +394,13 @@ export function ForkContent({ post }: { post: RecipePost }) {
           <div className="flex gap-3 pt-5" style={{ borderTop: "1px solid var(--lp-border)" }}>
             <button onClick={handleSave} disabled={saving}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
-              style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : null} 保存到我的菜谱
+              style={{
+                border: `1.5px solid ${saveSuccess ? "var(--lp-green)" : "var(--lp-border)"}`,
+                background: saveSuccess ? "var(--lp-green-light)" : "var(--lp-surface)",
+                color: saveSuccess ? "var(--lp-green)" : "var(--lp-fg-secondary, var(--lp-muted))",
+              }}>
+              {saving ? <Loader2 size={14} className="animate-spin" /> : saveSuccess ? <Check size={14} /> : null}
+              {saveSuccess ? "已保存 ✓" : "保存到我的菜谱"}
             </button>
             <Link href={`/packs/${post.id}`} target="_blank"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150"

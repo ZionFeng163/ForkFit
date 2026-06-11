@@ -88,9 +88,18 @@ export function RunView({ runId }: { runId: string }) {
     setPublishing(false);
   }
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   async function handleSave() {
     setSaving(true);
-    try { await saveRun(runId); } catch (e: any) { setActionError(e.message || "保存失败"); }
+    setActionError(null);
+    try {
+      await saveRun(runId);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (e: any) {
+      setActionError(e.message || "保存失败");
+    }
     setSaving(false);
   }
 
@@ -313,8 +322,13 @@ export function RunView({ runId }: { runId: string }) {
         <div className="flex gap-3">
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
-            style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-            {saving ? <Loader2 size={14} className="animate-spin" /> : null} 保存到我的菜谱
+            style={{
+              border: `1.5px solid ${saveSuccess ? "var(--lp-green)" : "var(--lp-border)"}`,
+              background: saveSuccess ? "var(--lp-green-light)" : "var(--lp-surface)",
+              color: saveSuccess ? "var(--lp-green)" : "var(--lp-fg-secondary, var(--lp-muted))",
+            }}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : saveSuccess ? <Check size={14} /> : null}
+            {saveSuccess ? "已保存 ✓" : "保存到我的菜谱"}
           </button>
           <Link href={`/packs/${result.original_meal_pack.id}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150"

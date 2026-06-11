@@ -1,4 +1,6 @@
 import type {
+  AdminActivityResponse,
+  AdminHealthResponse,
   AdminPost,
   AdminStats,
   AdminUser,
@@ -192,6 +194,14 @@ export function deletePost(postId: string) {
 
 export function getAdminStats() {
   return request<AdminStats>("/admin/stats");
+}
+
+export function getAdminHealth() {
+  return request<AdminHealthResponse>("/admin/health");
+}
+
+export function getAdminActivity() {
+  return request<AdminActivityResponse>("/admin/activity");
 }
 
 export function listAdminUsers(limit = 50, offset = 0) {
