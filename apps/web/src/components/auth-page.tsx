@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Eye, EyeOff, Mail, Lock, User, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
@@ -58,6 +58,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
   const router = useRouter();
   const { refresh } = useAuth();
   const [tab, setTab] = useState(defaultTab);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   // Login state
   const [loginUser, setLoginUser] = useState("");
@@ -118,6 +121,16 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
     if (msg.includes("characters") || msg.includes("pattern")) return t("usernameInvalid");
     if (tab === "login") return t("loginError");
     return t("registerError");
+  }
+
+  if (!mounted) {
+    return (
+      <AuthLayout>
+        <div className="h-[400px] grid place-items-center">
+          <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (
