@@ -335,6 +335,7 @@ async def publish_run(
         description=post.description,
         recipe=post.recipe,
         saves=post.saves,
+        likes=post.likes,
         forks=post.forks,
         created_at=post.created_at.isoformat(),
     )
