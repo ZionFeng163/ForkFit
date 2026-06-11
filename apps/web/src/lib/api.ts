@@ -36,10 +36,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (response.status === 401) {
-    // Redirect to login on client side
+    // Redirect to login on client side, but NOT if already on login page
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname;
-      window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+      if (!currentPath.includes("/login")) {
+        window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+      }
     }
     throw new Error("请先登录");
   }
