@@ -9,14 +9,13 @@ from .models import (
     AdapterOutput,
     AgentFinding,
     AgentReview,
-    ChangeLogEntry,
     ConstraintSet,
     MealPack,
     UserAgentOutput,
     UserProfile,
     RunTrace,
 )
-from .serialization import adapter_output_from_dict, meal_pack_from_dict, user_agent_output_from_dict
+from .serialization import adapter_output_from_dict, user_agent_output_from_dict
 from .serialization import agent_review_from_dict
 
 
@@ -368,6 +367,7 @@ class AdapterAgent:
         trace: RunTrace | None = None,
         locale: str = "en",
         people_count: int = 1,
+        constraints: ConstraintSet | None = None,
     ) -> AdapterOutput:
         lang_hint = "Chinese (中文)" if locale.startswith("zh") else "English"
 
@@ -456,14 +456,17 @@ class AdapterAgent:
         )
         output = adapter_output_from_dict(payload)
         return self._guard_adapter_output(
-            original_meal_pack, user_agent_output, reviews, output
+            original_meal_pack,
+            constraints or user_agent_output.preference_profile.to_constraints(
+                UserProfile(people_count=people_count)
+            ),
+            output,
         )
 
     def _guard_adapter_output(
         self,
         original_meal_pack: MealPack,
-        user_agent_output: UserAgentOutput,
-        reviews: list[AgentReview],
+        constraints: ConstraintSet,
         output: AdapterOutput,
     ) -> AdapterOutput:
         original_ids = {meal.id for meal in original_meal_pack.meals}
@@ -483,7 +486,7 @@ class AdapterAgent:
 
         constrained = ConstraintGuard().review(
             output.forked_meal_pack,
-            _constraints_from_reviews(user_agent_output, reviews),
+            constraints,
         )
         if constrained.status == "block" and not output.unresolved_items:
             output.unresolved_items = constrained.findings
@@ -491,96 +494,6 @@ class AdapterAgent:
             return output
 
         return output
-
-
-class TranslationAgent:
-    """Translates all output text fields to the target locale."""
-
-    agent_name = "translator"
-
-    def __init__(self, llm_client: LLMClient) -> None:
-        self.llm_client = llm_client
-
-    def translate(
-        self, output: AdapterOutput, locale: str, final_review: AgentReview | None = None
-    ) -> tuple[AdapterOutput, AgentReview | None]:
-        if not locale.startswith("zh"):
-            return output, final_review
-
-        lang_hint = "Chinese (中文)"
-
-        user_message = {
-            "task": "Translate all text fields to Chinese. Return the same JSON structure.",
-            "forked_meal_pack": output.forked_meal_pack.to_dict(),
-            "change_log": [asdict(c) for c in output.change_log],
-            "summary": output.summary,
-            "description": output.description,
-            "final_review": asdict(final_review) if final_review else None,
-            "rules": [
-                "Translate EVERYTHING: meal name, ingredients, equipment, tags, notes, steps, summary, description, change reasons, review messages.",
-                "Equipment: 'stovetop'→'灶台', 'oven'→'烤箱', 'wok'→'炒锅', 'pot'→'锅', 'pan'→'平底锅'.",
-                "Keep JSON structure. Only translate text values. Keep meal ids unchanged.",
-            ],
-        }
-
-        payload = self.llm_client.complete_json(
-            agent=self.agent_name,
-            system=f"Translate all recipe text to {lang_hint}. Return JSON only.",
-            user=json.dumps(user_message, ensure_ascii=False),
-            max_tokens=1500,
-        )
-
-        if "forked_meal_pack" in payload:
-            output.forked_meal_pack = meal_pack_from_dict(payload["forked_meal_pack"])
-        if "change_log" in payload:
-            output.change_log = [
-                ChangeLogEntry(
-                    affected_item=item.get("affected_item", ""),
-                    from_value=item.get("from_value", ""),
-                    to_value=item.get("to_value", ""),
-                    reason=item.get("reason", ""),
-                    source_agent=item.get("source_agent", "translator"),
-                )
-                for item in payload["change_log"]
-            ]
-        if "summary" in payload:
-            output.summary = payload["summary"]
-        if "description" in payload:
-            output.description = payload["description"]
-
-        translated_review = final_review
-        if final_review and "final_review" in payload:
-            review_data = payload["final_review"]
-            translated_review = AgentReview(
-                agent=final_review.agent,
-                status=final_review.status,
-                findings=[
-                    AgentFinding(
-                        type=f.get("type", ""),
-                        severity=f.get("severity", "low"),
-                        affected_items=f.get("affected_items", []),
-                        message=f.get("message", ""),
-                        suggested_action=f.get("suggested_action", ""),
-                        required_action=f.get("required_action", ""),
-                    )
-                    for f in review_data.get("findings", [])
-                ],
-                scores=final_review.scores,
-            )
-
-        return output, translated_review
-
-
-def _constraints_from_reviews(
-    user_agent_output: UserAgentOutput, reviews: list[AgentReview]
-) -> ConstraintSet:
-    return ConstraintSet(
-        allergies=list(user_agent_output.preference_profile.allergies),
-        diet_rules=list(user_agent_output.preference_profile.diet_rules),
-        equipment=list(user_agent_output.preference_profile.equipment),
-        max_cook_time_minutes=24 * 60,
-        people_count=1,
-    )
 
 
 class CookingStepsAgent:
@@ -757,42 +670,4 @@ class UserPreferenceExtractor:
             "extracted": True,
         }
 
-        # If target language is not English, translate the output
-        if not locale.startswith("en"):
-            result = self._translate_result(result, locale, trace)
-
         return result
-
-    def _translate_result(self, result: dict, locale: str, trace: RunTrace | None = None) -> dict:
-        """Translate extracted preferences to the target language."""
-        lang_hint = "Chinese (中文)" if locale.startswith("zh") else locale
-        translate_msg = {
-            "task": "Translate these cooking preferences to the target language.",
-            "target_language": lang_hint,
-            "preferences": result,
-        }
-        translated = self.llm_client.complete_json(
-            agent=self.agent_name,
-            system=(
-                f"Translate all text values in the JSON to {lang_hint}. "
-                f"Keep the same structure and keys. Only translate the string values. "
-                f"For ingredient names, use the common Chinese name "
-                f"(e.g., chicken breast→鸡胸肉, broccoli→西兰花, rice→米饭, "
-                f"peanut sauce→花生酱, oven→烤箱, high protein→高蛋白). "
-                f"Do not add or remove any items. Return only the translated JSON."
-            ),
-            user=json.dumps(translate_msg, ensure_ascii=False),
-            trace=trace,
-            max_tokens=400,
-        )
-        return {
-            "likes": translated.get("likes", result.get("likes", [])),
-            "dislikes": translated.get("dislikes", result.get("dislikes", [])),
-            "diet_rules": translated.get("diet_rules", result.get("diet_rules", [])),
-            "equipment": translated.get("equipment", result.get("equipment", [])),
-            "soft_preferences": translated.get("soft_preferences", result.get("soft_preferences", [])),
-            "preferred_ingredients": translated.get("preferred_ingredients", result.get("preferred_ingredients", [])),
-            "cooking_style": translated.get("cooking_style", result.get("cooking_style", "")),
-            "summary": translated.get("summary", result.get("summary", "")),
-            "extracted": True,
-        }

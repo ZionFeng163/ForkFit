@@ -1,4 +1,4 @@
-"""Redis utilities: caching, rate limiting, pub/sub."""
+"""Redis utilities for caching and rate limiting."""
 from __future__ import annotations
 
 import hashlib
@@ -28,10 +28,10 @@ class RedisCache:
         return json.loads(raw)
 
     def set(self, namespace: str, key: str, value: Any, ttl: int | None = None) -> None:
-        self._redis.setex(
+        self._redis.set(
             self._key(namespace, key),
-            ttl or self._default_ttl,
             json.dumps(value, ensure_ascii=False),
+            ex=ttl or self._default_ttl,
         )
 
     def invalidate(self, namespace: str, key: str) -> None:
@@ -98,41 +98,9 @@ class RateLimiter:
         return True, remaining
 
 
-class RedisPubSub:
-    """Redis pub/sub for real-time event broadcasting."""
-
-    def __init__(self, redis: Redis, prefix: str = "pubsub") -> None:
-        self._redis = redis
-        self._prefix = prefix
-
-    def publish(self, channel: str, data: dict) -> None:
-        """Publish an event to a channel."""
-        self._redis.publish(
-            f"{self._prefix}:{channel}",
-            json.dumps(data, ensure_ascii=False),
-        )
-
-    def broadcast_run_update(self, run_id: str, status: str, extra: dict | None = None) -> None:
-        """Broadcast a run status update."""
-        self.publish(f"run:{run_id}", {
-            "type": "run_update",
-            "run_id": run_id,
-            "status": status,
-            "timestamp": time.time(),
-            **(extra or {}),
-        })
-
-    def get_subscriber(self, run_id: str):
-        """Get a pub/sub subscriber for a specific run."""
-        pubsub = self._redis.pubsub()
-        pubsub.subscribe(f"{self._prefix}:run:{run_id}")
-        return pubsub
-
-
 # Singleton instances (lazily initialized)
 _cache: RedisCache | None = None
 _rate_limiter: RateLimiter | None = None
-_pubsub: RedisPubSub | None = None
 
 
 def get_cache(redis_url: str | None = None) -> RedisCache | None:
@@ -161,20 +129,5 @@ def get_rate_limiter(redis_url: str | None = None) -> RateLimiter | None:
         redis.ping()
         _rate_limiter = RateLimiter(redis)
         return _rate_limiter
-    except Exception:
-        return None
-
-
-def get_pubsub(redis_url: str | None = None) -> RedisPubSub | None:
-    global _pubsub
-    if _pubsub is not None:
-        return _pubsub
-    if not redis_url:
-        return None
-    try:
-        redis = Redis.from_url(redis_url, decode_responses=True)
-        redis.ping()
-        _pubsub = RedisPubSub(redis)
-        return _pubsub
     except Exception:
         return None

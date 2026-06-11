@@ -5,7 +5,8 @@ from dataclasses import asdict
 from fastapi.testclient import TestClient
 
 from forkfit.api.app import create_app
-from forkfit.api.deps import get_post_extraction_llm
+from forkfit.api.deps import current_user, get_post_extraction_llm, optional_current_user
+from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.models import PostRow
 from forkfit.db.session import make_session_factory
@@ -48,15 +49,24 @@ class PostApiTests(unittest.TestCase):
 
     def _client(self, *, llm=None) -> TestClient:
         app = create_app()
+        user = CurrentUser(
+            id="demo_user",
+            username="demo",
+            display_name="Demo User",
+            avatar_url=None,
+            role="user",
+        )
         app.dependency_overrides[get_post_extraction_llm] = (
             lambda: llm or FakePostExtractionLLM()
         )
+        app.dependency_overrides[current_user] = lambda: user
+        app.dependency_overrides[optional_current_user] = lambda: user
         return TestClient(app)
 
     def test_list_posts_includes_presets(self):
         client = self._client()
 
-        response = client.get("/posts")
+        response = client.get("/posts?limit=100")
 
         self.assertEqual(response.status_code, 200)
         post_ids = {post["id"] for post in response.json()}

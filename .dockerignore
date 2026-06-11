@@ -10,3 +10,4 @@ docs
 tests
 *.png
 *.md
+!README.md

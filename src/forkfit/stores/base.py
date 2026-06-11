@@ -23,6 +23,7 @@ class RunRecord:
     error: PublicRunError | None = None
     trace: RunTrace | None = None
     unresolved_payload: dict | None = None
+    events: list[dict] = field(default_factory=list)
     saved: bool = False
     created_at: datetime = field(default_factory=utc_now)
     started_at: datetime | None = None
@@ -39,6 +40,11 @@ class RunStore(Protocol):
         ...
 
     def mark_running(self, run_id: str) -> RunRecord:
+        ...
+
+    def requeue_run(
+        self, run_id: str, *, input_payload: dict, original_meal_pack: MealPack
+    ) -> RunRecord:
         ...
 
     def update_trace(self, run_id: str, trace: RunTrace) -> None:

@@ -8,7 +8,7 @@ import sys
 from confluent_kafka import KafkaError
 
 from forkfit.config import get_settings
-from forkfit.kafka_utils import create_consumer
+from forkfit.kafka_utils import create_consumer, ensure_topic
 from forkfit.workers.runner import run_forkfit_job
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ GROUP_ID = "forkfit-workers"
 
 def main() -> None:
     settings = get_settings()
+    ensure_topic(settings.kafka_bootstrap_servers, TOPIC)
     consumer = create_consumer(
         bootstrap_servers=settings.kafka_bootstrap_servers,
         group_id=GROUP_ID,
@@ -47,6 +48,7 @@ def main() -> None:
             logger.error("Kafka error: %s", msg.error())
             continue
 
+        data = {}
         try:
             data = json.loads(msg.value().decode("utf-8"))
             run_id = data["run_id"]

@@ -40,7 +40,22 @@ class PostgresRunStore:
             row = session.get(RunRow, run_id)
             if row is None:
                 return None
-            return _record_from_row(row)
+            record = _record_from_row(row)
+            event_rows = (
+                session.query(RunEventRow)
+                .filter(RunEventRow.run_id == run_id)
+                .order_by(RunEventRow.id.asc())
+                .all()
+            )
+            record.events = [
+                {
+                    "type": event.event_type,
+                    "payload": event.payload,
+                    "created_at": event.created_at.isoformat(),
+                }
+                for event in event_rows
+            ]
+            return record
 
     def mark_running(self, run_id: str) -> RunRecord:
         with self.session_factory() as session:
@@ -49,6 +64,24 @@ class PostgresRunStore:
             row.started_at = utc_now()
             session.commit()
         self.append_event(run_id, "run_started", {})
+        return self.get_run(run_id)
+
+    def requeue_run(
+        self, run_id: str, *, input_payload: dict, original_meal_pack: MealPack
+    ) -> RunRecord:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.status = "queued"
+            row.input_payload = input_payload
+            row.original_meal_pack = original_meal_pack.to_dict()
+            row.result_payload = None
+            row.error_payload = None
+            row.trace_payload = None
+            row.unresolved_payload = None
+            row.started_at = None
+            row.finished_at = None
+            session.commit()
+        self.append_event(run_id, "run_requeued", {})
         return self.get_run(run_id)
 
     def update_trace(self, run_id: str, trace: RunTrace) -> None:

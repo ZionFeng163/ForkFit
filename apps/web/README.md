@@ -10,7 +10,7 @@ Start the FastAPI backend and worker first, then run:
 npm run dev
 ```
 
-The app opens at `http://localhost:3000`.
+The app is served by the root Docker Compose stack at `http://localhost:3001`.
 
 By default, frontend requests to `/api/backend/*` are proxied to
 `http://127.0.0.1:8000/*`. Override with:

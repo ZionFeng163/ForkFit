@@ -576,10 +576,7 @@ class ForkFitAgentTests(unittest.TestCase):
         self.assertIsNotNone(result.trace)
         step_names = [step.node for step in result.trace.steps]
         self.assertEqual(step_names[:4], ["load_input", "user_agent", "reviewer_agents", "adapter_agent"])
-        self.assertEqual(step_names[-1], "join_parallel")
-        # cooking_steps and final_validation run in parallel, order may vary
-        self.assertIn("cooking_steps", step_names)
-        self.assertIn("final_validation", step_names)
+        self.assertEqual(step_names[-2:], ["cooking_steps", "final_validation"])
         self.assertEqual(result.trace.llm_call_count, 4)
         self.assertEqual(
             [call.agent for call in result.trace.llm_calls],

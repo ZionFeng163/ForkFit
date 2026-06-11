@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from forkfit.config import get_settings
 from forkfit.kafka_utils import produce
 from forkfit.models import MealPack, UserProfile
@@ -24,4 +26,10 @@ class KafkaJobExecutor:
             "meal_pack": meal_pack_to_dict(meal_pack),
             "locale": locale,
         }
-        produce(TOPIC, message, key=run_id, bootstrap_servers=settings.kafka_bootstrap_servers)
+        await asyncio.to_thread(
+            produce,
+            TOPIC,
+            message,
+            run_id,
+            settings.kafka_bootstrap_servers,
+        )

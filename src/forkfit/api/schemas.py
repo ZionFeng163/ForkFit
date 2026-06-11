@@ -75,6 +75,7 @@ class RunStatusResponse(BaseModel):
     result: "RunResultPayload | None" = None
     error: PublicRunError | None = None
     trace: RunTrace | None = None
+    unresolved_payload: dict | None = None
     saved: bool = False
 
 

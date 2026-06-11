@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 from langgraph.graph import END, START, StateGraph
 from langsmith import tracing_context
 
-from .agents import AdapterAgent, CookingStepsAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, TranslationAgent, UserAgent
+from .agents import AdapterAgent, CookingStepsAgent, ConstraintAgent, ConstraintGuard, ReviewerAgent, UserAgent
 from .llm import BailianLLMClient, LLMClient
 from .models import (
     AdapterOutput,
@@ -33,10 +33,10 @@ class ForkFitGraphState(TypedDict, total=False):
     constraints: ConstraintSet
     reviews: list[AgentReview]
     adapter_output: AdapterOutput
-    _cooking_steps_result: MealPack
     final_review: AgentReview
     success: bool
     trace: RunTrace
+    on_step_complete: Callable[[RunTrace], None] | None
 
 
 class ForkFitLangGraphWorkflow:
@@ -100,7 +100,6 @@ class ForkFitLangGraphWorkflow:
         self.reviewer_agents = reviewer_agents or [ConstraintAgent(llm_client, nutrition_tool=nutrition_tool)]
         self.adapter_agent = adapter_agent or AdapterAgent(llm_client, substitution_tool=substitution_tool, nutrition_tool=nutrition_tool)
         self.cooking_steps_agent = CookingStepsAgent(llm_client, cooking_steps_tool=cooking_steps_tool)
-        self.translation_agent = TranslationAgent(llm_client)
         self.final_constraint_guard = ConstraintGuard()
         self.graph = self._build_graph()
 
@@ -111,7 +110,6 @@ class ForkFitLangGraphWorkflow:
         locale: str = "en",
         on_step_complete: Callable[[RunTrace], None] | None = None,
     ) -> ForkFitResult:
-        self._on_step_complete = on_step_complete
         with tracing_context(enabled=False):
             state = self.graph.invoke(
                 {
@@ -119,6 +117,7 @@ class ForkFitLangGraphWorkflow:
                     "meal_pack": meal_pack,
                     "locale": locale,
                     "trace": RunTrace(),
+                    "on_step_complete": on_step_complete,
                 }
             )
         return ForkFitResult(
@@ -149,27 +148,13 @@ class ForkFitLangGraphWorkflow:
             "final_validation",
             self._traced_node("final_validation", self._run_final_validation),
         )
-        graph.add_node(
-            "join_parallel",
-            self._traced_node("join_parallel", self._join_parallel),
-        )
-        graph.add_node(
-            "translate",
-            self._traced_node("translate", self._run_translate),
-        )
-
         graph.add_edge(START, "load_input")
         graph.add_edge("load_input", "user_agent")
         graph.add_edge("user_agent", "reviewer_agents")
         graph.add_edge("reviewer_agents", "adapter_agent")
-        # Fan-out: adapter_agent → cooking_steps + final_validation (parallel)
         graph.add_edge("adapter_agent", "cooking_steps")
-        graph.add_edge("adapter_agent", "final_validation")
-        # Fan-in: both merge at join_parallel
-        graph.add_edge("cooking_steps", "join_parallel")
-        graph.add_edge("final_validation", "join_parallel")
-        graph.add_edge("join_parallel", "translate")
-        graph.add_edge("translate", END)
+        graph.add_edge("cooking_steps", "final_validation")
+        graph.add_edge("final_validation", END)
         return graph.compile()
 
     def _load_input(self, state: ForkFitGraphState) -> ForkFitGraphState:
@@ -191,25 +176,29 @@ class ForkFitLangGraphWorkflow:
         """Run all reviewer agents in parallel using threads."""
         meal_pack = state["meal_pack"]
         constraints = state["constraints"]
-        trace = state["trace"]
-
         if len(self.reviewer_agents) <= 1:
-            # Single reviewer — no threading overhead
             reviews = [
-                reviewer.review(meal_pack, constraints, trace)
+                reviewer.review(meal_pack, constraints, state["trace"])
                 for reviewer in self.reviewer_agents
             ]
         else:
-            # Multiple reviewers — run in parallel
             reviews = [None] * len(self.reviewer_agents)
+            local_traces = [RunTrace() for _ in self.reviewer_agents]
             with ThreadPoolExecutor(max_workers=len(self.reviewer_agents)) as pool:
                 futures = {
-                    pool.submit(reviewer.review, meal_pack, constraints, trace): i
+                    pool.submit(
+                        reviewer.review,
+                        meal_pack,
+                        constraints,
+                        local_traces[i],
+                    ): i
                     for i, reviewer in enumerate(self.reviewer_agents)
                 }
                 for future in as_completed(futures):
                     idx = futures[future]
                     reviews[idx] = future.result()
+            for local_trace in local_traces:
+                state["trace"].llm_calls.extend(local_trace.llm_calls)
         return {"reviews": reviews}
 
     def _run_adapter_agent(self, state: ForkFitGraphState) -> ForkFitGraphState:
@@ -221,31 +210,19 @@ class ForkFitLangGraphWorkflow:
             state["trace"],
             locale=state.get("locale", "en"),
             people_count=people_count,
+            constraints=state["constraints"],
         )
         return {"adapter_output": adapter_output}
 
     def _run_cooking_steps(self, state: ForkFitGraphState) -> ForkFitGraphState:
-        # Clone the forked pack so final_validation (running in parallel) isn't affected
-        forked_pack = state["adapter_output"].forked_meal_pack.clone()
         updated_pack = self.cooking_steps_agent.run(
-            forked_pack,
+            state["adapter_output"].forked_meal_pack,
             state["user_agent_output"],
             state["trace"],
             locale=state.get("locale", "en"),
         )
-        # Store the steps separately so join_parallel can merge them
-        return {"_cooking_steps_result": updated_pack}
-
-    def _join_parallel(self, state: ForkFitGraphState) -> ForkFitGraphState:
-        """Merge results from parallel cooking_steps and final_validation."""
-        steps_pack = state.get("_cooking_steps_result")
-        if steps_pack:
-            # Copy generated steps back into the forked meal pack
-            for step_meal in steps_pack.meals:
-                target = state["adapter_output"].forked_meal_pack.find_meal(step_meal.id)
-                if target and step_meal.steps:
-                    target.steps = step_meal.steps
-        return {}
+        state["adapter_output"].forked_meal_pack = updated_pack
+        return {"adapter_output": state["adapter_output"]}
 
     def _run_final_validation(self, state: ForkFitGraphState) -> ForkFitGraphState:
         final_review = self.final_constraint_guard.review(
@@ -258,18 +235,6 @@ class ForkFitLangGraphWorkflow:
             "final_review": final_review,
             "success": success,
         }
-
-    def _run_translate(self, state: ForkFitGraphState) -> ForkFitGraphState:
-        locale = state.get("locale", "en")
-        adapter_output = state["adapter_output"]
-        final_review = state.get("final_review")
-        translated_output, translated_review = self.translation_agent.translate(
-            adapter_output, locale, final_review
-        )
-        result = {"adapter_output": translated_output}
-        if translated_review:
-            result["final_review"] = translated_review
-        return result
 
     def _traced_node(
         self,
@@ -300,12 +265,12 @@ class ForkFitLangGraphWorkflow:
                 raise
 
             # Notify caller of progress
-            cb = getattr(self, "_on_step_complete", None)
+            cb = state.get("on_step_complete")
             if cb:
                 try:
                     cb(trace)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning("Step callback failed after %s: %s", node_name, exc)
 
             return output
 

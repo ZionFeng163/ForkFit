@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict
+from functools import lru_cache
 
 from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
 
@@ -14,20 +15,9 @@ from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
 from forkfit.stores import PostgresRunStore
 
 
-def _broadcast(run_id: str, status: str, settings, extra: dict | None = None) -> None:
-    """Broadcast run status update via Kafka."""
-    try:
-        from forkfit.kafka_utils import produce
-        import time
-        message = {
-            "run_id": run_id,
-            "status": status,
-            "timestamp": time.time(),
-            **(extra or {}),
-        }
-        produce("forkfit-events", message, key=run_id, bootstrap_servers=settings.kafka_bootstrap_servers)
-    except Exception:
-        pass  # Broadcasting is best-effort
+@lru_cache(maxsize=1)
+def _get_workflow() -> ForkFitLangGraphWorkflow:
+    return ForkFitLangGraphWorkflow()
 
 
 def _build_failure_message(result, locale: str = "zh") -> str:
@@ -67,18 +57,13 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
     meal_pack = meal_pack_from_dict(meal_pack_payload)
     user_profile = user_profile_from_dict(user_profile_payload)
 
-    # Broadcast: running
-    _broadcast(run_id, "running", settings)
-
     store.mark_running(run_id)
     exporter = LangSmithRunExporter(settings)
     try:
         def on_step_complete(trace):
             store.update_trace(run_id, trace)
-            trace_dict = asdict(trace)
-            _broadcast(run_id, "running", settings, extra={"trace": trace_dict})
 
-        result = ForkFitLangGraphWorkflow().run(
+        result = _get_workflow().run(
             user_profile, meal_pack, locale=locale,
             on_step_complete=on_step_complete,
         )
@@ -88,7 +73,6 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
                 result=result_payload_from_forkfit(meal_pack, result),
                 trace=result.trace,
             )
-            _broadcast(run_id, "succeeded", settings)
         elif result.adapter_output and result.adapter_output.unresolved_items:
             # Has unresolved items → needs human input
             partial_result = result_payload_from_forkfit(meal_pack, result)
@@ -102,7 +86,6 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
                 unresolved=unresolved,
                 trace=result.trace,
             )
-            _broadcast(run_id, "needs_input", settings)
         else:
             # No unresolved items but still failed → true failure
             partial_result = result_payload_from_forkfit(meal_pack, result)
@@ -112,7 +95,6 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
                 trace=result.trace,
                 result=partial_result,
             )
-            _broadcast(run_id, "failed", settings)
         exporter.export_run(record)
     except Exception as exc:
         logger.exception("Run %s failed", run_id)
@@ -121,5 +103,4 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
             run_id,
             error=PublicRunError(message=error_msg),
         )
-        _broadcast(run_id, "failed", settings)
         exporter.export_run(record)

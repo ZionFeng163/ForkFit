@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 from fastapi import HTTPException
 
+from forkfit.api.schemas import PublicRunError
 from forkfit.config import Settings
 from forkfit.executors.base import JobExecutor
 from forkfit.models import MealPack, UserProfile
@@ -40,15 +41,55 @@ class RunService:
             input_payload={
                 "user_profile": asdict(user_profile),
                 "meal_pack": meal_pack.to_dict(),
+                "locale": locale,
             },
             original_meal_pack=meal_pack,
         )
-        await self.executor.submit(
-            run_id=run.id,
-            user_profile=user_profile,
-            meal_pack=meal_pack,
-            locale=locale,
+        try:
+            await self.executor.submit(
+                run_id=run.id,
+                user_profile=user_profile,
+                meal_pack=meal_pack,
+                locale=locale,
+            )
+        except Exception as exc:
+            self.store.mark_failed(
+                run.id,
+                error=PublicRunError(message="任务队列暂时不可用，请稍后重试。"),
+            )
+            raise HTTPException(status_code=503, detail="Job queue unavailable.") from exc
+        return run
+
+    async def requeue_run(
+        self,
+        *,
+        run_id: str,
+        user_profile: UserProfile,
+        meal_pack: MealPack,
+        locale: str,
+    ) -> RunRecord:
+        run = self.store.requeue_run(
+            run_id,
+            input_payload={
+                "user_profile": asdict(user_profile),
+                "meal_pack": meal_pack.to_dict(),
+                "locale": locale,
+            },
+            original_meal_pack=meal_pack,
         )
+        try:
+            await self.executor.submit(
+                run_id=run.id,
+                user_profile=user_profile,
+                meal_pack=meal_pack,
+                locale=locale,
+            )
+        except Exception as exc:
+            self.store.mark_failed(
+                run.id,
+                error=PublicRunError(message="任务队列暂时不可用，请稍后重试。"),
+            )
+            raise HTTPException(status_code=503, detail="Job queue unavailable.") from exc
         return run
 
     def get_run(self, run_id: str) -> RunRecord | None:

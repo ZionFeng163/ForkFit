@@ -296,6 +296,8 @@ class SyncExecutor:
         from forkfit.serialization import meal_pack_to_dict, user_profile_to_dict
         # Patch ForkFitLangGraphWorkflow inside run_forkfit_job to use our fake LLM
         with patch("forkfit.workers.runner.ForkFitLangGraphWorkflow") as MockWorkflow:
+            from forkfit.workers.runner import _get_workflow
+            _get_workflow.cache_clear()
             MockWorkflow.return_value.run = lambda up, mp, locale="en", on_step_complete=None: ForkFitLangGraphWorkflow(
                 llm_client=self.fake_llm
             ).run(up, mp, locale)
@@ -464,7 +466,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
 
     # -- 4. Unresolvable block (smoker, no equipment) ------------------------
 
-    def test_unresolvable_block_fails(self):
+    def test_unresolvable_block_requests_input(self):
         fake_llm = FakeLLMClient()
         client, store = _build_app(fake_llm)
         user = _make_user(equipment=[])
@@ -479,10 +481,9 @@ class ForkFlowEndToEndTests(unittest.TestCase):
         run_id = resp.json()["run_id"]
         result = client.get(f"/runs/{run_id}").json()
 
-        self.assertEqual(result["status"], "failed")
-        self.assertIsNotNone(result["error"])
-        # Should have a meaningful error (either constraint-based or generic)
-        self.assertTrue(len(result["error"]["message"]) > 0)
+        self.assertEqual(result["status"], "needs_input")
+        self.assertIsNotNone(result["unresolved_payload"])
+        self.assertTrue(result["unresolved_payload"]["items"])
 
     # -- 5. Empty meal pack --------------------------------------------------
 
@@ -583,9 +584,9 @@ class ForkFlowEndToEndTests(unittest.TestCase):
         })
         run_id = resp.json()["run_id"]
 
-        # Verify it failed
+        # Verify it requires input and still cannot be published.
         result = client.get(f"/runs/{run_id}").json()
-        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["status"], "needs_input")
 
         # Try to publish
         pub_resp = client.post(f"/runs/{run_id}/publish")
@@ -612,7 +613,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
         # Diet rules are checked by ConstraintGuard (deterministic)
         # The fake LLM constraint agent doesn't check diet rules, but the
         # guard in final_validation does
-        self.assertIn(result["status"], ("succeeded", "failed"))
+        self.assertEqual(result["status"], "needs_input")
 
     # -- 12. Time limit exceeded → adapter reduces cook time ----------------
 

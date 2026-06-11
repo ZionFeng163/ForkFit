@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, Check, CheckCircle2, Loader2, X, Send,
+  AlertTriangle, ArrowLeft, Check, CheckCircle2, Loader2, X, Send,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
-import { getRun, getPost, publishRun, saveRun } from "@/lib/api";
+import { getRun, getPost, publishRun, resolveRun, saveRun } from "@/lib/api";
 import type { RunResultPayload } from "@/types/forkfit";
 
 export function RunView({ runId }: { runId: string }) {
@@ -43,6 +43,8 @@ export function RunView({ runId }: { runId: string }) {
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [substitutions, setSubstitutions] = useState<Record<string, string>>({});
+  const [resolving, setResolving] = useState(false);
 
   // Init fields from result
   useEffect(() => {
@@ -103,6 +105,19 @@ export function RunView({ runId }: { runId: string }) {
     setSaving(false);
   }
 
+  async function handleResolve() {
+    setResolving(true);
+    setActionError(null);
+    try {
+      await resolveRun(runId, substitutions);
+      await query.refetch();
+    } catch (e: any) {
+      setActionError(e.message || "重新提交失败");
+    } finally {
+      setResolving(false);
+    }
+  }
+
   // Loading / error states
   if (query.isLoading) {
     return (
@@ -114,7 +129,7 @@ export function RunView({ runId }: { runId: string }) {
     );
   }
 
-  if (!run || !result || !forkedMeal) {
+  if (!run) {
     return (
       <div className="mx-auto max-w-[860px] px-7 pb-20">
         <div className="pt-6">
@@ -122,7 +137,7 @@ export function RunView({ runId }: { runId: string }) {
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <div className="py-20 text-center text-sm" style={{ color: "var(--lp-muted)" }}>无法加载定制结果</div>
+        <div className="py-20 text-center text-sm" style={{ color: "var(--lp-muted)" }}>无法加载任务</div>
       </div>
     );
   }
@@ -145,7 +160,6 @@ export function RunView({ runId }: { runId: string }) {
     );
   }
 
-  // Failed
   if (run.status === "failed") {
     return (
       <div className="mx-auto max-w-[860px] px-7 pb-20">
@@ -158,6 +172,62 @@ export function RunView({ runId }: { runId: string }) {
           <div className="text-base font-semibold mb-2" style={{ color: "var(--lp-fg)" }}>定制失败</div>
           <div className="text-sm" style={{ color: "var(--lp-muted)" }}>{run.error?.message || "未知错误"}</div>
         </div>
+      </div>
+    );
+  }
+
+  if (run.status === "needs_input") {
+    const unresolved = run.unresolved_payload;
+    return (
+      <div className="mx-auto max-w-[720px] px-7 pb-20">
+        <div className="pt-6 pb-8">
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
+            <ArrowLeft size={18} /> 返回我的定制
+          </Link>
+        </div>
+        <section className="rounded-2xl p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+          <div className="flex items-start gap-3 mb-6">
+            <AlertTriangle size={22} className="mt-0.5 shrink-0" style={{ color: "#a35b21" }} />
+            <div>
+              <h1 className="text-lg font-bold" style={{ color: "var(--lp-fg)" }}>需要你确认替代方案</h1>
+              <p className="mt-1 text-sm leading-6" style={{ color: "var(--lp-muted)" }}>
+                {unresolved?.message || "部分限制无法自动处理，请填写你接受的替代食材或厨具。"}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {(unresolved?.items || []).map((item, index) => (
+              <label key={`${item.type}-${index}`} className="block">
+                <span className="block text-sm font-semibold mb-1.5" style={{ color: "var(--lp-fg)" }}>{item.message}</span>
+                <input
+                  value={substitutions[String(index)] || ""}
+                  onChange={(event) => setSubstitutions((current) => ({ ...current, [String(index)]: event.target.value }))}
+                  placeholder={item.type === "equipment" ? "例如：平底锅" : "例如：芝麻酱"}
+                  className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none"
+                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                />
+              </label>
+            ))}
+          </div>
+          {actionError && <p className="mt-4 text-sm" style={{ color: "#a33d2d" }}>{actionError}</p>}
+          <button
+            onClick={handleResolve}
+            disabled={resolving || Object.values(substitutions).every((value) => !value.trim())}
+            className="mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--lp-accent)" }}
+          >
+            {resolving && <Loader2 size={15} className="animate-spin" />}
+            重新提交定制
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (!result || !forkedMeal) {
+    return (
+      <div className="mx-auto max-w-[860px] px-7 pb-20">
+        <div className="py-20 text-center text-sm" style={{ color: "var(--lp-muted)" }}>无法加载定制结果</div>
       </div>
     );
   }

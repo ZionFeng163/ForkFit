@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 from redis import Redis
 
 from forkfit.api.app import create_app
+from forkfit.api.deps import current_user
+from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.fixtures import demo_meal_pack, demo_user_profile
 
@@ -20,7 +22,15 @@ class RunApiIntegrationTests(unittest.TestCase):
                 f"Install/start Redis at {settings.redis_url}. Original error: {exc}"
             )
 
-        client = TestClient(create_app())
+        app = create_app()
+        app.dependency_overrides[current_user] = lambda: CurrentUser(
+            id="demo_user",
+            username="demo",
+            display_name="Demo User",
+            avatar_url=None,
+            role="user",
+        )
+        client = TestClient(app)
         response = client.post(
             "/runs",
             json={

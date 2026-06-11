@@ -1,97 +1,18 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+import copy
+import re
 
-from forkfit.api.deps import current_user, get_post_store, get_run_service, optional_current_user
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+
+from forkfit.api.deps import current_user, get_post_store, get_run_service
 from forkfit.api.schemas import CreateRunRequest, CreateRunResponse, PostResponse, RunStatusResponse
 from forkfit.auth.models import CurrentUser
 from forkfit.services import RunService
 from forkfit.stores.base import RunRecord
 
 router = APIRouter(prefix="/runs", tags=["runs"])
-
-
-@router.get("/{run_id}/stream")
-async def stream_run(
-    run_id: str,
-    token: str | None = None,
-    user: CurrentUser = Depends(optional_current_user),
-):
-    """SSE endpoint for real-time run status updates via Kafka."""
-    from forkfit.config import get_settings
-    from forkfit.kafka_utils import create_consumer
-    from fastapi.responses import StreamingResponse
-    import json
-
-    # Auth via query param (EventSource can't set headers)
-    if not user and token:
-        from forkfit.auth.jwt import decode_access_token
-        from forkfit.api.deps import get_user_store
-        user_id = decode_access_token(token)
-        if user_id:
-            user_store = get_user_store()
-            ur = user_store.get_user_by_id(user_id)
-            if ur:
-                from forkfit.auth.models import CurrentUser
-                user = CurrentUser(id=ur.id, display_name=ur.display_name, avatar_url=ur.avatar_url, username=ur.username, role=ur.role)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    # Verify run exists and belongs to user
-    service = get_run_service()
-    run = service.get_run(run_id)
-    if run is None or run.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Run not found.")
-
-    # If already in terminal state, return immediately
-    if run.status in ("succeeded", "failed", "cancelled", "needs_input"):
-        def final_event():
-            yield f"data: {json.dumps({'status': run.status})}\n\n"
-        return StreamingResponse(
-            final_event(), media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-        )
-
-    settings = get_settings()
-    consumer = create_consumer(
-        bootstrap_servers=settings.kafka_bootstrap_servers,
-        group_id=f"sse-{run_id}",
-        auto_offset_reset="latest",
-    )
-    # Assign topic partition directly for this specific run
-    from confluent_kafka import TopicPartition
-    # We need to find which partition this run_id maps to
-    # For simplicity, subscribe to the topic and filter by run_id
-    consumer.subscribe(["forkfit-events"])
-
-    def event_generator():
-        try:
-            yield f"data: {json.dumps({'status': run.status})}\n\n"
-            while True:
-                msg = consumer.poll(timeout=1.0)
-                if msg is None:
-                    continue
-                if msg.error():
-                    continue
-                try:
-                    data = json.loads(msg.value().decode("utf-8"))
-                    if data.get("run_id") != run_id:
-                        continue
-                    yield f"data: {json.dumps(data)}\n\n"
-                    if data.get("status") in ("succeeded", "failed", "cancelled", "needs_input"):
-                        break
-                except Exception:
-                    continue
-        finally:
-            consumer.close()
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
 
 
 @router.get("", response_model=list[RunStatusResponse])
@@ -129,84 +50,39 @@ async def resolve_run(
     if run.status != "needs_input":
         raise HTTPException(status_code=400, detail="Run is not waiting for input.")
 
-    # Re-run the fork with user's substitutions applied
-    from forkfit.config import get_settings
-    from forkfit.workers.runner import run_forkfit_job
-    settings = get_settings()
-
-    # Apply substitutions to the meal pack
     input_data = run.input_payload
-    meal_pack_dict = input_data["meal_pack"]
+    meal_pack_dict = copy.deepcopy(input_data["meal_pack"])
     user_profile_dict = input_data["user_profile"]
+    locale = input_data.get("locale", "en")
 
-    # Inject user choices into the meal pack for the adapter
     if body.substitutions:
         for idx_str, substitute in body.substitutions.items():
             idx = int(idx_str)
             items = run.unresolved_payload.get("items", []) if run.unresolved_payload else []
             if idx < len(items):
                 item = items[idx]
-                # Find the affected meal and apply the substitute
                 for meal in meal_pack_dict.get("meals", []):
                     if meal.get("id") in item.get("affected_items", []):
-                        if item.get("type") == "allergy":
-                            # Replace the allergen ingredient
-                            meal["ingredients"] = [
-                                substitute if substitute.lower() in i.lower() else i
-                                for i in meal.get("ingredients", [])
-                            ]
+                        if item.get("type") in {"allergy", "diet_rule"}:
+                            blocked_terms = list(user_profile_dict.get("allergies", []))
+                            blocked_terms.extend(
+                                rule.removeprefix("no ").strip()
+                                for rule in user_profile_dict.get("diet_rules", [])
+                            )
+                            _replace_blocked_terms(meal, blocked_terms, str(substitute))
                         elif item.get("type") == "equipment":
-                            # Replace the equipment
-                            meal["equipment"] = [substitute]
+                            meal["equipment"] = [str(substitute)]
 
-    # Mark as running again
-    store.mark_running(run_id)
-    _broadcast(run_id, "running", settings)
+    from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
 
-    # Re-run the workflow
-    try:
-        from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
-        from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
-        from forkfit.api.schemas import result_payload_from_forkfit
-
-        meal_pack = meal_pack_from_dict(meal_pack_dict)
-        user_profile = user_profile_from_dict(user_profile_dict)
-        result = ForkFitLangGraphWorkflow().run(user_profile, meal_pack, locale="en")
-
-        if result.success:
-            record = store.mark_succeeded(
-                run_id,
-                result=result_payload_from_forkfit(meal_pack, result),
-                trace=result.trace,
-            )
-            _broadcast(run_id, "succeeded", settings)
-        elif result.adapter_output and result.adapter_output.unresolved_items:
-            partial_result = result_payload_from_forkfit(meal_pack, result)
-            unresolved = {
-                "items": [asdict(f) for f in result.adapter_output.unresolved_items],
-                "message": _build_failure_message(result, "en"),
-                "partial_result": partial_result.model_dump(mode="json"),
-            }
-            record = store.mark_needs_input(run_id, unresolved=unresolved, trace=result.trace)
-            _broadcast(run_id, "needs_input", settings)
-        else:
-            from forkfit.api.schemas import PublicRunError
-            partial_result = result_payload_from_forkfit(meal_pack, result)
-            record = store.mark_failed(
-                run_id,
-                error=PublicRunError(message=_build_failure_message(result, "en")),
-                trace=result.trace,
-                result=partial_result,
-            )
-            _broadcast(run_id, "failed", settings)
-    except Exception as exc:
-        from forkfit.api.schemas import PublicRunError
-        record = store.mark_failed(
-            run_id,
-            error=PublicRunError(message=f"Re-run failed: {str(exc)[:200]}"),
-        )
-        _broadcast(run_id, "failed", settings)
-
+    meal_pack = meal_pack_from_dict(meal_pack_dict)
+    user_profile = user_profile_from_dict(user_profile_dict)
+    record = await service.requeue_run(
+        run_id=run_id,
+        user_profile=user_profile,
+        meal_pack=meal_pack,
+        locale=locale,
+    )
     return _run_response(record)
 
 
@@ -267,15 +143,15 @@ async def create_run(
 class PublishRequest(BaseModel):
     title: str = ""
     description: str = ""
-    image_urls: list[str] = []
+    image_urls: list[str] = Field(default_factory=list)
     recipe_name: str = ""
-    ingredients: list[str] = []
-    equipment: list[str] = []
+    ingredients: list[str] = Field(default_factory=list)
+    equipment: list[str] = Field(default_factory=list)
     cook_time_minutes: int = 30
     estimated_cost: float = 10
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
     notes: str = ""
-    steps: list[str] = []
+    steps: list[str] = Field(default_factory=list)
 
 
 @router.post("/{run_id}/publish", response_model=PostResponse)
@@ -364,5 +240,20 @@ def _run_response(run: RunRecord) -> RunStatusResponse:
         result=run.result,
         error=run.error,
         trace=run.trace,
+        unresolved_payload=run.unresolved_payload,
         saved=run.saved,
     )
+
+
+def _replace_blocked_terms(meal: dict, terms: list[str], substitute: str) -> None:
+    patterns = [re.compile(re.escape(term), re.IGNORECASE) for term in terms if term]
+
+    def replace(value: str) -> str:
+        for pattern in patterns:
+            value = pattern.sub(substitute, value)
+        return value
+
+    meal["name"] = replace(meal.get("name", ""))
+    meal["notes"] = replace(meal.get("notes", ""))
+    meal["ingredients"] = [replace(value) for value in meal.get("ingredients", [])]
+    meal["tags"] = [replace(value) for value in meal.get("tags", [])]

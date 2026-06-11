@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,10 +16,29 @@ from forkfit.api.routes_upload import router as upload_router
 from forkfit.api.routes_users import router as users_router
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(title="ForkFit API")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    from forkfit.api.deps import get_user_store
+    from forkfit.auth.password import hash_password
 
-    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001")
+    store = get_user_store()
+    if not store.has_admin():
+        default_pw = os.getenv("ADMIN_PASSWORD", "admin123456")
+        store.create_user(
+            username="admin",
+            password_hash=hash_password(default_pw),
+            display_name="Admin",
+        )
+        admin = store.get_user_by_username("admin")
+        if admin is not None:
+            store.set_role(admin.id, "admin")
+    yield
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="ForkFit API", lifespan=lifespan)
+
+    cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3001")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in cors_origins.split(",") if o.strip()],
@@ -37,21 +57,6 @@ def create_app() -> FastAPI:
     upload_dir = os.getenv("UPLOAD_DIR", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
-
-    @app.on_event("startup")
-    def seed_admin():
-        import os
-        from forkfit.api.deps import get_user_store
-        from forkfit.auth.password import hash_password
-        store = get_user_store()
-        if not store.has_admin():
-            default_pw = os.getenv("ADMIN_PASSWORD", "admin123456")
-            store.create_user(
-                username="admin",
-                password_hash=hash_password(default_pw),
-                display_name="Admin",
-            )
-            store.set_role(store.get_user_by_username("admin").id, "admin")
 
     return app
 
