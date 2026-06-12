@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from forkfit.api.deps import get_post_store, get_run_store, get_user_store, require_admin
 from forkfit.auth.models import CurrentUser
+from forkfit.config import get_settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -235,9 +236,17 @@ def admin_health(_admin: CurrentUser = Depends(require_admin)) -> AdminHealthRes
     redis_ok, redis_latency, redis_detail = _check_redis()
     services.append(ServiceHealth(name="Redis", status="ok" if redis_ok else "error", latency_ms=redis_latency, details=redis_detail))
 
-    # Kafka
-    kafka_ok, kafka_latency, kafka_detail = _check_kafka()
-    services.append(ServiceHealth(name="Kafka", status="ok" if kafka_ok else "warn", latency_ms=kafka_latency, details=kafka_detail))
+    settings = get_settings()
+    if settings.job_executor == "inline":
+        services.append(ServiceHealth(
+            name="Job Executor",
+            status="ok",
+            latency_ms=0,
+            details="Inline background execution",
+        ))
+    else:
+        kafka_ok, kafka_latency, kafka_detail = _check_kafka()
+        services.append(ServiceHealth(name="Kafka", status="ok" if kafka_ok else "warn", latency_ms=kafka_latency, details=kafka_detail))
 
     # Bailian API
     llm_ok, llm_latency, llm_detail = _check_bailian()
