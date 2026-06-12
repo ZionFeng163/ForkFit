@@ -7,7 +7,7 @@ import { Search, X } from "lucide-react";
 import { PostCard } from "@/components/post-card";
 import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
-import { listPosts } from "@/lib/api";
+import { listPostsPage } from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
 const PAGE_SIZE = 20;
@@ -59,46 +59,69 @@ const CATEGORIES = [
 interface DiscoverContentProps {
   initialPosts: RecipePost[];
   totalCount: number;
+  initialOffset: number;
   featuredPost: RecipePost | null;
 }
 
-export function DiscoverContent({ initialPosts, totalCount, featuredPost }: DiscoverContentProps) {
+export function DiscoverContent({ initialPosts, totalCount, initialOffset, featuredPost }: DiscoverContentProps) {
   const t = useTranslations("Home");
   const locale = useLocale();
   const [posts, setPosts] = useState(initialPosts);
   const [loading, setLoading] = useState(false);
   const [totalCount_, setTotalCount] = useState(totalCount);
+  const [nextOffset, setNextOffset] = useState(initialOffset);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const requestIdRef = useRef(0);
 
   const fetchPosts = useCallback((q: string, tag: string, offset: number) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setFetchError(null);
     const apiTag = tag === "all" ? "" : tag;
-    listPosts(PAGE_SIZE, offset, q, apiTag)
-      .then((fresh) => {
+    listPostsPage(PAGE_SIZE, offset, q, apiTag)
+      .then(({ posts: fresh, total }) => {
+        if (requestId !== requestIdRef.current) return;
+        const withoutFeatured = fresh.filter((post) => post.id !== featuredPost?.id);
         if (offset === 0) {
-          // Deduplicate by ID
           const seen = new Set<string>();
-          setPosts(fresh.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; }));
-          setTotalCount(fresh.length < PAGE_SIZE ? fresh.length : totalCount_);
+          setPosts(withoutFeatured.filter((post) => {
+            if (seen.has(post.id)) return false;
+            seen.add(post.id);
+            return true;
+          }));
         } else {
           setPosts((prev) => {
             const seen = new Set(prev.map((p) => p.id));
-            return [...prev, ...fresh.filter((p) => { if (seen.has(p.id)) return false; seen.add(p.id); return true; })];
+            return [...prev, ...withoutFeatured.filter((post) => {
+              if (seen.has(post.id)) return false;
+              seen.add(post.id);
+              return true;
+            })];
           });
         }
+        setNextOffset(offset + fresh.length);
+        setTotalCount(total);
       })
       .catch((e) => {
+        if (requestId !== requestIdRef.current) return;
         setFetchError(e.message || "加载失败，请稍后重试");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId === requestIdRef.current) setLoading(false);
+      });
+  }, [featuredPost?.id]);
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    requestIdRef.current += 1;
   }, []);
 
   function handleSearch(value: string) {
     setSearch(value);
+    requestIdRef.current += 1;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       fetchPosts(value, activeCategory, 0);
@@ -106,30 +129,23 @@ export function DiscoverContent({ initialPosts, totalCount, featuredPost }: Disc
   }
 
   function handleCategoryClick(catKey: string) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     const next = activeCategory === catKey ? "all" : catKey;
     setActiveCategory(next);
     fetchPosts(search, next, 0);
   }
 
   function clearSearch() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setSearch("");
     setActiveCategory("all");
     fetchPosts("", "all", 0);
   }
 
-  const hasMore = posts.length < totalCount_;
+  const hasMore = nextOffset < totalCount_;
 
-  async function loadMore() {
-    setLoading(true);
-    try {
-      const apiTag = activeCategory === "all" ? "" : activeCategory;
-      const nextPosts = await listPosts(PAGE_SIZE, posts.length, search, apiTag);
-      setPosts((prev) => [...prev, ...nextPosts]);
-    } catch (e: any) {
-      setFetchError(e.message || "加载更多失败");
-    } finally {
-      setLoading(false);
-    }
+  function loadMore() {
+    fetchPosts(search, activeCategory, nextOffset);
   }
 
   const showClear = search || activeCategory !== "all";

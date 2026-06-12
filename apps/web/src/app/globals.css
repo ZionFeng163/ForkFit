@@ -223,6 +223,7 @@ html {
   --lp-muted: #7a7168;
   --lp-border: #e8e2da;
   --lp-accent: #e85d3a;
+  --lp-on-accent: #ffffff;
   --lp-accent-hover: #d14e2e;
   --lp-accent-light: #fef0ec;
   --lp-accent-soft: #f9ddd4;
@@ -232,6 +233,11 @@ html {
   --lp-warm-100: #faf6f0;
   --lp-warm-200: #f2ece3;
   --lp-warm-300: #e4dbd0;
+}
+
+button[style*="background: var(--lp-accent)"],
+a[style*="background: var(--lp-accent)"] {
+  color: var(--lp-on-accent) !important;
 }
 
 /* Sidebar nav links */

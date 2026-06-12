@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Bookmark, Check, GitFork, Heart, MapPin, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Bookmark, Check, ChevronLeft, ChevronRight, GitFork, Heart, MapPin, Send, Trash2 } from "lucide-react";
 
 import { RemoteImage } from "@/components/remote-image";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -55,15 +55,15 @@ interface PackDetailContentProps {
 }
 
 export function PackDetailContent({ post, locale }: PackDetailContentProps) {
-  const t = useTranslations("Pack");
   const tc = useTranslations("Comments");
   const { user } = useAuth();
 
   // Post state
   const [liked, setLiked] = useState(post.liked ?? false);
-  const [saves, setSaves] = useState(post.saves);
   const [likes, setLikes] = useState(post.likes ?? 0);
   const [saved, setSaved] = useState(post.saved ?? false);
+  const [activeImage, setActiveImage] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   // Ingredients
   const [checked, setChecked] = useState<Set<number>>(new Set());
@@ -85,11 +85,23 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
   const hasLocation = post.location && post.location !== "unknown";
   const canEdit = user?.id === post.user_id;
 
+  function scrollToImage(index: number) {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    const nextIndex = Math.max(0, Math.min(index, post.image_urls.length - 1));
+    gallery.scrollTo({ left: gallery.clientWidth * nextIndex, behavior: "smooth" });
+  }
+
+  function syncActiveImage() {
+    const gallery = galleryRef.current;
+    if (!gallery || gallery.clientWidth === 0) return;
+    setActiveImage(Math.round(gallery.scrollLeft / gallery.clientWidth));
+  }
+
   // Fetch fresh like/save state
   useEffect(() => {
     getPost(post.id).then((fresh) => {
       setLiked(fresh.liked ?? false);
-      setSaves(fresh.saves);
       setSaved(fresh.saved ?? false);
     }).catch(() => {});
   }, [post.id]);
@@ -117,7 +129,6 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     toggleLike(post.id).then((res) => {
       setLiked(res.liked);
       setLikes(res.likes);
-      setSaves(res.saves);
     }).catch((e) => setActionError(e.message || "操作失败"));
   }
 
@@ -126,7 +137,6 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
     setActionError(null);
     toggleSave(post.id).then((res) => {
       setSaved(res.saved);
-      setSaves(res.saves);
     }).catch((e) => setActionError(e.message || "操作失败"));
   }
 
@@ -178,13 +188,28 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
         </Link>
       </div>
 
-      {/* Hero image */}
+      {/* Hero image gallery */}
       <div
         className="mt-7 rounded-xl overflow-hidden relative"
         style={{ aspectRatio: "16/9" }}
       >
         {post.image_urls.length > 0 ? (
-          <RemoteImage src={post.image_urls[0]} alt={post.title} className="w-full h-full object-cover" />
+          <div
+            ref={galleryRef}
+            onScroll={syncActiveImage}
+            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {post.image_urls.map((url, index) => (
+              <div key={`${url}-${index}`} className="h-full min-w-full snap-start">
+                <RemoteImage
+                  src={url}
+                  alt={`${post.title} ${index + 1}/${post.image_urls.length}`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="w-full h-full grid place-items-center" style={{ background: getGradient(post.id) }}>
             <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="rgba(232,93,58,0.25)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -199,6 +224,41 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
           >
             {locale === "en" ? "Popular" : "热门菜谱"}
           </div>
+        )}
+        {post.image_urls.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => scrollToImage(activeImage - 1)}
+              disabled={activeImage === 0}
+              aria-label={locale === "en" ? "Previous image" : "上一张图片"}
+              className="absolute left-4 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-stone-800 shadow-sm transition-opacity disabled:opacity-30"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToImage(activeImage + 1)}
+              disabled={activeImage === post.image_urls.length - 1}
+              aria-label={locale === "en" ? "Next image" : "下一张图片"}
+              className="absolute right-4 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-stone-800 shadow-sm transition-opacity disabled:opacity-30"
+            >
+              <ChevronRight size={20} />
+            </button>
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5">
+              {post.image_urls.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => scrollToImage(index)}
+                  aria-label={`${locale === "en" ? "View image" : "查看图片"} ${index + 1}`}
+                  className={`h-1.5 rounded-full bg-white transition-all ${
+                    activeImage === index ? "w-5 opacity-100" : "w-1.5 opacity-60"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

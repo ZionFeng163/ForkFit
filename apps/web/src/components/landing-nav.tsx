@@ -2,21 +2,13 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "@/i18n/routing";
 
 export function LandingNav() {
   const t = useTranslations("Nav");
-  const tHome = useTranslations("Home");
   const locale = useLocale();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const logoSrc = locale === "en" ? "/logo_en.png" : "/logo_zh.png";
   const logoAlt = locale === "en" ? "ForkFit" : "吃什么";
@@ -24,9 +16,7 @@ export function LandingNav() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-shadow duration-300 ${
-          scrolled ? "shadow-[var(--lp-shadow-sm)]" : ""
-        }`}
+        className="relative z-50"
         style={{
           background: "rgba(255,253,249,0.85)",
           backdropFilter: "blur(20px)",
@@ -77,7 +67,7 @@ export function LandingNav() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className="fixed top-16 left-0 right-0 bottom-0 z-[99] flex flex-col gap-2 p-8 md:hidden"
+          className="absolute top-16 left-0 right-0 z-[99] flex min-h-[calc(100vh-4rem)] flex-col gap-2 p-8 md:hidden"
           style={{ background: "var(--lp-bg)" }}
         >
           <a href="#how" className="block py-3.5 text-base font-medium border-b" style={{ color: "var(--lp-fg)", borderColor: "var(--lp-border)" }} onClick={() => setMobileOpen(false)}>

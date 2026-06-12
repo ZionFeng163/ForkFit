@@ -3,16 +3,19 @@ import { DiscoverContent } from "@/components/discover-content";
 import type { RecipePost } from "@/types/forkfit";
 
 const API_BASE = process.env.FORKFIT_API_BASE_URL ?? "http://127.0.0.1:8000";
+const PAGE_SIZE = 20;
 
 export default async function DiscoverPage() {
-  // Fetch a larger batch to find the most popular post
-  const res = await fetch(`${API_BASE}/posts?limit=50&offset=0`, {
+  const res = await fetch(`${API_BASE}/posts?limit=${PAGE_SIZE}&offset=0`, {
     headers: { "Content-Type": "application/json" },
+    cache: "no-store",
   });
+  if (!res.ok) throw new Error("Failed to load recipes");
+
   const allPosts = (await res.json()) as RecipePost[];
   const total = parseInt(res.headers.get("X-Total-Count") ?? String(allPosts.length), 10);
 
-  // Pick the post with highest forks as featured
+  // Feature the most popular post from the first page without consuming later offsets.
   const featured = allPosts.reduce((best, post) =>
     post.forks > (best?.forks ?? 0) ? post : best
   , allPosts[0] as RecipePost | undefined);
@@ -28,6 +31,7 @@ export default async function DiscoverPage() {
         <DiscoverContent
           initialPosts={gridPosts}
           totalCount={total}
+          initialOffset={allPosts.length}
           featuredPost={featured ?? null}
         />
       </div>

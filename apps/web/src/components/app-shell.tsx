@@ -110,14 +110,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        {/* Topbar — frosted glass */}
+        {/* Topbar */}
         <header
-          className="sticky top-0 z-50 flex items-center justify-end px-6"
+          className="flex items-center justify-end px-6"
           style={{
             height: "52px",
-            background: "rgba(250,248,245,0.85)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
+            background: "var(--lp-warm-100)",
             borderBottom: "1px solid var(--lp-border)",
           }}
         >

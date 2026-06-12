@@ -30,7 +30,7 @@ function apiUrl(path: string) {
   return `${apiBase}${path}`;
 }
 
-async function request<T>(path: string, init?: RequestOptions): Promise<T> {
+async function requestResponse(path: string, init?: RequestOptions): Promise<Response> {
   const { redirectOnUnauthorized = true, ...fetchInit } = init ?? {};
   const response = await fetch(apiUrl(path), {
     ...fetchInit,
@@ -70,6 +70,11 @@ async function request<T>(path: string, init?: RequestOptions): Promise<T> {
     throw new Error(msg || "请求失败，请稍后重试");
   }
 
+  return response;
+}
+
+async function request<T>(path: string, init?: RequestOptions): Promise<T> {
+  const response = await requestResponse(path, init);
   return response.json() as Promise<T>;
 }
 
@@ -161,10 +166,17 @@ export function listSavedRuns() {
 }
 
 export function listPosts(limit = 20, offset = 0, q = "", tag = "") {
+  return listPostsPage(limit, offset, q, tag).then(({ posts }) => posts);
+}
+
+export async function listPostsPage(limit = 20, offset = 0, q = "", tag = "") {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (q) params.set("q", q);
   if (tag) params.set("tag", tag);
-  return request<RecipePost[]>(`/posts?${params}`);
+  const response = await requestResponse(`/posts?${params}`);
+  const posts = await response.json() as RecipePost[];
+  const total = Number.parseInt(response.headers.get("X-Total-Count") ?? String(posts.length), 10);
+  return { posts, total };
 }
 
 export function listTags() {
