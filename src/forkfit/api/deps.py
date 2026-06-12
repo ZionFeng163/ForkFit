@@ -9,6 +9,7 @@ from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.executors.kafka import KafkaJobExecutor
+from forkfit.executors.inline import InlineJobExecutor
 from forkfit.llm import BailianLLMClient
 from forkfit.services import RunService
 from forkfit.stores import PostgresPostStore, PostgresRunStore
@@ -53,7 +54,12 @@ def get_post_extraction_llm() -> BailianLLMClient:
 def get_run_service() -> RunService:
     settings = get_settings()
     store = get_run_store()
-    executor = KafkaJobExecutor()
+    if settings.job_executor == "inline":
+        executor = InlineJobExecutor()
+    elif settings.job_executor == "kafka":
+        executor = KafkaJobExecutor()
+    else:
+        raise RuntimeError(f"Unsupported JOB_EXECUTOR: {settings.job_executor}")
     return RunService(store=store, executor=executor, settings=settings)
 
 
