@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2, Eye, EyeOff, Mail, Lock, User, Shield } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
+import { FormEvent, useState } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
@@ -58,13 +58,9 @@ function InputField({
 export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "register" }) {
   const t = useTranslations("Auth");
   const router = useRouter();
-  const { user, loading, refresh } = useAuth();
+  const { refresh } = useAuth();
   const [tab, setTab] = useState(defaultTab);
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const [redirecting, setRedirecting] = useState(false);
 
   // Login state
   const [loginUser, setLoginUser] = useState("");
@@ -83,26 +79,23 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
   const loginMutation = useMutation({
     mutationFn: apiLogin,
-    onSuccess: () => {
-      void refresh();
+    onSuccess: async () => {
+      setRedirecting(true);
+      await refresh();
+      const params = new URLSearchParams(window.location.search);
+      router.replace(getSafeReturnTo(params.get("returnTo")));
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: () => {
-      void refresh();
+    onSuccess: async () => {
+      setRedirecting(true);
+      await refresh();
+      const params = new URLSearchParams(window.location.search);
+      router.replace(getSafeReturnTo(params.get("returnTo")));
     },
   });
-
-  useEffect(() => {
-    if (!mounted || loading || !user) {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    router.replace(getSafeReturnTo(params.get("returnTo")));
-  }, [loading, mounted, router, user]);
 
   function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -120,7 +113,7 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
   }
 
   const passwordMismatch = regConfirm.length > 0 && regPass !== regConfirm;
-  const isPending = loginMutation.isPending || registerMutation.isPending;
+  const isPending = loginMutation.isPending || registerMutation.isPending || redirecting;
   const error = loginMutation.error || registerMutation.error;
 
   function getErrorMsg() {
@@ -131,16 +124,6 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
     if (msg.includes("characters") || msg.includes("pattern")) return t("usernameInvalid");
     if (tab === "login") return t("loginError");
     return t("registerError");
-  }
-
-  if (!mounted) {
-    return (
-      <AuthLayout>
-        <div className="h-[400px] grid place-items-center">
-          <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
-        </div>
-      </AuthLayout>
-    );
   }
 
   return (
@@ -191,8 +174,8 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
           <button type="submit" disabled={isPending}
             className="auth-btn"
             style={{ background: "var(--lp-accent)", color: "white" }}>
-            {loginMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-            登录
+            {loginMutation.isPending || redirecting ? <Loader2 size={16} className="animate-spin" /> : null}
+            {redirecting ? "正在进入..." : "登录"}
           </button>
         </form>
       </div>
@@ -244,8 +227,8 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
           <button type="submit" disabled={isPending || passwordMismatch}
             className="auth-btn"
             style={{ background: "var(--lp-accent)", color: "white" }}>
-            {registerMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-            创建账号
+            {registerMutation.isPending || redirecting ? <Loader2 size={16} className="animate-spin" /> : null}
+            {redirecting ? "正在进入..." : "创建账号"}
           </button>
         </form>
       </div>

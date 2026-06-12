@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { FileText, GitFork, Home, LogOut, Plus, User } from "lucide-react";
+import { FileText, GitFork, Home, LogOut, Plus, Shield, User } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { Link, usePathname } from "@/i18n/routing";
@@ -61,6 +61,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          {user?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="sidebar-nav-link"
+              style={{
+                background: pathname.startsWith("/admin") ? "var(--lp-accent-light)" : undefined,
+                color: pathname.startsWith("/admin") ? "var(--lp-accent)" : undefined,
+                fontWeight: pathname.startsWith("/admin") ? 600 : undefined,
+              }}
+            >
+              <Shield size={18} />
+              {t("admin")}
+            </Link>
+          )}
         </nav>
 
         {/* User section */}
