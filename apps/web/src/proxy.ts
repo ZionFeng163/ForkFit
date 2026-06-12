@@ -23,7 +23,10 @@ function hasUnexpiredAccessToken(request: NextRequest): boolean {
 
 export default function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/") {
-    return NextResponse.rewrite(new URL(`/${routing.defaultLocale}`, request.url));
+    const destination = request.nextUrl.clone();
+    destination.protocol = "http:";
+    destination.pathname = `/${routing.defaultLocale}`;
+    return NextResponse.rewrite(destination);
   }
 
   const authMatch = request.nextUrl.pathname.match(/^\/(en|zh)\/(?:login|register)\/?$/);
