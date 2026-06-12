@@ -142,6 +142,18 @@ class PostgresRunStore:
                 RunRow.status.in_(["queued", "running"]),
             ).scalar()
 
+    def fail_active_runs(self, message: str) -> int:
+        with self.session_factory() as session:
+            rows = session.query(RunRow).filter(
+                RunRow.status.in_(["queued", "running"]),
+            ).all()
+            for row in rows:
+                row.status = "failed"
+                row.error_payload = {"message": message}
+                row.finished_at = utc_now()
+            session.commit()
+            return len(rows)
+
     def list_runs_for_user(self, user_id: str) -> list[RunRecord]:
         with self.session_factory() as session:
             rows = (

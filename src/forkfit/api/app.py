@@ -18,8 +18,9 @@ from forkfit.api.routes_users import router as users_router
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    from forkfit.api.deps import get_user_store
+    from forkfit.api.deps import get_run_store, get_user_store
     from forkfit.auth.password import hash_password
+    from forkfit.config import get_settings
 
     store = get_user_store()
     if not store.has_admin():
@@ -32,6 +33,10 @@ async def lifespan(_: FastAPI):
         admin = store.get_user_by_username("admin")
         if admin is not None:
             store.set_role(admin.id, "admin")
+
+    settings = get_settings()
+    if settings.job_executor == "inline":
+        get_run_store().fail_active_runs("服务曾重启，本次定制已中断，请重新提交。")
     yield
 
 

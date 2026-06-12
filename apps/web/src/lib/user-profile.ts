@@ -26,7 +26,7 @@ export const defaultUserProfileForm: UserProfileForm = {
 
 export function splitList(value: string) {
   return value
-    .split(",")
+    .split(/[,，、\n]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -42,6 +42,46 @@ export function profileFormToUserProfile(form: UserProfileForm): UserProfile {
     max_cook_time_minutes: Number(form.max_cook_time_minutes),
     soft_preferences: splitList(form.soft_preferences),
   };
+}
+
+export function applyRequirementToUserProfile(
+  profile: UserProfile,
+  requirement: string,
+): UserProfile {
+  const text = requirement.trim();
+  if (!text) return profile;
+
+  const next: UserProfile = {
+    ...profile,
+    likes: [...profile.likes],
+    dislikes: [...profile.dislikes],
+    allergies: [...profile.allergies],
+    diet_rules: [...profile.diet_rules],
+    equipment: [...profile.equipment],
+    soft_preferences: [...profile.soft_preferences, text],
+  };
+
+  const addUnique = (items: string[], value: string) => {
+    if (!items.includes(value)) items.push(value);
+  };
+
+  if (/去掉花生|不要花生|花生过敏/.test(text)) {
+    addUnique(next.allergies, "花生");
+  }
+  if (/素食|全素|不要肉/.test(text)) {
+    addUnique(next.diet_rules, "素食");
+  }
+  if (/缩短时间|快一点|快速|快手/.test(text)) {
+    next.max_cook_time_minutes = Math.min(next.max_cook_time_minutes, 20);
+  }
+  if (/少盐|少放盐|低盐/.test(text)) {
+    addUnique(next.soft_preferences, "少盐");
+  }
+  if (/少油|低油/.test(text)) {
+    addUnique(next.soft_preferences, "少油");
+  }
+
+  return next;
 }
 
 export function loadUserProfileForm(): UserProfileForm {

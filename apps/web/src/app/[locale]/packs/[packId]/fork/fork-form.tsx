@@ -110,8 +110,12 @@ export function ForkContent({ post }: { post: RecipePost }) {
     setRunError(null);
     setActionError(null);
     try {
-      const profile = await import("@/lib/user-profile").then((m) => m.loadUserProfileForm());
-      const profileData = await import("@/lib/user-profile").then((m) => m.profileFormToUserProfile(profile));
+      const profileHelpers = await import("@/lib/user-profile");
+      const profile = profileHelpers.loadUserProfileForm();
+      const profileData = profileHelpers.applyRequirementToUserProfile(
+        profileHelpers.profileFormToUserProfile(profile),
+        requirement,
+      );
       const resp = await createRun({
         user_profile: profileData,
         meal_pack: { id: post.id, title: post.title, theme: post.theme, meals: [firstMeal] },
