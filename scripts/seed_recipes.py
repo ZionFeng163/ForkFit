@@ -1,4 +1,4 @@
-"""Seed database with realistic Chinese recipes and food images from Unsplash."""
+"""Seed the database with realistic Chinese recipes and local food images."""
 
 import os
 from forkfit.db.session import make_session_factory
@@ -13,7 +13,7 @@ RECIPES = [
         "title": "番茄炒蛋的完美做法",
         "theme": "家常菜",
         "location": "上海",
-        "image_urls": ["https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1604908176997-125f25cc6f3d.jpg"],
         "description": "每个人都做过的家常菜，但 90% 的人不知道正确顺序。蛋要先炒到七分熟盛出，番茄出汁后再回锅，口感嫩滑、汁水浓郁。",
         "recipe": {
             "id": "r_tomato_egg", "day": "post", "name": "番茄炒蛋",
@@ -28,7 +28,7 @@ RECIPES = [
         "title": "宫保鸡丁",
         "theme": "川菜",
         "location": "成都",
-        "image_urls": ["https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1525755662778-989d0524087e.jpg"],
         "description": "经典川菜，鸡丁嫩滑、花生酥脆、辣而不燥，配米饭绝佳。关键在于鸡丁要腌制入味，花生要后放保持酥脆。",
         "recipe": {
             "id": "r_kung_pao", "day": "post", "name": "宫保鸡丁",
@@ -43,7 +43,7 @@ RECIPES = [
         "title": "蒜蓉西兰花",
         "theme": "快手菜",
         "location": "北京",
-        "image_urls": ["https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1459411552884-841db9b3cc2a.jpg"],
         "description": "清脆爽口的蒜蓉西兰花，低卡高蛋白，健身党必备。焯水时间是关键，30秒即可保持脆嫩。",
         "recipe": {
             "id": "r_broccoli", "day": "post", "name": "蒜蓉西兰花",
@@ -58,7 +58,7 @@ RECIPES = [
         "title": "酸辣土豆丝",
         "theme": "家常菜",
         "location": "西安",
-        "image_urls": ["https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1504674900247-0877df9cc836.jpg"],
         "description": "酸辣爽脆的土豆丝，切丝是关键。刀工不好可以用擦丝器，但手切的口感更好。",
         "recipe": {
             "id": "r_potato", "day": "post", "name": "酸辣土豆丝",
@@ -73,7 +73,7 @@ RECIPES = [
         "title": "可乐鸡翅",
         "theme": "家常菜",
         "location": "广州",
-        "image_urls": ["https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1527477396000-e27163b481c2.jpg"],
         "description": "甜香四溢的可乐鸡翅，色泽红亮，新手零失败。可乐代替糖和酱油，一罐搞定。",
         "recipe": {
             "id": "r_cola_wings", "day": "post", "name": "可乐鸡翅",
@@ -88,7 +88,7 @@ RECIPES = [
         "title": "手抓饼配煎蛋",
         "theme": "早餐",
         "location": "杭州",
-        "image_urls": ["https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1525351484163-7529414344d8.jpg"],
         "description": "五分钟搞定的完美早餐，外酥里嫩的手抓饼加上溏心蛋，配一杯豆浆绝了。",
         "recipe": {
             "id": "r_pancake_egg", "day": "post", "name": "手抓饼配煎蛋",
@@ -103,7 +103,7 @@ RECIPES = [
         "title": "红烧排骨",
         "theme": "硬菜",
         "location": "南京",
-        "image_urls": ["https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1544025162-d76694265947.jpg"],
         "description": "软烂入味的红烧排骨，收汁浓郁，入口即化。关键是先炒糖色再炖煮。",
         "recipe": {
             "id": "r_ribs", "day": "post", "name": "红烧排骨",
@@ -118,7 +118,7 @@ RECIPES = [
         "title": "紫菜蛋花汤",
         "theme": "汤羹",
         "location": "福州",
-        "image_urls": ["https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1547592166-23ac45744acd.jpg"],
         "description": "清淡鲜美的紫菜蛋花汤，三分钟就能上桌。蛋液要沿锅边缓缓倒入，形成漂亮的蛋花。",
         "recipe": {
             "id": "r_seaweed_soup", "day": "post", "name": "紫菜蛋花汤",
@@ -133,7 +133,7 @@ RECIPES = [
         "title": "麻婆豆腐",
         "theme": "川菜",
         "location": "成都",
-        "image_urls": ["https://images.unsplash.com/photo-1582452919408-aca2fdcd0b4f?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/mapo-tofu.jpg"],
         "description": "麻辣鲜香的麻婆豆腐，豆腐嫩滑入味，下饭神器。正宗做法要用郫县豆瓣酱。",
         "recipe": {
             "id": "r_mapo", "day": "post", "name": "麻婆豆腐",
@@ -148,7 +148,7 @@ RECIPES = [
         "title": "蛋炒饭",
         "theme": "快手菜",
         "location": "扬州",
-        "image_urls": ["https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1603133872878-684f208fb84b.jpg"],
         "description": "粒粒分明的黄金蛋炒饭，蛋液要先裹住米饭再炒，这样每粒米都是金黄色。",
         "recipe": {
             "id": "r_fried_rice", "day": "post", "name": "蛋炒饭",
@@ -163,7 +163,7 @@ RECIPES = [
         "title": "清蒸鲈鱼",
         "theme": "粤菜",
         "location": "广州",
-        "image_urls": ["https://images.unsplash.com/photo-1534766555764-ce878a0fbbf7?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/steamed-fish.jpg"],
         "description": "鲜嫩爽滑的清蒸鲈鱼，关键在于蒸的时间不能太长，8分钟刚好。",
         "recipe": {
             "id": "r_steam_fish", "day": "post", "name": "清蒸鲈鱼",
@@ -178,7 +178,7 @@ RECIPES = [
         "title": "抹茶巴斯克蛋糕",
         "theme": "甜品",
         "location": "上海",
-        "image_urls": ["https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1565958011703-44f9829ba187.jpg"],
         "description": "外焦里嫩的巴斯克蛋糕加上抹茶的清香，零失败的新手友好甜品。",
         "recipe": {
             "id": "r_basque", "day": "post", "name": "抹茶巴斯克蛋糕",
@@ -193,7 +193,7 @@ RECIPES = [
         "title": "鸡胸肉藜麦沙拉",
         "theme": "减脂餐",
         "location": "深圳",
-        "image_urls": ["https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1512621776951-a57141f2eefd.jpg"],
         "description": "高蛋白低脂的完美减脂餐，饱腹感强，健身党的理想选择。",
         "recipe": {
             "id": "r_salad", "day": "post", "name": "鸡胸肉藜麦沙拉",
@@ -208,7 +208,7 @@ RECIPES = [
         "title": "韭菜盒子",
         "theme": "面食",
         "location": "天津",
-        "image_urls": ["https://images.unsplash.com/photo-1496116218417-1a781b6c42f1?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/chive-pancake.jpg"],
         "description": "外酥里嫩的韭菜盒子，韭菜鸡蛋虾皮的经典搭配，早餐绝佳选择。",
         "recipe": {
             "id": "r_chive_box", "day": "post", "name": "韭菜盒子",
@@ -223,7 +223,7 @@ RECIPES = [
         "title": "糖醋里脊",
         "theme": "家常菜",
         "location": "北京",
-        "image_urls": ["https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=900&q=85"],
+        "image_urls": ["/recipes/1529692236671-f1f6cf9683ba.jpg"],
         "description": "外酥里嫩的糖醋里脊，酸甜可口，大人小孩都爱吃。挂糊要薄，炸两遍更酥脆。",
         "recipe": {
             "id": "r_sweet_sour", "day": "post", "name": "糖醋里脊",
@@ -243,7 +243,13 @@ def seed():
             # Check if already exists
             existing = session.query(PostRow).filter(PostRow.title == recipe["title"]).first()
             if existing:
-                print(f"  Skip (exists): {recipe['title']}")
+                existing.theme = recipe["theme"]
+                existing.location = recipe["location"]
+                existing.image_urls = recipe["image_urls"]
+                existing.description = recipe["description"]
+                existing.recipe_payload = recipe["recipe"]
+                session.commit()
+                print(f"  Updated: {recipe['title']}")
                 continue
 
             post_id = f"post_{uuid4().hex[:12]}"

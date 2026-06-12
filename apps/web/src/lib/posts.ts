@@ -1,8 +1,6 @@
 import { getPost } from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
-const API_PROXY_PREFIX = "/api/backend";
-
 function serverApiUrl(path: string) {
   const apiBase = process.env.FORKFIT_API_BASE_URL ?? "http://127.0.0.1:8000";
   return `${apiBase}${path}`;

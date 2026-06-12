@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
+import { RemoteImage } from "@/components/remote-image";
 
 type Props = {
   images: string[];
@@ -11,18 +12,18 @@ type Props = {
   maxImages?: number;
 };
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [dragover, setDragover] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
   const upload = useCallback(async (file: File) => {
     if (!user) return;
     if (file.size > MAX_FILE_SIZE) {
-      alert("图片大小不能超过 10MB");
+      alert("图片大小不能超过 5MB");
       return;
     }
     setUploading(true);
@@ -78,7 +79,7 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
               className="group relative w-[100px] h-[100px] rounded-lg overflow-hidden"
               style={{ border: "1px solid var(--lp-border)" }}
             >
-              <img src={url} alt="" className="w-full h-full object-cover" />
+              <RemoteImage src={url} alt={`上传图片 ${i + 1}`} className="w-full h-full object-cover" />
               <button
                 type="button"
                 onClick={() => removeImage(i)}

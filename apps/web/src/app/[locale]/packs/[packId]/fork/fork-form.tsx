@@ -1,19 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 import {
-  ArrowLeft, Check, CheckCircle2, ChevronDown,
-  Loader2, Send, Sparkles, X,
+  ArrowLeft, Check, CheckCircle2,
+  Loader2, Sparkles, X,
 } from "lucide-react";
 
 import { RemoteImage } from "@/components/remote-image";
 import { ImageUpload } from "@/components/image-upload";
-import { useAuth } from "@/components/auth-provider";
 import { Link, useRouter } from "@/i18n/routing";
 import {
   createRun, getRun, getPost, publishRun, saveRun, extractMyPreferences,
 } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import type { RecipePost, RunResultPayload } from "@/types/forkfit";
 
 const GRADIENTS = [
@@ -22,18 +21,8 @@ const GRADIENTS = [
   "linear-gradient(135deg, #eef4fd, #d4e4f9)",
 ];
 
-function getGradient(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
-  const idx = Math.abs(hash) % GRADIENTS.length;
-  const strokes = ["#e85d3a", "#2d8a56", "#4a8ac9"];
-  return { gradient: GRADIENTS[idx], stroke: strokes[idx] };
-}
-
 export function ForkContent({ post }: { post: RecipePost }) {
-  const t = useTranslations("Fork");
   const router = useRouter();
-  const { user } = useAuth();
   const firstMeal = post.recipe;
 
   // Run state
@@ -123,8 +112,8 @@ export function ForkContent({ post }: { post: RecipePost }) {
       });
       setRunId(resp.run_id);
       setRunStatus(resp.status);
-    } catch (e: any) {
-      setActionError(e.message || "定制失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "定制失败"));
     }
     setCreating(false);
   }
@@ -148,8 +137,8 @@ export function ForkContent({ post }: { post: RecipePost }) {
       if (parts.length > 0) {
         setRequirement((prev) => prev ? prev + "\n" + parts.join("\n") : parts.join("\n"));
       }
-    } catch (e: any) {
-      setActionError(e.message || "提取偏好失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "提取偏好失败"));
     }
     setExtracting(false);
   }
@@ -175,8 +164,8 @@ export function ForkContent({ post }: { post: RecipePost }) {
       });
       setPublished(true);
       setTimeout(() => router.push(`/packs/${published.id}`), 1500);
-    } catch (e: any) {
-      setActionError(e.message || "发布失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "发布失败"));
     }
     setPublishing(false);
   }
@@ -192,14 +181,10 @@ export function ForkContent({ post }: { post: RecipePost }) {
       await saveRun(runId);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (e: any) {
-      setActionError(e.message || "保存失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "保存失败"));
     }
     setSaving(false);
-  }
-
-  function toggleIngredientCheck(idx: number) {
-    // Visual only for now
   }
 
   return (
@@ -299,10 +284,18 @@ export function ForkContent({ post }: { post: RecipePost }) {
         </div>
       )}
 
-      {actionError && (
+      {(actionError || runError) && (
         <div className="mb-4 px-4 py-3 rounded-xl text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
-          {actionError}
-          <button onClick={() => setActionError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
+          {actionError || runError}
+          <button
+            onClick={() => {
+              setActionError(null);
+              setRunError(null);
+            }}
+            className="ml-3 opacity-70 hover:opacity-100"
+          >
+            ×
+          </button>
         </div>
       )}
 

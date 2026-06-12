@@ -5,13 +5,29 @@ from fastapi.testclient import TestClient
 from redis import Redis
 
 from forkfit.api.app import create_app
-from forkfit.api.deps import current_user
+from forkfit.api.deps import current_user, get_run_service
 from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
+from forkfit.db.models import RunEventRow, RunRow
+from forkfit.db.session import make_session_factory
 from forkfit.fixtures import demo_meal_pack, demo_user_profile
+from forkfit.services import RunService
+from forkfit.stores import PostgresRunStore
+
+
+class NoopExecutor:
+    async def submit(self, **_kwargs) -> None:
+        return None
 
 
 class RunApiIntegrationTests(unittest.TestCase):
+    def _delete_run(self, run_id: str) -> None:
+        session_factory = make_session_factory(get_settings().database_url)
+        with session_factory() as session:
+            session.query(RunEventRow).filter(RunEventRow.run_id == run_id).delete()
+            session.query(RunRow).filter(RunRow.id == run_id).delete()
+            session.commit()
+
     def test_create_run_requires_real_postgres_and_redis(self):
         settings = get_settings()
         try:
@@ -22,7 +38,10 @@ class RunApiIntegrationTests(unittest.TestCase):
                 f"Install/start Redis at {settings.redis_url}. Original error: {exc}"
             )
 
+        store = PostgresRunStore(make_session_factory(settings.database_url))
+        service = RunService(store=store, executor=NoopExecutor(), settings=settings)
         app = create_app()
+        app.dependency_overrides[get_run_service] = lambda: service
         app.dependency_overrides[current_user] = lambda: CurrentUser(
             id="demo_user",
             username="demo",
@@ -41,6 +60,7 @@ class RunApiIntegrationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         run_id = response.json()["run_id"]
+        self.addCleanup(self._delete_run, run_id)
         self.assertEqual(response.json()["status"], "queued")
 
         get_response = client.get(f"/runs/{run_id}")

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Calendar, Edit, Heart, Loader2, MapPin, Plus, Star, Users } from "lucide-react";
+import { useLocale } from "next-intl";
+import { Calendar, Edit, Loader2, MapPin, Plus, Star, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { AuthGuard } from "@/components/auth-guard";
@@ -10,36 +10,18 @@ import { useAuth } from "@/components/auth-provider";
 import { PostCard } from "@/components/post-card";
 import { Link } from "@/i18n/routing";
 import {
-  listLikedPosts,
   listSavedPosts,
   listUserPosts,
   listFollowing,
   listFollowers,
   getFollowStats,
   getUserProfile,
-  saveMyProfile,
   updateMe,
 } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import type { RecipePost } from "@/types/forkfit";
 
 type Tab = "recipes" | "saved" | "following" | "followers";
-
-const GRADIENTS = [
-  "linear-gradient(135deg, #fef0ec, #f9ddd4)",
-  "linear-gradient(135deg, #e8f5ee, #c8e6d5)",
-  "linear-gradient(135deg, #eef4fd, #d4e4f9)",
-  "linear-gradient(135deg, #fef9ec, #f5ecd0)",
-  "linear-gradient(135deg, #f5eef8, #e4d5f0)",
-];
-
-const STROKE_COLORS = ["#e85d3a", "#2d8a56", "#4a8ac9", "#c9a030", "#8a5dc9"];
-
-function getGradient(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
-  const idx = Math.abs(hash) % GRADIENTS.length;
-  return { gradient: GRADIENTS[idx], stroke: STROKE_COLORS[idx] };
-}
 
 export default function ProfilePage() {
   return (
@@ -99,8 +81,8 @@ function ProfileContent() {
         setProfile(updated);
       }
       setEditing(false);
-    } catch (e: any) {
-      setError(e.message || "保存失败");
+    } catch (error: unknown) {
+      setError(errorMessage(error, "保存失败"));
     }
     setSaving(false);
   }
@@ -373,7 +355,6 @@ function FollowersTab({ userId }: { userId: string }) {
 
 /* ── Follow Card ── */
 function FollowCard({ user: u }: { user: { id: string; username: string; display_name: string; avatar_url: string | null } }) {
-  const { gradient, stroke } = getGradient(u.id);
   return (
     <Link href={`/users/${u.id}`}>
       <div

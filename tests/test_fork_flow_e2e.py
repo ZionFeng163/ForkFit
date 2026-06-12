@@ -6,7 +6,8 @@ ForkFitLangGraphWorkflow (with FakeLLMClient) → Postgres store → API respons
 No Redis, no real LLM calls.
 """
 import unittest
-from dataclasses import asdict
+from dataclasses import asdict, replace
+import os
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -15,6 +16,7 @@ from forkfit.api.app import create_app
 from forkfit.api.deps import get_run_service
 from forkfit.auth.models import CurrentUser
 from forkfit.config import Settings, get_settings
+from forkfit.db.models import PostRow, RunEventRow, RunRow
 from forkfit.db.session import make_session_factory
 from forkfit.executors.base import JobExecutor
 from forkfit.fixtures import demo_meal_pack, demo_user_profile
@@ -363,7 +365,11 @@ def _make_pack(*meals):
 
 def _build_app(fake_llm: FakeLLMClient):
     """Build a TestClient with mocked deps (no Redis, no real auth)."""
-    settings = get_settings()
+    settings = replace(
+        get_settings(),
+        max_global_concurrent_runs=100,
+        max_user_concurrent_runs=100,
+    )
     store = PostgresRunStore(make_session_factory(settings.database_url))
     executor = SyncExecutor(fake_llm)
     from forkfit.services import RunService
@@ -391,6 +397,37 @@ def _build_app(fake_llm: FakeLLMClient):
 # ---------------------------------------------------------------------------
 
 class ForkFlowEndToEndTests(unittest.TestCase):
+    def setUp(self):
+        self._env_patch = patch.dict(os.environ, {"RATE_LIMIT_ENABLED": "false"})
+        self._env_patch.start()
+        self._clear_test_data()
+
+    def tearDown(self):
+        try:
+            self._clear_test_data()
+        finally:
+            self._env_patch.stop()
+
+    def _clear_test_data(self):
+        session_factory = make_session_factory(get_settings().database_url)
+        with session_factory() as session:
+            run_ids = [
+                run_id
+                for (run_id,) in session.query(RunRow.id)
+                .filter(RunRow.user_id == FAKE_USER.id)
+                .all()
+            ]
+            if run_ids:
+                session.query(RunEventRow).filter(
+                    RunEventRow.run_id.in_(run_ids)
+                ).delete(synchronize_session=False)
+                session.query(RunRow).filter(
+                    RunRow.id.in_(run_ids)
+                ).delete(synchronize_session=False)
+            session.query(PostRow).filter(
+                PostRow.user_id == FAKE_USER.id
+            ).delete(synchronize_session=False)
+            session.commit()
 
     # -- 1. Happy path: no conflicts ----------------------------------------
 

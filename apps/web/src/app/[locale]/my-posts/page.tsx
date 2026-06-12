@@ -7,9 +7,11 @@ import { Loader2, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AuthGuard } from "@/components/auth-guard";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { RemoteImage } from "@/components/remote-image";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
 import { listUserPosts } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import type { RecipePost } from "@/types/forkfit";
 
 const GRADIENTS = [
@@ -69,8 +71,8 @@ export default function MyPostsPage() {
       const { deletePost } = await import("@/lib/api");
       await deletePost(deleteTarget);
       setPosts((prev) => prev.filter((p) => p.id !== deleteTarget));
-    } catch (e: any) {
-      setError(e.message || "删除失败，请稍后重试");
+    } catch (error: unknown) {
+      setError(errorMessage(error, "删除失败，请稍后重试"));
     } finally {
       setDeleting(null);
       setDeleteTarget(null);
@@ -186,7 +188,7 @@ export default function MyPostsPage() {
                     {/* Thumbnail */}
                     <Link href={`/packs/${post.id}`} className="w-[120px] h-[80px] rounded-lg overflow-hidden grid place-items-center flex-shrink-0" style={{ background: gradient }}>
                       {post.image_urls.length > 0 ? (
-                        <img src={post.image_urls[0]} alt="" className="w-full h-full object-cover" />
+                        <RemoteImage src={post.image_urls[0]} alt={post.title} className="w-full h-full object-cover" />
                       ) : (
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.5" opacity="0.4">
                           <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 5 4 6.5V22l4-2.5c.6.2 1.3.5 2 .5 5.52 0 10-4 10-8s-4.48-8-10-8z" />

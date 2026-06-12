@@ -3,17 +3,15 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, ArrowLeft, Check, CheckCircle2, Loader2, X, Send,
+  AlertTriangle, ArrowLeft, Check, CheckCircle2, Loader2, X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
 import { getRun, getPost, publishRun, resolveRun, saveRun } from "@/lib/api";
-import type { RunResultPayload } from "@/types/forkfit";
+import { errorMessage } from "@/lib/errors";
 
 export function RunView({ runId }: { runId: string }) {
-  const t = useTranslations("Run");
   const router = useRouter();
 
   const query = useQuery({
@@ -49,6 +47,8 @@ export function RunView({ runId }: { runId: string }) {
   // Init fields from result
   useEffect(() => {
     if (!result || !forkedMeal) return;
+    // This remote result becomes an editable local draft once per completed run.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditTitle(result.forked_meal_pack.title || forkedMeal.name || "");
     setEditDesc(result.description || result.summary || "");
     setEditIngredients(forkedMeal.ingredients.join(", "));
@@ -64,7 +64,7 @@ export function RunView({ runId }: { runId: string }) {
         if (post.image_urls.length > 0) setEditImages(post.image_urls);
       }).catch(() => {});
     }
-  }, [result]);
+  }, [result, forkedMeal]);
 
   async function handlePublish() {
     setPublishing(true);
@@ -84,8 +84,8 @@ export function RunView({ runId }: { runId: string }) {
       });
       setPublished(true);
       setTimeout(() => router.push(`/packs/${post.id}`), 1500);
-    } catch (e: any) {
-      setActionError(e.message || "发布失败，请稍后重试");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "发布失败，请稍后重试"));
     }
     setPublishing(false);
   }
@@ -99,8 +99,8 @@ export function RunView({ runId }: { runId: string }) {
       await saveRun(runId);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (e: any) {
-      setActionError(e.message || "保存失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "保存失败"));
     }
     setSaving(false);
   }
@@ -111,8 +111,8 @@ export function RunView({ runId }: { runId: string }) {
     try {
       await resolveRun(runId, substitutions);
       await query.refetch();
-    } catch (e: any) {
-      setActionError(e.message || "重新提交失败");
+    } catch (error: unknown) {
+      setActionError(errorMessage(error, "重新提交失败"));
     } finally {
       setResolving(false);
     }

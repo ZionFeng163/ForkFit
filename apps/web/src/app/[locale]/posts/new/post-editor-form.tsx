@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ImagePlus, Info, Loader2, Plus, Send, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Info, Loader2, Plus, Send, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { FormEvent, useCallback, useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 
 import { ImageUpload } from "@/components/image-upload";
-import { useAuth } from "@/components/auth-provider";
 import { useRouter } from "@/i18n/routing";
 import { createPost, extractPost, updatePost } from "@/lib/api";
 import type { CreatePostInput, RecipePost } from "@/types/forkfit";
@@ -106,7 +105,6 @@ function TagInput({
 export function PostEditorForm({ post }: { post?: RecipePost }) {
   const t = useTranslations("NewPost");
   const router = useRouter();
-  const { user } = useAuth();
   const isEditing = Boolean(post);
   const [form, setForm] = useState<PostFormState>(() => {
     if (post) return formFromPost(post);
@@ -133,10 +131,6 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     return "easy";
   });
   const [draftSaved, setDraftSaved] = useState(false);
-  const [hasDraft, setHasDraft] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !!localStorage.getItem("forkfit.draft");
-  });
 
   const mutation = useMutation({
     mutationFn: (input: CreatePostInput) =>
@@ -179,7 +173,6 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
   function submit(e: FormEvent) {
     e.preventDefault();
     localStorage.removeItem("forkfit.draft");
-    setHasDraft(false);
     mutation.mutate(buildInput(form, difficulty));
   }
 

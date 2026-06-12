@@ -46,7 +46,6 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
 
   useEffect(() => {
     if (!userId) return;
-    setLoading(true);
     Promise.all([
       getUserProfile(userId),
       listUserPosts(userId, 50, 0),

@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageOff } from "lucide-react";
 import { useState } from "react";
 
 export function RemoteImage({
@@ -14,7 +15,15 @@ export function RemoteImage({
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
-    return null;
+    return (
+      <div
+        role="img"
+        aria-label={`${alt}（图片暂不可用）`}
+        className={`flex items-center justify-center bg-[#eeeae2] text-[#9a9388] ${className ?? ""}`}
+      >
+        <ImageOff aria-hidden="true" className="h-6 w-6" strokeWidth={1.6} />
+      </div>
+    );
   }
 
   return (

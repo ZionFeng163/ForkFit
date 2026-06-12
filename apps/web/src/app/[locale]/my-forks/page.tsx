@@ -10,6 +10,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
 import { listSavedRuns, unsaveRun } from "@/lib/api";
+import { errorMessage } from "@/lib/errors";
 import type { RunStatusResponse } from "@/types/forkfit";
 
 const GRADIENTS = [
@@ -68,8 +69,8 @@ export default function MyForksPage() {
     try {
       await unsaveRun(deleteTarget);
       setRuns((prev) => prev.filter((r) => r.run_id !== deleteTarget));
-    } catch (e: any) {
-      setError(e.message || "移除失败，请稍后重试");
+    } catch (error: unknown) {
+      setError(errorMessage(error, "移除失败，请稍后重试"));
     } finally {
       setDeleting(null);
       setDeleteTarget(null);

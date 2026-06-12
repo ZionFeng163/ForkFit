@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Heart, MessageSquare } from "lucide-react";
 
 import { RemoteImage } from "@/components/remote-image";
@@ -33,26 +33,22 @@ function getGradient(id: string) {
 export function PostCard({ post }: { post: RecipePost }) {
   const tags = post.recipe.tags.slice(0, 2);
   const { user } = useAuth();
-  const [liked, setLiked] = useState(post.liked ?? false);
-  const [saves, setSaves] = useState(post.saves);
-  const [likes, setLikes] = useState(post.likes ?? 0);
+  const [likeOverride, setLikeOverride] = useState<{
+    postId: string;
+    liked: boolean;
+    likes: number;
+  } | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comment_count ?? 0);
-
-  useEffect(() => {
-    setLiked(post.liked ?? false);
-    setSaves(post.saves);
-    setLikes(post.likes ?? 0);
-  }, [post.liked, post.saves, post.likes]);
+  const liked = likeOverride?.postId === post.id ? likeOverride.liked : (post.liked ?? false);
+  const likes = likeOverride?.postId === post.id ? likeOverride.likes : (post.likes ?? 0);
 
   function handleLike(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     if (!user) return;
     toggleLike(post.id).then((res) => {
-      setLiked(res.liked);
-      setLikes(res.likes);
-      setSaves(res.saves);
+      setLikeOverride({ postId: post.id, liked: res.liked, likes: res.likes });
     }).catch(() => {});
   }
 

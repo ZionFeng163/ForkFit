@@ -255,7 +255,18 @@ class PostgresPostStore:
                         saves=post["saves"],
                         forks=post["forks"],
                     )
-                    .on_conflict_do_nothing(index_elements=[PostRow.id])
+                    .on_conflict_do_update(
+                        index_elements=[PostRow.id],
+                        set_={
+                            "author": post["author"],
+                            "title": post["title"],
+                            "theme": post["theme"],
+                            "location": post["location"],
+                            "image_urls": post["image_urls"],
+                            "description": post["description"],
+                            "recipe_payload": asdict(post["recipe"]),
+                        },
+                    )
                 )
                 session.execute(statement)
             session.commit()

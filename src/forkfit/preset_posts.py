@@ -12,7 +12,7 @@ PRESET_POSTS = [
         "theme": "工作日晚餐",
         "location": "上海",
         "image_urls": [
-            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=85",
+            "/recipes/1546069901-ba9599a7e63c.jpg",
         ],
         "saves": 184,
         "forks": 47,
@@ -37,7 +37,7 @@ PRESET_POSTS = [
         "theme": "办公室午餐",
         "location": "杭州",
         "image_urls": [
-            "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=85",
+            "/recipes/1512621776951-a57141f2eefd.jpg",
         ],
         "saves": 231,
         "forks": 63,
@@ -62,9 +62,9 @@ PRESET_POSTS = [
         "theme": "家庭共享餐",
         "location": "成都",
         "image_urls": [
-            "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=85",
-            "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=900&q=85",
-            "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85",
+            "/recipes/1604908176997-125f25cc6f3d.jpg",
+            "/recipes/1529042410759-befb1204b468.jpg",
+            "/recipes/1547592180-85f173990554.jpg",
         ],
         "saves": 312,
         "forks": 88,
@@ -89,7 +89,7 @@ PRESET_POSTS = [
         "theme": "素食主义",
         "location": "深圳",
         "image_urls": [
-            "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=85",
+            "/recipes/1498837167922-ddd27525d352.jpg",
         ],
         "saves": 156,
         "forks": 39,
@@ -114,7 +114,7 @@ PRESET_POSTS = [
         "theme": "早晨备餐",
         "location": "圣迭戈",
         "image_urls": [
-            "https://images.unsplash.com/photo-1495214783159-3503fd1b572d?auto=format&fit=crop&w=900&q=85",
+            "/recipes/1495214783159-3503fd1b572d.jpg",
         ],
         "saves": 98,
         "forks": 21,
