@@ -31,6 +31,11 @@ def demo_meal_pack() -> MealPack:
                 cook_time_minutes=35,
                 estimated_cost=14,
                 tags=["rice bowl", "high protein"],
+                steps=[
+                    "Cook rice until fluffy.",
+                    "Roast or pan-cook the chicken breast until done.",
+                    "Steam broccoli and assemble the bowl with sauce.",
+                ],
             )
         ],
     )

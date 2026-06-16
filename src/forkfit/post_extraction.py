@@ -57,6 +57,8 @@ def extract_post_details(
             or recipe.estimated_cost,
             tags=_string_list(raw.get("tags")),
             notes=_string(raw.get("notes")),
+            steps=list(recipe.steps),
+            difficulty=recipe.difficulty,
         ),
     )
 
