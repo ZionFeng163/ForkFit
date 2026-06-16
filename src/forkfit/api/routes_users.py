@@ -97,13 +97,22 @@ def update_me(
 
 
 @router.get("/{user_id}")
-def get_user_profile(user_id: str) -> dict:
+def get_user_profile(
+    user_id: str,
+    user: CurrentUser | None = Depends(optional_current_user),
+) -> dict:
     store = get_user_store()
     user = store.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     post_store = get_post_store()
-    _, post_count = post_store.list_posts_by_user(user_id, limit=1, offset=0)
+    can_view_all = bool(user and (user.id == user_id or user.role == "admin"))
+    _, post_count = post_store.list_posts_by_user(
+        user_id,
+        limit=1,
+        offset=0,
+        public_only=not can_view_all,
+    )
     return {
         "id": user.id,
         "username": user.username,
@@ -129,7 +138,13 @@ def get_user_posts(
         raise HTTPException(status_code=404, detail="User not found")
 
     post_store = get_post_store()
-    posts, total = post_store.list_posts_by_user(user_id, limit=limit, offset=offset)
+    can_view_all = bool(user and (user.id == user_id or user.role == "admin"))
+    posts, total = post_store.list_posts_by_user(
+        user_id,
+        limit=limit,
+        offset=offset,
+        public_only=not can_view_all,
+    )
 
     interactions = {}
     if user:
@@ -159,7 +174,11 @@ def get_user_posts(
                     "steps": p.recipe.steps,
                 },
                 "saves": p.saves,
+                "likes": p.likes,
                 "forks": p.forks,
+                "status": p.status,
+                "source_name": p.source_name,
+                "source_url": p.source_url,
                 "created_at": p.created_at.isoformat(),
                 "liked": interactions.get(p.id, (False, False))[0],
                 "saved": interactions.get(p.id, (False, False))[1],

@@ -76,6 +76,16 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX IF NOT EXISTS ix_admin_audit_logs_admin_user_id ON admin_audit_logs (admin_user_id)",
         ),
     ),
+    (
+        6,
+        "post_content_status_and_source",
+        (
+            "ALTER TABLE posts ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'published'",
+            "ALTER TABLE posts ADD COLUMN IF NOT EXISTS source_name varchar(120) NOT NULL DEFAULT ''",
+            "ALTER TABLE posts ADD COLUMN IF NOT EXISTS source_url varchar(500) NOT NULL DEFAULT ''",
+            "CREATE INDEX IF NOT EXISTS ix_posts_status ON posts (status)",
+        ),
+    ),
 )
 
 

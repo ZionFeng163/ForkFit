@@ -16,6 +16,7 @@ from forkfit.models import (
 
 
 RunStatus = Literal["queued", "running", "succeeded", "failed", "cancelled", "needs_input"]
+PostStatus = Literal["draft", "published", "hidden"]
 
 
 class CreateRunRequest(BaseModel):
@@ -47,6 +48,9 @@ class PostResponse(BaseModel):
     image_urls: list[str]
     description: str
     recipe: Meal
+    status: PostStatus = "published"
+    source_name: str = ""
+    source_url: str = ""
     saves: int
     likes: int
     forks: int

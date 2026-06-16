@@ -1,4 +1,6 @@
 export type RunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled" | "needs_input";
+export type PostStatus = "draft" | "published" | "hidden";
+export type PostQuality = "complete" | "missing_image" | "missing_steps" | "incomplete";
 
 export type Meal = {
   id: string;
@@ -126,6 +128,9 @@ export type RecipePost = {
   forks: number;
   description: string;
   recipe: Meal;
+  status?: PostStatus;
+  source_name?: string;
+  source_url?: string;
   created_at?: string;
   liked?: boolean;
   saved?: boolean;
@@ -156,8 +161,13 @@ export type UserInfoResponse = {
 export type AdminStats = {
   user_count: number;
   post_count: number;
+  published_posts: number;
+  hidden_posts: number;
+  draft_posts: number;
   active_runs: number;
   total_runs: number;
+  ai_succeeded_runs: number;
+  ai_failed_runs: number;
   today_new_posts: number;
   today_runs: number;
 };
@@ -176,6 +186,21 @@ export type AdminPost = {
   title: string;
   author: string;
   user_id: string;
+  status: PostStatus;
+  source_name: string;
+  source_url: string;
+  quality: PostQuality;
+  has_image: boolean;
+  has_steps: boolean;
+  created_at: string;
+};
+
+export type AdminRunFeedback = {
+  id: number;
+  run_id: string;
+  user_id: string;
+  rating: "helpful" | "not_helpful";
+  reason: string;
   created_at: string;
 };
 

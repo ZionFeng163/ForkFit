@@ -8,10 +8,13 @@ from pydantic import ValidationError
 
 from forkfit.api.routes_admin import (
     UpdateUserRequest,
+    UpdatePostStatusRequest,
     admin_activity,
     admin_delete_post,
     admin_delete_user,
+    admin_list_posts,
     admin_list_users,
+    admin_update_post_status,
     admin_update_user,
 )
 from forkfit.auth.models import CurrentUser
@@ -77,6 +80,63 @@ class AdminRouteTests(unittest.TestCase):
             admin_delete_post("missing", _admin=ADMIN)
 
         self.assertEqual(error.exception.status_code, 404)
+
+    def test_post_list_forwards_content_filters(self):
+        store = MagicMock()
+        store.list_admin_posts.return_value = ([], 0)
+
+        with patch("forkfit.api.routes_admin.get_post_store", return_value=store):
+            response = admin_list_posts(
+                limit=10,
+                offset=0,
+                q="番茄",
+                status="hidden",
+                tag="家常",
+                quality="missing_image",
+                _admin=ADMIN,
+            )
+
+        self.assertEqual(response, {"posts": [], "total": 0})
+        store.list_admin_posts.assert_called_once_with(
+            limit=10,
+            offset=0,
+            search="番茄",
+            tag="家常",
+            status="hidden",
+            quality="missing_image",
+        )
+
+    def test_post_status_update_returns_quality_fields(self):
+        now = datetime.now(timezone.utc)
+        post = SimpleNamespace(
+            id="post-1",
+            title="测试菜谱",
+            author="Chef",
+            user_id="user-1",
+            status="hidden",
+            source_name="ForkFit",
+            source_url="internal://post-1",
+            quality="complete",
+            has_image=True,
+            has_steps=True,
+            created_at=now,
+        )
+        store = MagicMock()
+        store.update_post_status.return_value = post
+
+        with (
+            patch("forkfit.api.routes_admin.get_post_store", return_value=store),
+            patch("forkfit.api.routes_admin._audit"),
+        ):
+            response = admin_update_post_status(
+                "post-1",
+                UpdatePostStatusRequest(status="hidden"),
+                _admin=ADMIN,
+            )
+
+        self.assertEqual(response.status, "hidden")
+        self.assertEqual(response.quality, "complete")
+        store.update_post_status.assert_called_once_with("post-1", "hidden")
 
     def test_activity_is_sorted_across_posts_and_runs(self):
         now = datetime.now(timezone.utc)

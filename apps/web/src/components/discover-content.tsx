@@ -45,15 +45,13 @@ function timeAgo(dateStr: string) {
 }
 
 const CATEGORIES = [
-  { key: "all", label: { zh: "全部", en: "All" } },
-  { key: "家常菜", label: { zh: "家常菜", en: "Home cooking" } },
-  { key: "快手菜", label: { zh: "快手菜", en: "Quick meals" } },
-  { key: "减脂餐", label: { zh: "减脂餐", en: "Low-cal" } },
+  { key: "推荐", label: { zh: "推荐", en: "Recommended" } },
+  { key: "快手", label: { zh: "快手", en: "Quick" } },
+  { key: "减脂", label: { zh: "减脂", en: "Light" } },
+  { key: "家常", label: { zh: "家常", en: "Home cooking" } },
   { key: "早餐", label: { zh: "早餐", en: "Breakfast" } },
-  { key: "面食", label: { zh: "面食", en: "Noodles" } },
-  { key: "甜品", label: { zh: "甜品", en: "Desserts" } },
-  { key: "汤羹", label: { zh: "汤羹", en: "Soups" } },
-  { key: "便当", label: { zh: "便当", en: "Bento" } },
+  { key: "素食", label: { zh: "素食", en: "Vegetarian" } },
+  { key: "低预算", label: { zh: "低预算", en: "Budget" } },
 ];
 
 interface DiscoverContentProps {
@@ -71,17 +69,16 @@ export function DiscoverContent({ initialPosts, totalCount, initialOffset, featu
   const [totalCount_, setTotalCount] = useState(totalCount);
   const [nextOffset, setNextOffset] = useState(initialOffset);
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("推荐");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const requestIdRef = useRef(0);
 
-  const fetchPosts = useCallback((q: string, tag: string, offset: number) => {
+  const fetchPosts = useCallback((q: string, category: string, offset: number) => {
     const requestId = ++requestIdRef.current;
     setLoading(true);
     setFetchError(null);
-    const apiTag = tag === "all" ? "" : tag;
-    listPostsPage(PAGE_SIZE, offset, q, apiTag)
+    listPostsPage(PAGE_SIZE, offset, q, "", category)
       .then(({ posts: fresh, total }) => {
         if (requestId !== requestIdRef.current) return;
         const withoutFeatured = fresh.filter((post) => post.id !== featuredPost?.id);
@@ -130,16 +127,15 @@ export function DiscoverContent({ initialPosts, totalCount, initialOffset, featu
 
   function handleCategoryClick(catKey: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    const next = activeCategory === catKey ? "all" : catKey;
-    setActiveCategory(next);
-    fetchPosts(search, next, 0);
+    setActiveCategory(catKey);
+    fetchPosts(search, catKey, 0);
   }
 
   function clearSearch() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setSearch("");
-    setActiveCategory("all");
-    fetchPosts("", "all", 0);
+    setActiveCategory("推荐");
+    fetchPosts("", "推荐", 0);
   }
 
   const hasMore = nextOffset < totalCount_;
@@ -148,7 +144,7 @@ export function DiscoverContent({ initialPosts, totalCount, initialOffset, featu
     fetchPosts(search, activeCategory, nextOffset);
   }
 
-  const showClear = search || activeCategory !== "all";
+  const showClear = search || activeCategory !== "推荐";
 
   return (
     <div>
@@ -323,7 +319,9 @@ export function DiscoverContent({ initialPosts, totalCount, initialOffset, featu
       {/* Recipe grid section header */}
       <div className="flex items-center justify-between pt-7 pb-4">
         <h2 className="text-lg font-bold" style={{ letterSpacing: "-0.01em" }}>
-          {activeCategory === "all" ? (locale === "en" ? "All recipes" : "全部菜谱") : (locale === "en" ? activeCategory : activeCategory)}
+          {locale === "en"
+            ? CATEGORIES.find((cat) => cat.key === activeCategory)?.label.en ?? activeCategory
+            : activeCategory}
         </h2>
         <span className="text-[13px]" style={{ color: "var(--lp-muted)" }}>
           {totalCount_} {locale === "en" ? "recipes" : "道"}

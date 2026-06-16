@@ -10,6 +10,7 @@ from forkfit.auth.models import CurrentUser
 from forkfit.llm import LLMClient
 from forkfit.post_extraction import extract_post_details
 from forkfit.stores import PostgresPostStore, PostRecord
+from forkfit.stores.posts import is_public_record
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 logger = logging.getLogger(__name__)
@@ -22,10 +23,24 @@ async def list_posts(
     offset: int = Query(default=0, ge=0),
     q: str = Query(default="", max_length=200),
     tag: str = Query(default="", max_length=100),
+    category: str = Query(default="", max_length=100),
+    status: str = Query(default="", max_length=20),
     user: CurrentUser | None = Depends(optional_current_user),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> list[PostResponse]:
-    posts, total = store.list_posts(limit=limit, offset=offset, search=q, tag=tag)
+    effective_status = status or "published"
+    if status and (user is None or user.role != "admin"):
+        raise HTTPException(status_code=403, detail="Only admins can filter post status.")
+    posts, total = store.list_posts(
+        limit=limit,
+        offset=offset,
+        search=q,
+        tag=tag,
+        category=category,
+        status=effective_status,
+        quality="complete",
+        recommended=not q and not tag,
+    )
     response.headers["X-Total-Count"] = str(total)
     interactions = _get_interactions(store, user, [p.id for p in posts])
     comment_store = get_comment_store()
@@ -89,6 +104,8 @@ async def get_post(
 ) -> PostResponse:
     post = store.get_post(post_id)
     if post is None:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    if not is_public_record(post) and (user is None or (user.id != post.user_id and user.role != "admin")):
         raise HTTPException(status_code=404, detail="Post not found.")
     interactions = _get_interactions(store, user, [post.id])
     comment_store = get_comment_store()
@@ -165,6 +182,9 @@ def _post_response(post: PostRecord, interaction: tuple[bool, bool] | None = Non
         image_urls=post.image_urls,
         description=post.description,
         recipe=post.recipe,
+        status=post.status,
+        source_name=post.source_name,
+        source_url=post.source_url,
         saves=post.saves,
         likes=post.likes,
         forks=post.forks,

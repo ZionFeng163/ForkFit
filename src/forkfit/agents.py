@@ -46,6 +46,39 @@ def _contains_term(text: str, term: str) -> bool:
     return bool(words) and all(word in normalized_text for word in words)
 
 
+EQUIPMENT_ALIASES: dict[str, set[str]] = {
+    "灶台": {"stove", "stovetop", "炒锅", "平底锅", "锅", "炉灶"},
+    "炉灶": {"stove", "stovetop", "炒锅", "平底锅", "锅", "灶台"},
+    "炒锅": {"wok", "stove", "stovetop", "锅", "炉灶", "灶台"},
+    "平底锅": {"pan", "frying pan", "skillet", "stove", "stovetop", "锅", "炉灶"},
+    "汤锅": {"pot", "stove", "stovetop", "锅", "炉灶"},
+    "蒸锅": {"steamer", "pot", "stove", "stovetop", "锅", "炉灶"},
+    "烤箱": {"oven"},
+    "空气炸锅": {"air fryer"},
+    "电饭煲": {"rice cooker"},
+    "oven": {"烤箱"},
+    "air fryer": {"空气炸锅"},
+    "rice cooker": {"电饭煲"},
+    "stove": {"灶台", "炉灶", "炒锅", "平底锅", "汤锅"},
+    "stovetop": {"灶台", "炉灶", "炒锅", "平底锅", "汤锅"},
+}
+
+
+DIET_RULE_BLOCKED_TERMS: dict[str, set[str]] = {
+    "素食": {"猪肉", "牛肉", "羊肉", "鸡肉", "鸡胸肉", "鸡腿", "鱼", "虾", "虾仁", "三文鱼", "肥牛", "肉末", "排骨", "火腿"},
+    "vegetarian": {"pork", "beef", "lamb", "chicken", "fish", "shrimp", "salmon", "tuna", "bacon", "ham", "sausage"},
+    "vegan": {"pork", "beef", "lamb", "chicken", "fish", "shrimp", "salmon", "tuna", "egg", "milk", "cheese", "yogurt", "honey"},
+    "无猪肉": {"猪肉", "肉末", "排骨", "火腿"},
+    "不吃猪肉": {"猪肉", "肉末", "排骨", "火腿"},
+    "no pork": {"pork", "bacon", "ham", "sausage"},
+    "无牛肉": {"牛肉", "肥牛"},
+    "不吃牛肉": {"牛肉", "肥牛"},
+    "no beef": {"beef", "steak"},
+    "低盐": {"咸菜", "腊肉", "火腿", "培根"},
+    "少盐": {"咸菜", "腊肉", "火腿", "培根"},
+}
+
+
 def _equipment_available(required: str, available: set[str]) -> bool:
     """Check if a required equipment item is covered by any available item.
 
@@ -53,10 +86,33 @@ def _equipment_available(required: str, available: set[str]) -> bool:
     """
     if required in available:
         return True
+    required_aliases = EQUIPMENT_ALIASES.get(required, set())
+    if required_aliases & available:
+        return True
     for avail in available:
         if required in avail or avail in required:
             return True
+        if required in EQUIPMENT_ALIASES.get(avail, set()):
+            return True
     return False
+
+
+def _blocked_terms_for_rule(rule: str) -> set[str]:
+    normalized = _norm(rule)
+    if not normalized:
+        return set()
+    blocked: set[str] = set()
+    for key, terms in DIET_RULE_BLOCKED_TERMS.items():
+        normalized_key = _norm(key)
+        if normalized == normalized_key or normalized_key in normalized:
+            blocked.update(terms)
+
+    if normalized.startswith("no "):
+        blocked.add(normalized.removeprefix("no ").strip())
+    for prefix in ("不要", "不吃", "去掉", "去", "无"):
+        if rule.startswith(prefix) and len(rule) > len(prefix):
+            blocked.add(rule[len(prefix):].strip())
+    return {term for term in blocked if term}
 
 
 def _status_from_findings(findings: list[AgentFinding]) -> str:
@@ -286,8 +342,8 @@ class ConstraintGuard:
         for meal in meal_pack.meals:
             text = meal.searchable_text()
             for rule in constraints.diet_rules:
-                blocked_term = _norm(rule).removeprefix("no ")
-                if blocked_term and _contains_term(text, blocked_term):
+                blocked_terms = _blocked_terms_for_rule(rule)
+                if any(_contains_term(text, term) for term in blocked_terms):
                     msg = f"不符合饮食要求：{rule}" if zh else f"Conflicts with diet rule: {rule}"
                     findings.append(
                         AgentFinding(

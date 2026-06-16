@@ -10,18 +10,23 @@ import {
   getAdminStats,
   getAdminHealth,
   getAdminActivity,
+  listAdminRunFeedback,
   listAdminUsers,
   listAdminPosts,
   deleteAdminUser,
   deleteAdminPost,
   updateAdminUser,
+  updateAdminPostStatus,
   batchDeleteAdminUsers,
   batchDeleteAdminPosts,
 } from "@/lib/api";
 import type {
+  AdminRunFeedback,
   AdminStats,
   AdminUser,
   AdminPost,
+  PostQuality,
+  PostStatus,
   ServiceHealth,
   ActivityItem,
 } from "@/types/forkfit";
@@ -241,17 +246,19 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [feedback, setFeedback] = useState<AdminRunFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const refresh = useCallback(() => {
     setLoading(true);
     setError("");
-    Promise.all([getAdminStats(), getAdminHealth(), getAdminActivity()])
-      .then(([s, h, a]) => {
+    Promise.all([getAdminStats(), getAdminHealth(), getAdminActivity(), listAdminRunFeedback(8)])
+      .then(([s, h, a, f]) => {
         setStats(s);
         setHealth(h.services);
         setActivities(a.activities);
+        setFeedback(f.feedback);
       })
       .catch((reason: Error) => {
         setError(reason.message || "后台数据加载失败");
@@ -277,9 +284,9 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-6 grid grid-cols-4 gap-4">
         <StatCard
           icon={Icons.postsStat}
-          label="菜谱总数"
-          value={stats.post_count}
-          detail={`今日新增 ${stats.today_new_posts}`}
+          label="发布内容"
+          value={stats.published_posts}
+          detail={`隐藏 ${stats.hidden_posts} · 草稿 ${stats.draft_posts}`}
         />
         <StatCard
           icon={Icons.usersStat}
@@ -291,7 +298,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
           icon={Icons.runsStat}
           label="AI 定制次数"
           value={stats.total_runs}
-          detail={`今日新增 ${stats.today_runs}`}
+          detail={`成功 ${stats.ai_succeeded_runs} · 失败 ${stats.ai_failed_runs}`}
         />
         <StatCard
           icon={Icons.clockStat}
@@ -376,6 +383,33 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
           ))}
         </ul>
       </div>
+
+      <div className="mb-4 mt-8 text-[15px] font-bold text-[#1a1917]">AI 反馈</div>
+      <div className="rounded-xl border border-[#e8e6e0] bg-white">
+        <ul className="px-5 py-2">
+          {feedback.length === 0 && (
+            <li className="py-8 text-center text-sm text-[#a8a59d]">暂无反馈</li>
+          )}
+          {feedback.map((item) => (
+            <li
+              key={item.id}
+              className="flex items-start justify-between gap-4 border-b border-[#e8e6e0] py-3 last:border-0"
+            >
+              <div>
+                <div className="text-[13px] font-semibold text-[#1a1917]">
+                  {item.rating === "helpful" ? "有用" : "没用"} · {item.run_id.slice(0, 16)}...
+                </div>
+                <div className="mt-0.5 text-xs text-[#7c7a73]">
+                  {item.reason || "用户未填写原因"}
+                </div>
+              </div>
+              <span className="whitespace-nowrap text-[11px] text-[#a8a59d]">
+                {new Date(item.created_at).toLocaleString("zh-CN")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </>
   );
 }
@@ -440,7 +474,7 @@ const SERVICE_DISPLAY_CONFIG: Record<
   string,
   { desc: string; iconBg: string; iconColor: string; icon: React.ReactNode; metrics: { label: string; key: string }[] }
 > = {
-  PostgreSQL: {
+  database: {
     desc: "用户数据 + 菜谱内容",
     iconBg: "#e8f5ee",
     iconColor: "#2d8a56",
@@ -457,8 +491,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
       { label: "连接", key: "details" },
     ],
   },
-  Redis: {
-    desc: "会话缓存 + 热数据",
+  redis: {
+    desc: "限流 + 运行态缓存",
     iconBg: "#fde8ea",
     iconColor: "#d94452",
     icon: (
@@ -472,8 +506,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
       { label: "内存", key: "details" },
     ],
   },
-  Kafka: {
-    desc: "事件流 + 消息队列",
+  executor: {
+    desc: "inline 任务执行器",
     iconBg: "#eef4fd",
     iconColor: "#4a8ac9",
     icon: (
@@ -487,8 +521,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
       { label: "详情", key: "details" },
     ],
   },
-  "Bailian API": {
-    desc: "AI 定制 + 推荐算法",
+  llm: {
+    desc: "AI 定制模型连通性",
     iconBg: "#fef0ec",
     iconColor: "#e85d3a",
     icon: (
@@ -616,6 +650,9 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PostStatus | "all">("all");
+  const [qualityFilter, setQualityFilter] = useState<PostQuality | "all">("all");
+  const [tagFilter, setTagFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pendingDelete, setPendingDelete] = useState<AdminPost | "batch" | null>(null);
   const [actionPending, setActionPending] = useState(false);
@@ -627,7 +664,11 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
   const fetchPosts = useCallback(() => {
     setLoading(true);
     setError("");
-    listAdminPosts(limit, page * limit, debouncedSearch)
+    listAdminPosts(limit, page * limit, debouncedSearch, {
+      status: statusFilter,
+      quality: qualityFilter,
+      tag: tagFilter,
+    })
       .then((res) => {
         setPosts(res.posts);
         setTotal(res.total);
@@ -637,7 +678,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
         setError(reason.message || "菜谱列表加载失败");
       })
       .finally(() => setLoading(false));
-  }, [debouncedSearch, page]);
+  }, [debouncedSearch, page, qualityFilter, statusFilter, tagFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(fetchPosts, 0);
@@ -675,6 +716,24 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
     }
   }
 
+  async function changePostStatus(post: AdminPost, status: PostStatus) {
+    setActionPending(true);
+    setError("");
+    setMessage("");
+    try {
+      const updated = await updateAdminPostStatus(post.id, status);
+      setPosts((current) => current.map((item) => (
+        item.id === post.id ? updated : item
+      )));
+      setMessage(`已${status === "published" ? "恢复发布" : status === "hidden" ? "下架" : "设为草稿"}「${post.title}」`);
+      if (statusFilter !== "all" && statusFilter !== status) fetchPosts();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "状态更新失败");
+    } finally {
+      setActionPending(false);
+    }
+  }
+
   const totalPages = Math.ceil(total / limit);
   const pageNumbers = getPageNumbers(page, totalPages);
   const allSelected = posts.length > 0 && posts.every((post) => selectedIds.has(post.id));
@@ -707,14 +766,44 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
-          {Icons.search}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value as PostStatus | "all"); setPage(0); }}
+            className="rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none"
+          >
+            <option value="all">全部状态</option>
+            <option value="published">已发布</option>
+            <option value="hidden">已下架</option>
+            <option value="draft">草稿</option>
+          </select>
+          <select
+            value={qualityFilter}
+            onChange={(e) => { setQualityFilter(e.target.value as PostQuality | "all"); setPage(0); }}
+            className="rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none"
+          >
+            <option value="all">全部质量</option>
+            <option value="complete">完整</option>
+            <option value="missing_image">缺图</option>
+            <option value="missing_steps">缺步骤</option>
+            <option value="incomplete">缺图和步骤</option>
+          </select>
+          <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
+            {Icons.search}
+            <input
+              type="text"
+              placeholder="标题 / 标签..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              className="w-36 border-none bg-transparent text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
+            />
+          </div>
           <input
             type="text"
-            placeholder="搜索菜谱标题..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-44 border-none bg-transparent text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
+            placeholder="标签筛选"
+            value={tagFilter}
+            onChange={(e) => { setTagFilter(e.target.value); setPage(0); }}
+            className="w-24 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
           />
         </div>
       </div>
@@ -723,7 +812,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
 
       {/* Table */}
       <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse">
+      <table className="w-full min-w-[960px] border-collapse">
         <thead>
           <tr className="border-b border-[#e8e6e0] bg-[#f5f4f0]">
             <th className="w-12 px-5 py-3 text-left">
@@ -738,7 +827,16 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
               菜谱
             </th>
             <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+              状态
+            </th>
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+              质量
+            </th>
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               作者
+            </th>
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+              来源
             </th>
             <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
               发布时间
@@ -751,7 +849,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
         <tbody>
           {posts.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
+              <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
                 {loading ? "正在加载..." : search ? "没有匹配的菜谱" : "暂无菜谱"}
               </td>
             </tr>
@@ -769,7 +867,16 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                   onChange={() => toggleSelection(p.id)}
                 />
               </td>
-              <td className="px-5 py-3.5 text-sm font-semibold text-[#1a1917]">{p.title}</td>
+              <td className="px-5 py-3.5">
+                <div className="text-sm font-semibold text-[#1a1917]">{p.title}</div>
+                <div className="mt-0.5 text-[11px] text-[#a8a59d]">{p.id}</div>
+              </td>
+              <td className="px-5 py-3.5">
+                <StatusBadge status={p.status} />
+              </td>
+              <td className="px-5 py-3.5">
+                <QualityBadge quality={p.quality} />
+              </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#fef0ec] text-[11px] font-bold text-[#e85d3a]">
@@ -778,10 +885,22 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                   <span className="text-sm font-semibold text-[#1a1917]">{p.author}</span>
                 </div>
               </td>
+              <td className="px-5 py-3.5 text-xs text-[#7c7a73]">
+                <div className="max-w-[150px] truncate" title={p.source_url || p.source_name}>
+                  {p.source_name || "用户投稿"}
+                </div>
+              </td>
               <td className="px-5 py-3.5 text-sm text-[#7c7a73]">
                 {new Date(p.created_at).toLocaleDateString("zh-CN")}
               </td>
               <td className="px-5 py-3.5 text-right">
+                <button
+                  onClick={() => void changePostStatus(p, p.status === "published" ? "hidden" : "published")}
+                  disabled={actionPending}
+                  className="mr-2 rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a1917] transition-colors hover:border-[#2d8a56] hover:text-[#2d8a56] disabled:opacity-50"
+                >
+                  {p.status === "published" ? "下架" : "恢复"}
+                </button>
                 <button
                   onClick={() => setPendingDelete(p)}
                   className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452]"
@@ -838,6 +957,39 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
         onCancel={() => { if (!actionPending) setPendingDelete(null); }}
       />
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: PostStatus }) {
+  const label = status === "published" ? "已发布" : status === "hidden" ? "已下架" : "草稿";
+  const classes = status === "published"
+    ? "bg-[#e8f5ee] text-[#2d8a56]"
+    : status === "hidden"
+    ? "bg-[#fef0ec] text-[#e85d3a]"
+    : "bg-[#f5f4f0] text-[#7c7a73]";
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${classes}`}>
+      {label}
+    </span>
+  );
+}
+
+function QualityBadge({ quality }: { quality: PostQuality }) {
+  const label: Record<PostQuality, string> = {
+    complete: "完整",
+    missing_image: "缺图",
+    missing_steps: "缺步骤",
+    incomplete: "不完整",
+  };
+  const ok = quality === "complete";
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+        ok ? "bg-[#e8f5ee] text-[#2d8a56]" : "bg-[#fde8ea] text-[#d94452]"
+      }`}
+    >
+      {label[quality]}
+    </span>
   );
 }
 

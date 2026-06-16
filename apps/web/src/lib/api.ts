@@ -2,6 +2,7 @@ import type {
   AdminActivityResponse,
   AdminHealthResponse,
   AdminPost,
+  AdminRunFeedback,
   AdminStats,
   AdminUser,
   AuthResponse,
@@ -188,14 +189,15 @@ export function listSavedRuns() {
   return request<RunStatusResponse[]>("/runs/saved");
 }
 
-export function listPosts(limit = 20, offset = 0, q = "", tag = "") {
-  return listPostsPage(limit, offset, q, tag).then(({ posts }) => posts);
+export function listPosts(limit = 20, offset = 0, q = "", tag = "", category = "") {
+  return listPostsPage(limit, offset, q, tag, category).then(({ posts }) => posts);
 }
 
-export async function listPostsPage(limit = 20, offset = 0, q = "", tag = "") {
+export async function listPostsPage(limit = 20, offset = 0, q = "", tag = "", category = "") {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (q) params.set("q", q);
   if (tag) params.set("tag", tag);
+  if (category) params.set("category", category);
   const response = await requestResponse(`/posts?${params}`);
   const posts = await response.json() as RecipePost[];
   const total = Number.parseInt(response.headers.get("X-Total-Count") ?? String(posts.length), 10);
@@ -268,17 +270,36 @@ export function deleteAdminUser(userId: string) {
   return request<void>(`/admin/users/${userId}`, { method: "DELETE" });
 }
 
-export function listAdminPosts(limit = 50, offset = 0, q = "") {
+export function listAdminPosts(
+  limit = 50,
+  offset = 0,
+  q = "",
+  filters?: { status?: string; tag?: string; quality?: string },
+) {
   const params = new URLSearchParams({
     limit: String(limit),
     offset: String(offset),
   });
   if (q) params.set("q", q);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.tag) params.set("tag", filters.tag);
+  if (filters?.quality) params.set("quality", filters.quality);
   return request<{ posts: AdminPost[]; total: number }>(`/admin/posts?${params}`);
+}
+
+export function updateAdminPostStatus(postId: string, status: "draft" | "published" | "hidden") {
+  return request<AdminPost>(`/admin/posts/${postId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
 export function deleteAdminPost(postId: string) {
   return request<void>(`/admin/posts/${postId}`, { method: "DELETE" });
+}
+
+export function listAdminRunFeedback(limit = 20, offset = 0) {
+  return request<{ feedback: AdminRunFeedback[]; total: number }>(`/admin/runs/feedback?limit=${limit}&offset=${offset}`);
 }
 
 export function batchDeleteAdminUsers(ids: string[]) {

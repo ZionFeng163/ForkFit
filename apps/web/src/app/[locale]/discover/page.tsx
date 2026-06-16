@@ -6,7 +6,12 @@ const API_BASE = process.env.FORKFIT_API_BASE_URL ?? "http://127.0.0.1:8000";
 const PAGE_SIZE = 20;
 
 export default async function DiscoverPage() {
-  const res = await fetch(`${API_BASE}/posts?limit=${PAGE_SIZE}&offset=0`, {
+  const params = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+    offset: "0",
+    category: "推荐",
+  });
+  const res = await fetch(`${API_BASE}/posts?${params}`, {
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
   });

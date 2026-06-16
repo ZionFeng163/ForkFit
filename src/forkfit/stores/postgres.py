@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import uuid4
 
@@ -12,6 +13,16 @@ from forkfit.db.models import RunEventRow, RunFeedbackRow, RunRow
 from forkfit.models import MealPack, RunTrace
 from forkfit.serialization import meal_pack_from_dict, run_trace_from_dict
 from forkfit.stores.base import RunRecord, utc_now
+
+
+@dataclass(frozen=True, slots=True)
+class RunFeedbackRecord:
+    id: int
+    run_id: str
+    user_id: str
+    rating: str
+    reason: str
+    created_at: datetime
 
 
 class PostgresRunStore:
@@ -234,6 +245,10 @@ class PostgresRunStore:
         with self.session_factory() as session:
             return session.query(func.count(RunRow.id)).scalar()
 
+    def count_runs_by_status(self, status: str) -> int:
+        with self.session_factory() as session:
+            return session.query(func.count(RunRow.id)).filter(RunRow.status == status).scalar()
+
     def list_failed_runs(self, limit: int = 20) -> list[RunRecord]:
         with self.session_factory() as session:
             rows = (
@@ -250,6 +265,28 @@ class PostgresRunStore:
             _require_row(session, run_id)
             session.add(RunFeedbackRow(run_id=run_id, user_id=user_id, rating=rating, reason=reason))
             session.commit()
+
+    def list_feedback(self, limit: int = 50, offset: int = 0) -> tuple[list[RunFeedbackRecord], int]:
+        with self.session_factory() as session:
+            total = session.query(func.count(RunFeedbackRow.id)).scalar()
+            rows = (
+                session.query(RunFeedbackRow)
+                .order_by(RunFeedbackRow.created_at.desc(), RunFeedbackRow.id.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            return [
+                RunFeedbackRecord(
+                    id=row.id,
+                    run_id=row.run_id,
+                    user_id=row.user_id,
+                    rating=row.rating,
+                    reason=row.reason,
+                    created_at=row.created_at,
+                )
+                for row in rows
+            ], total
 
 
 def _require_row(session: Session, run_id: str) -> RunRow:
