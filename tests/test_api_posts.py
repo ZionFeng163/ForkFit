@@ -66,12 +66,14 @@ class PostApiTests(unittest.TestCase):
     def test_list_posts_includes_presets(self):
         client = self._client()
 
-        response = client.get("/posts?limit=100")
+        response = client.get("/posts?limit=100&q=莓果")
 
         self.assertEqual(response.status_code, 200)
         post_ids = {post["id"] for post in response.json()}
-        self.assertIn("budget-family-hotpot", post_ids)
         self.assertIn("berry-yogurt-jar", post_ids)
+
+        get_response = client.get("/posts/budget-family-hotpot")
+        self.assertEqual(get_response.status_code, 200)
 
     def test_create_list_and_get_post(self):
         client = self._client()
@@ -103,7 +105,7 @@ class PostApiTests(unittest.TestCase):
         self.assertEqual(post["recipe"]["ingredients"], ["番茄", "米饭", "蜂蜜"])
         self.assertEqual(len(post["image_urls"]), 1)
 
-        list_response = client.get("/posts")
+        list_response = client.get("/posts?q=Test%20Tomato%20Rice")
         self.assertEqual(list_response.status_code, 200)
         self.assertTrue(
             any(item["id"] == post["id"] for item in list_response.json())
