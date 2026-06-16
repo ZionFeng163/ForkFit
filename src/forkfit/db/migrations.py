@@ -46,6 +46,36 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX IF NOT EXISTS ix_comments_user_id ON comments (user_id)",
         ),
     ),
+    (
+        5,
+        "run_feedback_and_admin_audit",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS run_feedback (
+                id serial PRIMARY KEY,
+                run_id varchar(80) NOT NULL,
+                user_id varchar(120) NOT NULL,
+                rating varchar(40) NOT NULL,
+                reason text NOT NULL DEFAULT '',
+                created_at timestamptz NOT NULL DEFAULT now()
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_run_feedback_run_id ON run_feedback (run_id)",
+            "CREATE INDEX IF NOT EXISTS ix_run_feedback_user_id ON run_feedback (user_id)",
+            """
+            CREATE TABLE IF NOT EXISTS admin_audit_logs (
+                id serial PRIMARY KEY,
+                admin_user_id varchar(120) NOT NULL,
+                action varchar(120) NOT NULL,
+                target_type varchar(80) NOT NULL,
+                target_id varchar(160) NOT NULL,
+                payload json NOT NULL,
+                created_at timestamptz NOT NULL DEFAULT now()
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_admin_audit_logs_admin_user_id ON admin_audit_logs (admin_user_id)",
+        ),
+    ),
 )
 
 

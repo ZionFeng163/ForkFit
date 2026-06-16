@@ -5,6 +5,7 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { RemoteImage } from "@/components/remote-image";
+import { readCookie } from "@/lib/api";
 
 type Props = {
   images: string[];
@@ -30,9 +31,14 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      const csrfToken = readCookie("csrf_token");
+      const headers: HeadersInit = {
+        Authorization: `Bearer ${localStorage.getItem("forkfit.auth.token") || ""}`,
+      };
+      if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
       const res = await fetch("/api/backend/upload/image", {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("forkfit.auth.token") || ""}` },
+        headers,
         body: formData,
       });
       if (!res.ok) throw new Error("Upload failed");

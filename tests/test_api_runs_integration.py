@@ -62,10 +62,42 @@ class RunApiIntegrationTests(unittest.TestCase):
         run_id = response.json()["run_id"]
         self.addCleanup(self._delete_run, run_id)
         self.assertEqual(response.json()["status"], "queued")
+        self.assertIn("queue_position", response.json())
+        self.assertIn("user_message", response.json())
 
         get_response = client.get(f"/runs/{run_id}")
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(get_response.json()["user_id"], "demo_user")
+
+    def test_feedback_requires_succeeded_run(self):
+        store = PostgresRunStore(make_session_factory(get_settings().database_url))
+        service = RunService(store=store, executor=NoopExecutor(), settings=get_settings())
+        app = create_app()
+        app.dependency_overrides[get_run_service] = lambda: service
+        app.dependency_overrides[current_user] = lambda: CurrentUser(
+            id="demo_user",
+            username="demo",
+            display_name="Demo User",
+            avatar_url=None,
+            role="user",
+        )
+        client = TestClient(app)
+        response = client.post(
+            "/runs",
+            json={
+                "user_profile": asdict(demo_user_profile()),
+                "meal_pack": demo_meal_pack().to_dict(),
+            },
+        )
+        run_id = response.json()["run_id"]
+        self.addCleanup(self._delete_run, run_id)
+
+        feedback_response = client.post(
+            f"/runs/{run_id}/feedback",
+            json={"rating": "helpful", "reason": "good"},
+        )
+
+        self.assertEqual(feedback_response.status_code, 400)
 
 
 if __name__ == "__main__":

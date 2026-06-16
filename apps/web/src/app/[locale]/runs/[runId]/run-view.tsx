@@ -8,7 +8,7 @@ import {
 
 import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
-import { getRun, getPost, publishRun, resolveRun, saveRun } from "@/lib/api";
+import { getRun, getPost, publishRun, resolveRun, saveRun, sendRunFeedback } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 
 export function RunView({ runId }: { runId: string }) {
@@ -43,6 +43,7 @@ export function RunView({ runId }: { runId: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [substitutions, setSubstitutions] = useState<Record<string, string>>({});
   const [resolving, setResolving] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<"idle" | "sent" | "error">("idle");
 
   // Init fields from result
   useEffect(() => {
@@ -118,6 +119,16 @@ export function RunView({ runId }: { runId: string }) {
     }
   }
 
+  async function handleFeedback(rating: "helpful" | "not_helpful") {
+    setFeedbackState("idle");
+    try {
+      await sendRunFeedback(runId, { rating });
+      setFeedbackState("sent");
+    } catch {
+      setFeedbackState("error");
+    }
+  }
+
   // Loading / error states
   if (query.isLoading) {
     return (
@@ -144,6 +155,13 @@ export function RunView({ runId }: { runId: string }) {
 
   // Still running
   if (run.status === "queued" || run.status === "running") {
+    const steps = [
+      "理解需求",
+      "检查限制",
+      "生成替代方案",
+      "整理步骤",
+    ];
+    const activeStep = run.status === "queued" ? 0 : Math.min(3, Math.max(1, run.trace?.steps?.length ?? 1));
     return (
       <div className="mx-auto max-w-[860px] px-7 pb-20">
         <div className="pt-6">
@@ -151,10 +169,34 @@ export function RunView({ runId }: { runId: string }) {
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <div className="py-20 text-center">
+        <div className="py-16 text-center">
           <Loader2 size={32} className="animate-spin mx-auto mb-4" style={{ color: "var(--lp-accent)" }} />
-          <div className="text-base font-semibold" style={{ color: "var(--lp-fg)" }}>定制中...</div>
-          <div className="text-sm mt-1" style={{ color: "var(--lp-muted)" }}>AI 正在为你调整菜谱</div>
+          <div className="text-base font-semibold" style={{ color: "var(--lp-fg)" }}>
+            {run.status === "queued" ? "已加入队列" : "定制中..."}
+          </div>
+          <div className="text-sm mt-1" style={{ color: "var(--lp-muted)" }}>
+            {run.user_message || "AI 正在为你调整菜谱"}
+          </div>
+          <div className="mt-3 text-xs" style={{ color: "var(--lp-muted)" }}>
+            {run.queue_position ? `队列位置 ${run.queue_position}` : "正在处理"}
+            {run.estimated_wait_seconds ? ` · 预计 ${run.estimated_wait_seconds} 秒` : ""}
+          </div>
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+            {steps.map((step, index) => (
+              <div
+                key={step}
+                className="rounded-xl px-3.5 py-3"
+                style={{
+                  border: "1px solid var(--lp-border)",
+                  background: index <= activeStep ? "var(--lp-accent-light)" : "var(--lp-surface)",
+                  color: index <= activeStep ? "var(--lp-accent)" : "var(--lp-muted)",
+                }}
+              >
+                <div className="text-[11px] font-semibold">阶段 {index + 1}</div>
+                <div className="mt-1 text-[13px] font-bold">{step}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -171,6 +213,16 @@ export function RunView({ runId }: { runId: string }) {
         <div className="py-20 text-center">
           <div className="text-base font-semibold mb-2" style={{ color: "var(--lp-fg)" }}>定制失败</div>
           <div className="text-sm" style={{ color: "var(--lp-muted)" }}>{run.error?.message || "未知错误"}</div>
+          <div className="mt-3 text-sm" style={{ color: "var(--lp-muted)" }}>
+            {run.user_message || "你可以回到原菜谱重新提交，或者把限制写得更具体一点。"}
+          </div>
+          <Link
+            href="/discover"
+            className="mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+            style={{ background: "var(--lp-accent)" }}
+          >
+            换个菜谱重试
+          </Link>
         </div>
       </div>
     );
@@ -389,7 +441,7 @@ export function RunView({ runId }: { runId: string }) {
 
       {/* Actions */}
       <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
             style={{
@@ -405,6 +457,29 @@ export function RunView({ runId }: { runId: string }) {
             style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
             查看原版菜谱
           </Link>
+        </div>
+        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--lp-border)" }}>
+          <div className="text-[13px] font-semibold mb-2" style={{ color: "var(--lp-fg)" }}>
+            这个 AI 结果有帮助吗？
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => handleFeedback("helpful")}
+              className="px-3.5 py-2 rounded-lg text-[13px] font-semibold"
+              style={{ border: "1px solid var(--lp-border)", color: "var(--lp-green)", background: "var(--lp-green-light)" }}
+            >
+              有用
+            </button>
+            <button
+              onClick={() => handleFeedback("not_helpful")}
+              className="px-3.5 py-2 rounded-lg text-[13px] font-semibold"
+              style={{ border: "1px solid var(--lp-border)", color: "var(--lp-muted)", background: "var(--lp-surface)" }}
+            >
+              没用
+            </button>
+            {feedbackState === "sent" && <span className="self-center text-[13px]" style={{ color: "var(--lp-green)" }}>已收到反馈</span>}
+            {feedbackState === "error" && <span className="self-center text-[13px]" style={{ color: "#9e3a2b" }}>反馈提交失败</span>}
+          </div>
         </div>
       </div>
     </div>

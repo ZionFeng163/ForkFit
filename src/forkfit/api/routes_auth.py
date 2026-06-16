@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+import secrets
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from forkfit.api.deps import current_user, get_user_store
 from forkfit.auth.jwt import create_access_token
 from forkfit.auth.models import CurrentUser
 from forkfit.auth.password import hash_password, verify_password
+from forkfit.api.rate_limit import enforce_rate_limit
 from forkfit.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -49,6 +52,7 @@ def _user_info(user_id: str, username: str, display_name: str, avatar_url: str |
 
 
 def _set_cookie(response: Response, token: str, cookie_secure: bool) -> None:
+    csrf_token = secrets.token_urlsafe(32)
     response.set_cookie(
         key="access_token",
         value=token,
@@ -58,12 +62,23 @@ def _set_cookie(response: Response, token: str, cookie_secure: bool) -> None:
         max_age=7 * 24 * 3600,
         path="/",
     )
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        httponly=False,
+        secure=cookie_secure,
+        samesite="lax",
+        max_age=7 * 24 * 3600,
+        path="/",
+    )
 
 
 @router.post("/register", response_model=AuthResponse)
-def register(body: RegisterRequest, response: Response) -> AuthResponse:
+def register(body: RegisterRequest, response: Response, request: Request) -> AuthResponse:
     store = get_user_store()
     settings = get_settings()
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:register:{client_ip}", max_requests=5, window_seconds=300, detail="Too many registrations. Please wait.")
 
     existing = store.get_user_by_username(body.username)
     if existing:
@@ -87,9 +102,11 @@ def register(body: RegisterRequest, response: Response) -> AuthResponse:
 
 
 @router.post("/login", response_model=AuthResponse)
-def login(body: LoginRequest, response: Response) -> AuthResponse:
+def login(body: LoginRequest, response: Response, request: Request) -> AuthResponse:
     store = get_user_store()
     settings = get_settings()
+    client_ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(f"auth:login:{client_ip}:{body.username.lower()}", max_requests=8, window_seconds=300, detail="Too many login attempts. Please wait.")
 
     result = store.get_password_hash_by_username(body.username)
     if not result:
@@ -120,4 +137,5 @@ def me(user: CurrentUser = Depends(current_user)) -> UserInfoResponse:
 @router.post("/logout")
 def logout(response: Response) -> dict[str, str]:
     response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="csrf_token", path="/")
     return {"detail": "Logged out"}

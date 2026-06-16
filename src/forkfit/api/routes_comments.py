@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from forkfit.api.deps import current_user, get_comment_store, optional_current_user
+from forkfit.api.rate_limit import enforce_rate_limit
 from forkfit.auth.models import CurrentUser
 from forkfit.stores.comments import CommentStore
 
@@ -63,6 +64,12 @@ def create_comment(
     user: CurrentUser = Depends(current_user),
     store: CommentStore = Depends(get_comment_store),
 ) -> CommentResponse:
+    enforce_rate_limit(
+        f"comment:{user.id}:{post_id}",
+        max_requests=10,
+        window_seconds=60,
+        detail="Too many comments. Please wait a minute.",
+    )
     comment = store.create_comment(
         post_id=post_id,
         user_id=user.id,

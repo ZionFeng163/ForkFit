@@ -8,7 +8,6 @@ from forkfit.auth.jwt import decode_access_token
 from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
-from forkfit.executors.kafka import KafkaJobExecutor
 from forkfit.executors.inline import InlineJobExecutor
 from forkfit.llm import BailianLLMClient
 from forkfit.services import RunService
@@ -57,6 +56,10 @@ def get_run_service() -> RunService:
     if settings.job_executor == "inline":
         executor = InlineJobExecutor()
     elif settings.job_executor == "kafka":
+        try:
+            from forkfit.executors.kafka import KafkaJobExecutor
+        except ImportError as exc:
+            raise RuntimeError("JOB_EXECUTOR=kafka requires the optional confluent-kafka dependency.") from exc
         executor = KafkaJobExecutor()
     else:
         raise RuntimeError(f"Unsupported JOB_EXECUTOR: {settings.job_executor}")

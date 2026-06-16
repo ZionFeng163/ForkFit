@@ -2,23 +2,23 @@
 
 ## 运行拓扑
 
-项目只使用根目录 `docker-compose.yml`：
+当前线上以 VPS 实际部署为准：
 
-- `frontend`: Next.js 开发服务，对外端口 `3001`
-- `backend`: FastAPI，对外端口 `8000`
-- `worker`: Kafka 任务消费者
-- `postgres`: PostgreSQL 16，对外端口 `5432`
-- `redis`: 缓存与限流，对外端口 `6379`
-- `kafka`: Kafka 3.9 KRaft 单节点，对外端口 `9092`
+- `nginx`: 对外 HTTPS，反代到前端和 `/api/backend`
+- `frontend`: Next.js 服务，监听 `127.0.0.1:3001`
+- `backend`: FastAPI 服务，监听 `127.0.0.1:8000`
+- `postgres`: PostgreSQL 16，本机内网
+- `redis`: 缓存、限流、轻量队列状态，本机内网
+- `inline executor`: 小规模公测默认任务执行器
 
-不再支持本机 Homebrew/Conda 启动、Redis Queue、ZooKeeper 或独立 production compose。
+根目录 `docker-compose.yml` 仅用于本地开发，保持同样的 frontend/backend/postgres/redis 结构。Kafka/worker 不再是默认部署服务，只作为未来扩容方向保留在代码能力里。
 
 ## 数据流
 
-1. FastAPI 创建 `runs` 记录并向 `forkfit-jobs` 投递任务。
-2. Worker 消费任务，复用进程内的 `ForkFitLangGraphWorkflow`。
+1. FastAPI 创建 `runs` 记录，立即返回 run id。
+2. Inline executor 在后端进程内运行 `ForkFitLangGraphWorkflow`。
 3. 每个 graph 节点完成后更新数据库 trace。
-4. 前端轮询 run 状态；不再为每个浏览器连接创建 Kafka consumer。
+4. 前端轮询 run 状态，并显示排队位置、预计等待时间和用户可读阶段。
 5. 任务需要人工替代时进入 `needs_input`，用户选择后更新原输入并重新入队。
 
 ## Agent 流程
@@ -41,3 +41,11 @@ load_input
 ## 数据库
 
 `Base.metadata.create_all()` 负责创建新表，`src/forkfit/db/migrations.py` 负责升级已有表。每个迁移只执行一次，版本记录保存在 `schema_migrations`。
+
+## 上线检查
+
+- `/healthz` 返回 `ok`
+- `/readyz` 至少 database、redis、executor 为 `ok`
+- 生产环境缺少强 `JWT_SECRET`、强 `ADMIN_PASSWORD` 或 `COOKIE_SECURE=true` 时后端拒绝启动
+- PostgreSQL 每日备份，本地保留 7 天，异地保留 30 天
+- Inline executor 公测建议 `MAX_GLOBAL_CONCURRENT_RUNS=1-2`

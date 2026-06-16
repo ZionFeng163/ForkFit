@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from forkfit.api.deps import current_user, get_post_store, get_run_service
-from forkfit.api.schemas import CreateRunRequest, CreateRunResponse, PostResponse, RunStatusResponse
+from forkfit.api.rate_limit import enforce_rate_limit
+from forkfit.api.schemas import CreateRunRequest, CreateRunResponse, PostResponse, RunFeedbackRequest, RunStatusResponse
 from forkfit.auth.models import CurrentUser
 from forkfit.services import RunService
 from forkfit.stores.base import RunRecord
@@ -120,16 +121,12 @@ async def create_run(
     user: CurrentUser = Depends(current_user),
     service: RunService = Depends(get_run_service),
 ) -> CreateRunResponse:
-    # Rate limit: 5 fork requests per minute per user
-    from forkfit.config import get_settings
-    from forkfit.redis_utils import get_rate_limiter
-    settings = get_settings()
-    if settings.rate_limit_enabled:
-        limiter = get_rate_limiter(settings.redis_url)
-        if limiter:
-            allowed, remaining = limiter.is_allowed(f"fork:{user.id}", max_requests=5, window_seconds=60)
-            if not allowed:
-                raise HTTPException(status_code=429, detail="Too many fork requests. Please wait a minute.")
+    enforce_rate_limit(
+        f"fork:{user.id}",
+        max_requests=5,
+        window_seconds=60,
+        detail="Too many fork requests. Please wait a minute.",
+    )
 
     run = await service.create_run(
         user_id=user.id,
@@ -137,7 +134,33 @@ async def create_run(
         meal_pack=request.meal_pack,
         locale=request.locale,
     )
-    return CreateRunResponse(run_id=run.id, status=run.status)
+    queue_position, wait_seconds, user_message = _run_progress_fields(run, service)
+    return CreateRunResponse(
+        run_id=run.id,
+        status=run.status,
+        queue_position=queue_position,
+        estimated_wait_seconds=wait_seconds,
+        user_message=user_message,
+    )
+
+
+@router.post("/{run_id}/feedback")
+async def submit_run_feedback(
+    run_id: str,
+    body: RunFeedbackRequest,
+    user: CurrentUser = Depends(current_user),
+    service: RunService = Depends(get_run_service),
+) -> dict[str, bool]:
+    run = service.get_run(run_id)
+    if run is None or run.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Run not found.")
+    if run.status != "succeeded":
+        raise HTTPException(status_code=400, detail="Only succeeded runs can receive feedback.")
+    save_feedback = getattr(service.store, "save_feedback", None)
+    if save_feedback is None:
+        raise HTTPException(status_code=501, detail="Feedback storage is not available.")
+    save_feedback(run_id=run_id, user_id=user.id, rating=body.rating, reason=body.reason or "")
+    return {"ok": True}
 
 
 class PublishRequest(BaseModel):
@@ -230,6 +253,7 @@ async def get_run(
 
 
 def _run_response(run: RunRecord) -> RunStatusResponse:
+    queue_position, wait_seconds, user_message = _run_progress_fields(run)
     return RunStatusResponse(
         run_id=run.id,
         user_id=run.user_id,
@@ -242,7 +266,33 @@ def _run_response(run: RunRecord) -> RunStatusResponse:
         trace=run.trace,
         unresolved_payload=run.unresolved_payload,
         saved=run.saved,
+        queue_position=queue_position,
+        estimated_wait_seconds=wait_seconds,
+        user_message=user_message,
     )
+
+
+def _run_progress_fields(run: RunRecord, service: RunService | None = None) -> tuple[int | None, int | None, str]:
+    queue_position: int | None = None
+    estimated_wait_seconds: int | None = None
+    if run.status == "queued":
+        queued_ahead = 0
+        if service is not None:
+            count_queued_ahead = getattr(service.store, "count_queued_ahead", None)
+            if count_queued_ahead is not None:
+                queued_ahead = count_queued_ahead(run.id)
+        queue_position = queued_ahead + 1
+        estimated_wait_seconds = max(15, queue_position * 30)
+        return queue_position, estimated_wait_seconds, "已加入队列，ForkFit 会按顺序开始定制。"
+    if run.status == "running":
+        return 0, 20, "AI 正在理解需求、检查限制并整理替代方案。"
+    if run.status == "needs_input":
+        return None, None, "有些限制需要你选择替代项，然后可以继续定制。"
+    if run.status == "failed":
+        return None, None, "这次定制失败了。你可以保留输入，换一种说法或稍后重试。"
+    if run.status == "succeeded":
+        return None, None, "定制完成，可以保存、反馈或发布为菜谱。"
+    return None, None, ""
 
 
 def _replace_blocked_terms(meal: dict, terms: list[str], substitute: str) -> None:

@@ -59,6 +59,9 @@ class PostResponse(BaseModel):
 class CreateRunResponse(BaseModel):
     run_id: str
     status: RunStatus
+    queue_position: int | None = None
+    estimated_wait_seconds: int | None = None
+    user_message: str | None = None
 
 
 class PublicRunError(BaseModel):
@@ -77,6 +80,14 @@ class RunStatusResponse(BaseModel):
     trace: RunTrace | None = None
     unresolved_payload: dict | None = None
     saved: bool = False
+    queue_position: int | None = None
+    estimated_wait_seconds: int | None = None
+    user_message: str | None = None
+
+
+class RunFeedbackRequest(BaseModel):
+    rating: Literal["helpful", "not_helpful"]
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class RunResultPayload(BaseModel):

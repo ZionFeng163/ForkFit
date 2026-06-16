@@ -87,6 +87,9 @@ export type RunResultPayload = {
 export type CreateRunResponse = {
   run_id: string;
   status: RunStatus;
+  queue_position?: number | null;
+  estimated_wait_seconds?: number | null;
+  user_message?: string | null;
 };
 
 export type RunStatusResponse = {
@@ -105,6 +108,9 @@ export type RunStatusResponse = {
     partial_result: RunResultPayload;
   } | null;
   saved: boolean;
+  queue_position?: number | null;
+  estimated_wait_seconds?: number | null;
+  user_message?: string | null;
 };
 
 export type RecipePost = {

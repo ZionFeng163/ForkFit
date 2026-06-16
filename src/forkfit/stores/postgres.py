@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, sessionmaker
 
 from forkfit.api.schemas import PublicRunError, RunResultPayload
-from forkfit.db.models import RunEventRow, RunRow
+from forkfit.db.models import RunEventRow, RunFeedbackRow, RunRow
 from forkfit.models import MealPack, RunTrace
 from forkfit.serialization import meal_pack_from_dict, run_trace_from_dict
 from forkfit.stores.base import RunRecord, utc_now
@@ -142,6 +142,18 @@ class PostgresRunStore:
                 RunRow.status.in_(["queued", "running"]),
             ).scalar()
 
+    def count_queued_ahead(self, run_id: str) -> int:
+        with self.session_factory() as session:
+            row = session.get(RunRow, run_id)
+            if row is None or row.status not in {"queued", "running"}:
+                return 0
+            if row.status == "running":
+                return 0
+            return session.query(func.count(RunRow.id)).filter(
+                RunRow.status == "queued",
+                RunRow.created_at < row.created_at,
+            ).scalar()
+
     def fail_active_runs(self, message: str) -> int:
         with self.session_factory() as session:
             rows = session.query(RunRow).filter(
@@ -221,6 +233,23 @@ class PostgresRunStore:
     def count_all_runs(self) -> int:
         with self.session_factory() as session:
             return session.query(func.count(RunRow.id)).scalar()
+
+    def list_failed_runs(self, limit: int = 20) -> list[RunRecord]:
+        with self.session_factory() as session:
+            rows = (
+                session.query(RunRow)
+                .filter(RunRow.status == "failed")
+                .order_by(RunRow.created_at.desc())
+                .limit(limit)
+                .all()
+            )
+            return [_record_from_row(row) for row in rows]
+
+    def save_feedback(self, *, run_id: str, user_id: str, rating: str, reason: str = "") -> None:
+        with self.session_factory() as session:
+            _require_row(session, run_id)
+            session.add(RunFeedbackRow(run_id=run_id, user_id=user_id, rating=rating, reason=reason))
+            session.commit()
 
 
 def _require_row(session: Session, run_id: str) -> RunRow:

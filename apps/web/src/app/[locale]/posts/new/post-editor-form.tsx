@@ -50,6 +50,18 @@ const DIFFICULTY_OPTIONS = [
   { key: "hard", label: { zh: "较难", en: "Hard" } },
 ];
 
+function formatDraftTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /* ─── Tag Input ─── */
 function TagInput({
   tags,
@@ -131,6 +143,13 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     return "easy";
   });
   const [draftSaved, setDraftSaved] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState(() => {
+    try {
+      return localStorage.getItem("forkfit.draft.saved_at") || "";
+    } catch {
+      return "";
+    }
+  });
 
   const mutation = useMutation({
     mutationFn: (input: CreatePostInput) =>
@@ -173,6 +192,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
   function submit(e: FormEvent) {
     e.preventDefault();
     localStorage.removeItem("forkfit.draft");
+    localStorage.removeItem("forkfit.draft.saved_at");
     mutation.mutate(buildInput(form, difficulty));
   }
 
@@ -435,7 +455,10 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 type="button"
                 onClick={() => {
                   const data = JSON.stringify(buildInput(form, difficulty));
+                  const savedAt = new Date().toISOString();
                   localStorage.setItem("forkfit.draft", data);
+                  localStorage.setItem("forkfit.draft.saved_at", savedAt);
+                  setDraftSavedAt(savedAt);
                   setDraftSaved(true);
                   setTimeout(() => setDraftSaved(false), 2000);
                 }}
@@ -443,6 +466,11 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               >
                 {draftSaved ? "✓ 已保存" : "存为草稿"}
               </button>
+              {draftSavedAt && (
+                <div className="mt-2 text-[12px]" style={{ color: "var(--lp-muted)" }}>
+                  草稿保存于 {formatDraftTime(draftSavedAt)}
+                </div>
+              )}
 
               {isEditing && (
                 <button type="button" disabled={isPending} onClick={submitAndExtract} className="fp-btn-draft" style={{ marginTop: "8px" }}>

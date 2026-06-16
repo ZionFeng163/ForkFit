@@ -32,13 +32,16 @@ function apiUrl(path: string) {
 
 async function requestResponse(path: string, init?: RequestOptions): Promise<Response> {
   const { redirectOnUnauthorized = true, ...fetchInit } = init ?? {};
+  const headers = new Headers(fetchInit.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const csrfToken = readCookie("csrf_token");
+  if (csrfToken && isUnsafeMethod(fetchInit.method)) {
+    headers.set("X-CSRF-Token", csrfToken);
+  }
   const response = await fetch(apiUrl(path), {
     ...fetchInit,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...Object.fromEntries(Object.entries(fetchInit.headers ?? {})),
-    },
+    headers,
   });
 
   if (response.status === 401) {
@@ -71,6 +74,19 @@ async function requestResponse(path: string, init?: RequestOptions): Promise<Res
   }
 
   return response;
+}
+
+function isUnsafeMethod(method?: string) {
+  const normalized = (method || "GET").toUpperCase();
+  return ["POST", "PUT", "PATCH", "DELETE"].includes(normalized);
+}
+
+export function readCookie(name: string) {
+  if (typeof document === "undefined") return "";
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`))
+    ?.split("=")[1] ?? "";
 }
 
 async function request<T>(path: string, init?: RequestOptions): Promise<T> {
@@ -158,6 +174,13 @@ export function resolveRun(runId: string, substitutions: Record<string, string>)
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ substitutions }),
+  });
+}
+
+export function sendRunFeedback(runId: string, input: { rating: "helpful" | "not_helpful"; reason?: string }) {
+  return request<{ ok: boolean }>(`/runs/${runId}/feedback`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
@@ -261,14 +284,14 @@ export function deleteAdminPost(postId: string) {
 export function batchDeleteAdminUsers(ids: string[]) {
   return request<{ deleted: number }>("/admin/users/batch-delete", {
     method: "POST",
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ ids, confirm: true }),
   });
 }
 
 export function batchDeleteAdminPosts(ids: string[]) {
   return request<{ deleted: number }>("/admin/posts/batch-delete", {
     method: "POST",
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ ids, confirm: true }),
   });
 }
 

@@ -43,6 +43,33 @@ class RunEventRow(Base):
     )
 
 
+class RunFeedbackRow(Base):
+    __tablename__ = "run_feedback"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    rating: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class AdminAuditLogRow(Base):
+    __tablename__ = "admin_audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    admin_user_id: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    action: Mapped[str] = mapped_column(String(120), nullable=False)
+    target_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    target_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class UserRow(Base):
     __tablename__ = "users"
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -9,6 +8,9 @@ from pydantic import BaseModel, Field
 
 from forkfit.api.deps import get_post_store, get_run_store, get_user_store, require_admin
 from forkfit.auth.models import CurrentUser
+from forkfit.api.health import HealthReport, build_health_report
+from forkfit.db.models import AdminAuditLogRow
+from forkfit.db.session import make_session_factory
 from forkfit.config import get_settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -57,6 +59,7 @@ class UpdateUserRequest(BaseModel):
 
 class BatchDeleteRequest(BaseModel):
     ids: list[str] = Field(min_length=1, max_length=100)
+    confirm: bool = False
 
 
 # --- Endpoints ---
@@ -139,11 +142,14 @@ def admin_delete_user(user_id: str, _admin: CurrentUser = Depends(require_admin)
     store = get_user_store()
     if not store.delete_user(user_id):
         raise HTTPException(status_code=404, detail="User not found")
+    _audit(_admin.id, "delete_user", "user", user_id, {})
     return {"detail": "User deleted"}
 
 
 @router.post("/users/batch-delete")
 def admin_batch_delete_users(body: BatchDeleteRequest, _admin: CurrentUser = Depends(require_admin)) -> dict:
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="Confirmation is required")
     if _admin.id in body.ids:
         raise HTTPException(status_code=400, detail="You cannot delete your own account")
 
@@ -152,6 +158,7 @@ def admin_batch_delete_users(body: BatchDeleteRequest, _admin: CurrentUser = Dep
     for uid in body.ids:
         if store.delete_user(uid):
             deleted += 1
+            _audit(_admin.id, "batch_delete_user", "user", uid, {})
     return {"deleted": deleted}
 
 
@@ -181,17 +188,21 @@ def admin_delete_post(post_id: str, _admin: CurrentUser = Depends(require_admin)
         store.delete_post(post_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Post not found") from None
+    _audit(_admin.id, "delete_post", "post", post_id, {})
     return {"detail": "Post deleted"}
 
 
 @router.post("/posts/batch-delete")
 def admin_batch_delete_posts(body: BatchDeleteRequest, _admin: CurrentUser = Depends(require_admin)) -> dict:
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="Confirmation is required")
     store = get_post_store()
     deleted = 0
     for pid in body.ids:
         try:
             store.delete_post(pid)
             deleted += 1
+            _audit(_admin.id, "batch_delete_post", "post", pid, {})
         except KeyError:
             pass
     return {"deleted": deleted}
@@ -211,109 +222,31 @@ def admin_list_runs(
     ], "total": store.count_all_runs()}
 
 
+@router.get("/runs/failed")
+def admin_failed_runs(
+    limit: int = Query(default=20, ge=1, le=50),
+    _admin: CurrentUser = Depends(require_admin),
+) -> dict:
+    store = get_run_store()
+    list_failed_runs = getattr(store, "list_failed_runs", None)
+    runs = list_failed_runs(limit=limit) if list_failed_runs is not None else []
+    return {"runs": [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "status": r.status,
+            "created_at": r.created_at.isoformat(),
+            "error": r.error.message if r.error else "",
+        }
+        for r in runs
+    ]}
+
+
 # --- Health check ---
 
-class ServiceHealth(BaseModel):
-    name: str
-    status: str  # "ok" | "warn" | "error"
-    latency_ms: float
-    details: str = ""
-
-
-class AdminHealthResponse(BaseModel):
-    services: list[ServiceHealth]
-
-
-@router.get("/health", response_model=AdminHealthResponse)
-def admin_health(_admin: CurrentUser = Depends(require_admin)) -> AdminHealthResponse:
-    services = []
-
-    # PostgreSQL
-    pg_ok, pg_latency, pg_detail = _check_postgres()
-    services.append(ServiceHealth(name="PostgreSQL", status="ok" if pg_ok else "error", latency_ms=pg_latency, details=pg_detail))
-
-    # Redis
-    redis_ok, redis_latency, redis_detail = _check_redis()
-    services.append(ServiceHealth(name="Redis", status="ok" if redis_ok else "error", latency_ms=redis_latency, details=redis_detail))
-
-    settings = get_settings()
-    if settings.job_executor == "inline":
-        services.append(ServiceHealth(
-            name="Job Executor",
-            status="ok",
-            latency_ms=0,
-            details="Inline background execution",
-        ))
-    else:
-        kafka_ok, kafka_latency, kafka_detail = _check_kafka()
-        services.append(ServiceHealth(name="Kafka", status="ok" if kafka_ok else "warn", latency_ms=kafka_latency, details=kafka_detail))
-
-    # Bailian API
-    llm_ok, llm_latency, llm_detail = _check_bailian()
-    services.append(ServiceHealth(name="Bailian API", status="ok" if llm_ok else "warn", latency_ms=llm_latency, details=llm_detail))
-
-    return AdminHealthResponse(services=services)
-
-
-def _check_postgres() -> tuple[bool, float, str]:
-    try:
-        from forkfit.config import get_settings
-        from forkfit.db.session import make_session_factory
-        settings = get_settings()
-        factory = make_session_factory(settings.database_url)
-        started = time.perf_counter()
-        with factory() as session:
-            session.execute(__import__('sqlalchemy').text("SELECT 1"))
-        latency = round((time.perf_counter() - started) * 1000, 1)
-        return True, latency, "Connected"
-    except Exception as e:
-        return False, 0, str(e)[:100]
-
-
-def _check_redis() -> tuple[bool, float, str]:
-    try:
-        from forkfit.config import get_settings
-        import redis as redis_lib
-        settings = get_settings()
-        client = redis_lib.from_url(settings.redis_url, socket_timeout=3)
-        started = time.perf_counter()
-        client.ping()
-        latency = round((time.perf_counter() - started) * 1000, 1)
-        info = client.info("memory")
-        used_mb = round(info.get("used_memory", 0) / 1024 / 1024, 1)
-        return True, latency, f"{used_mb}MB used"
-    except Exception as e:
-        return False, 0, str(e)[:100]
-
-
-def _check_kafka() -> tuple[bool, float, str]:
-    try:
-        from forkfit.config import get_settings
-        from forkfit.kafka_utils import get_producer
-        settings = get_settings()
-        started = time.perf_counter()
-        producer = get_producer(bootstrap_servers=settings.kafka_bootstrap_servers)
-        producer.flush(timeout=3)
-        latency = round((time.perf_counter() - started) * 1000, 1)
-        return True, latency, "Connected"
-    except Exception as e:
-        return False, 0, str(e)[:100]
-
-
-def _check_bailian() -> tuple[bool, float, str]:
-    try:
-        from forkfit.config import get_settings
-        settings = get_settings()
-        if not __import__('os').getenv('BAILIAN_API_KEY'):
-            return False, 0, "No API key configured"
-        # Just check if the client can be initialized
-        from forkfit.llm import BailianLLMClient
-        started = time.perf_counter()
-        client = BailianLLMClient()
-        latency = round((time.perf_counter() - started) * 1000, 1)
-        return True, latency, f"Model: {client.model}"
-    except Exception as e:
-        return False, 0, str(e)[:100]
+@router.get("/health", response_model=HealthReport)
+def admin_health(_admin: CurrentUser = Depends(require_admin)) -> HealthReport:
+    return build_health_report()
 
 
 # --- Activity feed ---
@@ -393,3 +326,19 @@ def _relative_time(dt) -> str:
     if days < 30:
         return f"{days} 天前"
     return dt.strftime("%Y-%m-%d")
+
+
+def _audit(admin_user_id: str, action: str, target_type: str, target_id: str, payload: dict) -> None:
+    try:
+        factory = make_session_factory(get_settings().database_url)
+        with factory() as session:
+            session.add(AdminAuditLogRow(
+                admin_user_id=admin_user_id,
+                action=action,
+                target_type=target_type,
+                target_id=target_id,
+                payload=payload,
+            ))
+            session.commit()
+    except Exception:
+        pass

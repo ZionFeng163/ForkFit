@@ -39,6 +39,20 @@ class UploadApiTests(unittest.TestCase):
             )
 
             self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["detail"], "invalid_image_content")
+            self.assertEqual(os.listdir(upload_dir), [])
+
+    def test_rejects_image_over_pixel_limit(self):
+        with tempfile.TemporaryDirectory() as upload_dir, patch.dict(
+            os.environ, {"UPLOAD_DIR": upload_dir, "UPLOAD_MAX_PIXELS": "0"}
+        ):
+            response = self._client().post(
+                "/upload/image",
+                files={"file": ("avatar.png", PNG_1X1, "image/png")},
+            )
+
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["detail"], "image_dimensions_too_large")
             self.assertEqual(os.listdir(upload_dir), [])
 
     def test_stores_valid_image_with_detected_extension(self):

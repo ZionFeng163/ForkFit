@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Bookmark, Check, ChevronLeft, ChevronRight, GitFork, Heart, MapPin, Send, Trash2 } from "lucide-react";
 
@@ -8,6 +8,7 @@ import { RemoteImage } from "@/components/remote-image";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
+import { getLocalizedLoginUrl } from "@/lib/auth-navigation";
 import {
   getPost,
   toggleLike,
@@ -85,18 +86,34 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
   const hasLocation = post.location && post.location !== "unknown";
   const canEdit = user?.id === post.user_id;
 
-  function scrollToImage(index: number) {
+  const scrollToImage = useCallback((index: number) => {
     const gallery = galleryRef.current;
     if (!gallery) return;
     const nextIndex = Math.max(0, Math.min(index, post.image_urls.length - 1));
     gallery.scrollTo({ left: gallery.clientWidth * nextIndex, behavior: "smooth" });
-  }
+  }, [post.image_urls.length]);
 
   function syncActiveImage() {
     const gallery = galleryRef.current;
     if (!gallery || gallery.clientWidth === 0) return;
     setActiveImage(Math.round(gallery.scrollLeft / gallery.clientWidth));
   }
+
+  function requireLogin() {
+    if (typeof window !== "undefined") {
+      window.location.replace(getLocalizedLoginUrl(window.location));
+    }
+  }
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (post.image_urls.length <= 1) return;
+      if (event.key === "ArrowLeft") scrollToImage(activeImage - 1);
+      if (event.key === "ArrowRight") scrollToImage(activeImage + 1);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeImage, post.image_urls.length, scrollToImage]);
 
   // Fetch fresh like/save state
   useEffect(() => {
@@ -124,7 +141,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   function handleLike() {
-    if (!user) return;
+    if (!user) return requireLogin();
     setActionError(null);
     toggleLike(post.id).then((res) => {
       setLiked(res.liked);
@@ -133,7 +150,7 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
   }
 
   function handleSave() {
-    if (!user) return;
+    if (!user) return requireLogin();
     setActionError(null);
     toggleSave(post.id).then((res) => {
       setSaved(res.saved);
@@ -151,7 +168,8 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
 
   function handleCommentSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!commentText.trim() || !user) return;
+    if (!user) return requireLogin();
+    if (!commentText.trim()) return;
     setCommentSubmitting(true);
     createComment(post.id, commentText.trim()).then((c) => {
       setComments((prev) => [...prev, c]);
@@ -539,7 +557,14 @@ export function PackDetailContent({ post, locale }: PackDetailContentProps) {
             </div>
           </form>
         ) : (
-          <p className="mb-6 text-[13px]" style={{ color: "var(--lp-muted)" }}>{tc("loginToComment")}</p>
+          <button
+            type="button"
+            onClick={requireLogin}
+            className="mb-6 text-[13px] font-medium"
+            style={{ color: "var(--lp-accent)" }}
+          >
+            {tc("loginToComment")}
+          </button>
         )}
 
         {/* Comment list */}
