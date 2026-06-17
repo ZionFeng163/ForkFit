@@ -50,13 +50,13 @@ def extract_post_details(
             day=recipe.day,
             name=recipe.name,
             ingredients=_string_list(raw.get("ingredients")) or recipe.ingredients,
-            equipment=_string_list(raw.get("equipment")),
+            equipment=_string_list(raw.get("equipment")) or recipe.equipment,
             cook_time_minutes=_positive_int(raw.get("cook_time_minutes"))
             or recipe.cook_time_minutes,
             estimated_cost=_positive_float(raw.get("estimated_cost"))
             or recipe.estimated_cost,
-            tags=_string_list(raw.get("tags")),
-            notes=_string(raw.get("notes")),
+            tags=_string_list(raw.get("tags")) or recipe.tags,
+            notes=_string(raw.get("notes")) or recipe.notes,
             steps=list(recipe.steps),
             difficulty=recipe.difficulty,
         ),

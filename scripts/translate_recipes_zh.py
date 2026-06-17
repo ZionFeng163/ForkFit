@@ -105,6 +105,13 @@ EQUIPMENT_ZH = {
 
 def main() -> int:
     args = parse_args()
+    if args.source.resolve() == args.output.resolve() and not args.allow_in_place:
+        print(
+            "ERROR --source and --output are the same. "
+            "Use a separate output file, or pass --allow-in-place explicitly.",
+            file=sys.stderr,
+        )
+        return 2
     source = json.loads(args.source.read_text(encoding="utf-8"))
     recipes = source["recipes"]
     translated = load_existing(args.output)
@@ -129,7 +136,12 @@ def main() -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Translate recipe JSON display fields to zh-CN.")
     parser.add_argument("--source", type=Path, default=Path("data/recipes/themealdb_recipes.json"))
-    parser.add_argument("--output", type=Path, default=Path("data/recipes/themealdb_recipes.json"))
+    parser.add_argument("--output", type=Path, default=Path("data/recipes/themealdb_recipes.zh.json"))
+    parser.add_argument(
+        "--allow-in-place",
+        action="store_true",
+        help="Allow writing translations back to --source. Prefer a separate output file.",
+    )
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--sleep", type=float, default=0.2)
     parser.add_argument("--timeout", type=int, default=90)

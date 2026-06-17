@@ -92,7 +92,10 @@ export function readCookie(name: string) {
 
 async function request<T>(path: string, init?: RequestOptions): Promise<T> {
   const response = await requestResponse(path, init);
-  return response.json() as Promise<T>;
+  if (response.status === 204) return undefined as T;
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 export function registerUser(input: {

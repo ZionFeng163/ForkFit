@@ -379,9 +379,29 @@ class PostgresPostStore:
             return [_record_from_row(row) for row in rows], total
 
     def list_liked_posts(
-        self, user_id: str, limit: int = 20, offset: int = 0
+        self,
+        user_id: str,
+        limit: int = 20,
+        offset: int = 0,
+        *,
+        public_only: bool = False,
     ) -> tuple[list[PostRecord], int]:
         with self.session_factory() as session:
+            if public_only:
+                rows = (
+                    session.query(PostRow)
+                    .join(PostLikeRow, PostRow.id == PostLikeRow.post_id)
+                    .filter(PostLikeRow.user_id == user_id)
+                    .order_by(PostLikeRow.created_at.desc())
+                    .all()
+                )
+                records = [
+                    record
+                    for record in (_record_from_row(row) for row in rows)
+                    if is_public_record(record)
+                ]
+                return records[offset : offset + limit], len(records)
+
             total = session.scalar(
                 select(func.count(PostLikeRow.post_id)).where(
                     PostLikeRow.user_id == user_id
@@ -399,9 +419,29 @@ class PostgresPostStore:
             return [_record_from_row(row) for row in rows], total
 
     def list_saved_posts(
-        self, user_id: str, limit: int = 20, offset: int = 0
+        self,
+        user_id: str,
+        limit: int = 20,
+        offset: int = 0,
+        *,
+        public_only: bool = False,
     ) -> tuple[list[PostRecord], int]:
         with self.session_factory() as session:
+            if public_only:
+                rows = (
+                    session.query(PostRow)
+                    .join(PostSaveRow, PostRow.id == PostSaveRow.post_id)
+                    .filter(PostSaveRow.user_id == user_id)
+                    .order_by(PostSaveRow.created_at.desc())
+                    .all()
+                )
+                records = [
+                    record
+                    for record in (_record_from_row(row) for row in rows)
+                    if is_public_record(record)
+                ]
+                return records[offset : offset + limit], len(records)
+
             total = session.scalar(
                 select(func.count(PostSaveRow.post_id)).where(
                     PostSaveRow.user_id == user_id

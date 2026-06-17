@@ -81,7 +81,9 @@ async def list_liked_posts(
     user: CurrentUser = Depends(current_user),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> list[PostResponse]:
-    posts, _ = store.list_liked_posts(user.id, limit=limit, offset=offset)
+    posts, _ = store.list_liked_posts(
+        user.id, limit=limit, offset=offset, public_only=True
+    )
     return [_post_response(post, (True, False)) for post in posts]
 
 
@@ -92,7 +94,9 @@ async def list_saved_posts(
     user: CurrentUser = Depends(current_user),
     store: PostgresPostStore = Depends(get_post_store),
 ) -> list[PostResponse]:
-    posts, _ = store.list_saved_posts(user.id, limit=limit, offset=offset)
+    posts, _ = store.list_saved_posts(
+        user.id, limit=limit, offset=offset, public_only=True
+    )
     return [_post_response(post, (False, True)) for post in posts]
 
 

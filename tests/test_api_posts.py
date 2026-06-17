@@ -35,6 +35,17 @@ class FakePostExtractionLLM:
         }
 
 
+class PartialPostExtractionLLM:
+    model = "deepseek-v4-flash"
+
+    def complete_json(self, **kwargs):
+        return {
+            "theme": "家常晚餐",
+            "location": "杭州",
+            "ingredients": ["番茄", "米饭"],
+        }
+
+
 class PostApiTests(unittest.TestCase):
     def tearDown(self) -> None:
         get_post_extraction_llm.cache_clear()
@@ -138,6 +149,70 @@ class PostApiTests(unittest.TestCase):
         post = response.json()
         self.assertEqual(post["theme"], "community recipe")
         self.assertEqual(post["recipe"]["name"], recipe["name"])
+
+    def test_partial_extraction_preserves_existing_metadata(self):
+        client = self._client(llm=PartialPostExtractionLLM())
+        recipe = asdict(demo_meal_pack().meals[0])
+        recipe["id"] = "main"
+        recipe["notes"] = "Keep these notes."
+
+        response = client.post(
+            "/posts",
+            json={
+                "title": "Test Tomato Rice",
+                "theme": "community recipe",
+                "location": "unknown",
+                "image_urls": [
+                    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+                ],
+                "description": "A simple test recipe post.",
+                "recipe": recipe,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        post = response.json()
+        self.assertEqual(post["recipe"]["equipment"], recipe["equipment"])
+        self.assertEqual(post["recipe"]["tags"], recipe["tags"])
+        self.assertEqual(post["recipe"]["notes"], "Keep these notes.")
+
+    def test_hidden_posts_are_not_returned_from_liked_or_saved_lists(self):
+        client = self._client()
+        recipe = asdict(demo_meal_pack().meals[0])
+        recipe["id"] = "main"
+        response = client.post(
+            "/posts",
+            json={
+                "title": "Test Tomato Rice",
+                "theme": "quick dinner",
+                "location": "Shanghai",
+                "image_urls": [
+                    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+                ],
+                "description": "A simple test recipe post.",
+                "recipe": recipe,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        post_id = response.json()["id"]
+
+        self.assertEqual(client.post(f"/posts/{post_id}/like").status_code, 200)
+        self.assertEqual(client.post(f"/posts/{post_id}/save").status_code, 200)
+
+        session_factory = make_session_factory(get_settings().database_url)
+        with session_factory() as session:
+            row = session.get(PostRow, post_id)
+            self.assertIsNotNone(row)
+            row.status = "hidden"
+            session.commit()
+
+        liked = client.get("/posts/liked/me")
+        saved = client.get("/posts/saved/me")
+
+        self.assertEqual(liked.status_code, 200)
+        self.assertEqual(saved.status_code, 200)
+        self.assertNotIn(post_id, {item["id"] for item in liked.json()})
+        self.assertNotIn(post_id, {item["id"] for item in saved.json()})
 
     def test_update_post_and_extract_existing_post(self):
         client = self._client(llm=FakePostExtractionLLM(should_fail=True))
