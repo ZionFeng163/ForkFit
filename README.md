@@ -64,12 +64,23 @@ docker compose down -v  # 同时清空 PostgreSQL 数据
 
 公测内容走统一的帖子模型，不再区分“演示数据”和“真实数据”。导入文件必须包含标题、描述、食材、步骤、耗时、标签、封面图和来源记录；默认状态为 `published`。
 
+默认内容源使用 TheMealDB 的同源 meal 记录：菜谱步骤和图片都来自同一个 `idMeal`，避免“AI 写菜谱 + 随机图库配图”的不可信问题。旧的 `ForkFit curated public beta` 批次已经弃用，不再放在 `data/recipes/*.json` 默认导入范围内。
+
 ```bash
+# 重新生成 TheMealDB 同源内容 JSON；默认使用远程同源图
+python scripts/build_themealdb_recipes.py --limit 120 --image-mode remote
+
 # 只校验，不写库
 PYTHONPATH=src python scripts/import_recipes.py --source 'data/recipes/*.json' --dry-run
 
 # 写入 PostgreSQL；按 recipe id 幂等 upsert，重复执行不会产生重复帖子
 PYTHONPATH=src python scripts/import_recipes.py --source 'data/recipes/*.json' --apply
+
+# 下架已经确认质量不合格的旧来源，不删除历史数据
+PYTHONPATH=src python scripts/hide_posts_by_source.py \
+  --source-name 'ForkFit curated public beta' \
+  --source-name 'ForkFit curated' \
+  --apply
 ```
 
 首页/发现页默认只展示 `published` 且图片、步骤完整的内容。后台可按状态、关键词、标签、缺图、缺步骤筛选，并优先使用“下架/恢复”处理运营问题。

@@ -1,8 +1,27 @@
 # Recipe image sources
 
+## Public beta content
+
+The default public beta dataset is generated from TheMealDB with
+`scripts/build_themealdb_recipes.py`. Each imported recipe keeps the original
+TheMealDB `idMeal` lookup URL in `source_url`, and the image URL is the
+`strMealThumb` returned by that same meal record.
+
+This is the required rule for imported content: **do not pair generated recipes
+with unrelated stock photos**. If a recipe is imported from a third-party source,
+the image must either come from the same source record or be manually verified
+and attributed.
+
+The previous `ForkFit curated public beta` batch used local Unsplash photos as a
+visual pool and is deprecated because the images were not tied to exact recipe
+records.
+
+## Legacy local images
+
 The demo recipe images in `apps/web/public/recipes` are local, resized copies
 of photos published under the Unsplash License. The source pages are retained
-here for provenance and future replacement work.
+here for provenance and future replacement work. These images should only be
+used for hand-verified posts or legacy content, not for generated bulk imports.
 
 | Local file | Source |
 | --- | --- |
