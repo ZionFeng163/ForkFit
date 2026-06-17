@@ -811,7 +811,7 @@
     },
     {
       "id": "themealdb-53334",
-      "title": "委内瑞拉 Arepa Pabellón",
+      "title": "委内瑞拉玉米饼配牛肉黑豆（Arepa Pabellón）",
       "theme": "牛肉",
       "location": "委内瑞拉",
       "image_urls": [
@@ -827,7 +827,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "Arepa Pabellón",
+        "name": "委内瑞拉玉米饼配牛肉黑豆（Arepa Pabellón）",
         "ingredients": [
           "玉米饼 (Arepa) 夹马苏里拉奶酪 2个",
           "炸熟香蕉 1根",
@@ -2347,7 +2347,7 @@
         "name": "阿根廷烤肉 (Asado)",
         "ingredients": [
           "2公斤混合牛肉部位",
-          "4根查里佐香肠 (Chorizo)",
+          "4根查里佐香肠 (西班牙辣香肠)",
           "2根血肠 (Morcilla)",
           "适量盐"
         ],
@@ -2688,13 +2688,13 @@
     },
     {
       "id": "themealdb-52995",
-      "title": "烧烤猪肉 sloppy joes（松散肉馅汉堡）",
+      "title": "烧烤猪肉松散肉馅汉堡（松散肉馅汉堡）",
       "theme": "猪肉",
       "location": "美国",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/atd5sh1583188467.jpg"
       ],
-      "description": "来自 TheMealDB 的烧烤猪肉 sloppy joes 食谱。食谱和图片均从同一来源餐点记录导入。",
+      "description": "来自 TheMealDB 的烧烤猪肉 松散肉馅汉堡 食谱。食谱和图片均从同一来源餐点记录导入。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=52995",
       "status": "published",
@@ -2704,7 +2704,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "烧烤猪肉 sloppy joes",
+        "name": "烧烤猪肉松散肉馅汉堡（松散肉馅汉堡）",
         "ingredients": [
           "2个土豆",
           "1个红洋葱",
@@ -3168,7 +3168,7 @@
     },
     {
       "id": "themealdb-53016",
-      "title": "Chick-Fil-A 鸡肉三明治",
+      "title": "美式炸鸡三明治（Chick-Fil-A 风格）",
       "theme": "鸡肉",
       "location": "美国",
       "image_urls": [
@@ -3184,7 +3184,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "Chick-Fil-A 鸡肉三明治",
+        "name": "美式炸鸡三明治（Chick-Fil-A 风格）",
         "ingredients": [
           "1块 鸡胸肉",
           "1/4杯 腌黄瓜汁",
@@ -3955,13 +3955,13 @@
     },
     {
       "id": "themealdb-53161",
-      "title": "鸡肉chorizo炖饭",
+      "title": "鸡肉西班牙辣香肠炖饭",
       "theme": "鸡肉",
       "location": "西班牙",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/fk80jp1763280767.jpg"
       ],
-      "description": "来自 TheMealDB 的鸡肉chorizo炖饭。食谱和图片均源自同一来源餐点记录。",
+      "description": "来自 TheMealDB 的鸡肉西班牙辣香肠炖饭。食谱和图片均源自同一来源餐点记录。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=53161",
       "status": "published",
@@ -3971,14 +3971,14 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "鸡肉chorizo炖饭",
+        "name": "鸡肉西班牙辣香肠炖饭",
         "ingredients": [
           "1 汤匙 油",
           "1 只整鸡",
           "1 个切碎的洋葱",
           "1 个切碎的红灯笼椒",
           "3 瓣 压碎的蒜",
-          "225克 Chorizo（西班牙辣香肠）",
+          "225克 西班牙辣香肠（西班牙辣香肠）",
           "1 汤匙 番茄膏",
           "1 汤匙 切碎的新鲜百里香",
           "150毫升 白葡萄酒",
@@ -4004,7 +4004,7 @@
           "步骤1：在大号耐热砂锅中加热油，将所有鸡块煎至各面金黄——可能需要分批进行。",
           "将鸡块取出，放到一边备用。",
           "步骤2：降低火候，加入洋葱和灯笼椒，温和烹煮10分钟直至变软。",
-          "加入蒜和Chorizo，继续烹煮2分钟，直到Chorizo释放出油脂融入锅中。",
+          "加入蒜和西班牙辣香肠，继续烹煮2分钟，直到西班牙辣香肠释放出油脂融入锅中。",
           "拌入番茄膏，再煮1分钟。",
           "步骤3：将鸡块放回锅中，加入百里香、白葡萄酒和高汤。",
           "将液体煮沸，盖上紧密贴合的锅盖，转小火。",
@@ -5046,13 +5046,13 @@
     },
     {
       "id": "themealdb-53190",
-      "title": "斯洛伐克奶酪土豆 dumplings (Bryndzové Halušky)",
+      "title": "斯洛伐克奶酪土豆饺（Bryndzové Halušky）",
       "theme": "猪肉",
       "location": "斯洛伐克",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/g33c901763365484.jpg"
       ],
-      "description": "来自 TheMealDB 的斯洛伐克奶酪土豆 dumplings。食谱和图片均源自同一来源的餐食记录。",
+      "description": "来自 TheMealDB 的斯洛伐克奶酪土豆 饺子。食谱和图片均源自同一来源的餐食记录。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=53190",
       "status": "published",
@@ -5062,7 +5062,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "Bryndzové Halušky",
+        "name": "斯洛伐克奶酪土豆饺（Bryndzové Halušky）",
         "ingredients": [
           "500克 土豆",
           "200克 普通面粉",
@@ -5090,14 +5090,14 @@
           "准备面团：使用手动擦丝器或食物处理器将土豆擦成细丝。",
           "将擦好的土豆丝放入碗中，与面粉、鸡蛋和盐混合，搅拌成粘稠的面团。",
           "面团质地应厚实但具有可塑性。",
-          "煮 dumplings：将一大锅加盐的水烧开。",
+          "煮 饺子：将一大锅加盐的水烧开。",
           "使用特制的 halušky 模具（类似 spaetzle 模具），将面团直接压入沸水中。",
           "如果没有专用模具，可以使用倾斜的砧板和刀，将小块面团刮入水中。",
-          "让 dumplings 煮熟直到浮出水面，通常需要2-3分钟。",
-          "用漏勺捞出 dumplings，放入大碗中备用。",
+          "让 饺子 煮熟直到浮出水面，通常需要2-3分钟。",
+          "用漏勺捞出 饺子，放入大碗中备用。",
           "准备配料：将培根切成小块，在平底锅中用中火煎至酥脆。",
           "如果使用 Bryndza 奶酪替代品，可将碎菲达奶酪与一勺酸奶油混合，以模仿传统斯洛伐克绵羊奶酪的酸味。",
-          "组装菜肴：将煮好的 dumplings 与 Bryndza 奶酪（或替代品）拌匀，使其均匀裹上奶酪并变得奶油状。",
+          "组装菜肴：将煮好的 饺子 与 Bryndza 奶酪（或替代品）拌匀，使其均匀裹上奶酪并变得奶油状。",
           "顶部放上酥脆的培根及其油脂。"
         ]
       }
@@ -5504,13 +5504,13 @@
     },
     {
       "id": "themealdb-52796",
-      "title": "鸡肉阿尔弗雷多 Primavera",
+      "title": "春蔬鸡肉阿尔弗雷多意面",
       "theme": "鸡肉",
       "location": "意大利",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/syqypv1486981727.jpg"
       ],
-      "description": "来自 TheMealDB 的鸡肉阿尔弗雷多 Primavera。食谱和图片均源自同一来源餐点记录。",
+      "description": "来自 TheMealDB 的鸡肉阿尔弗雷多 春蔬。食谱和图片均源自同一来源餐点记录。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=52796",
       "status": "published",
@@ -5520,7 +5520,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "鸡肉阿尔弗雷多 Primavera",
+        "name": "春蔬鸡肉阿尔弗雷多意面",
         "ingredients": [
           "2汤匙 黄油",
           "3汤匙 橄榄油",
@@ -6127,7 +6127,7 @@
           "6汤匙橄榄油",
           "2个切片红洋葱",
           "3个大红椒",
-          "130克chorizo（西班牙辣香肠）",
+          "130克西班牙辣香肠（西班牙辣香肠）",
           "8片晒干番茄",
           "6瓣切片大蒜",
           "300克巴斯马蒂米",
@@ -6166,7 +6166,7 @@
           "不要拥挤锅具——分批煎鸡，煎好后取出放在厨房纸上沥油。",
           "向炖锅中加入少许橄榄油，在中火上炒洋葱10分钟，经常搅拌，直到变软但未变色。",
           "加入剩余的油，然后加入辣椒，再煮5分钟。",
-          "加入chorizo、晒干番茄和大蒜，煮2-3分钟。",
+          "加入西班牙辣香肠、晒干番茄和大蒜，煮2-3分钟。",
           "加入米饭，搅拌以确保其充分裹上油脂。",
           "拌入番茄膏、红椒粉、月桂叶和切碎的百里香。",
           "倒入高汤和葡萄酒。",
@@ -6416,7 +6416,7 @@
         "ingredients": [
           "6片厚切卡萨韦面包 (Casabe)",
           "450克 番茄酱",
-          "225克 西班牙辣香肠 (Chorizo)",
+          "225克 西班牙辣香肠 (西班牙辣香肠)",
           "225克 火鸡火腿",
           "75克 甜玉米粒",
           "40克 绿橄榄",
@@ -6466,7 +6466,7 @@
         "day": "post",
         "name": "蛤蜊、西班牙辣香肠和白豆炖菜",
         "ingredients": [
-          "50克 西班牙辣香肠 (Chorizo)",
+          "50克 西班牙辣香肠 (西班牙辣香肠)",
           "1个 洋葱（切碎）",
           "1瓣 大蒜",
           "1把 欧芹",
@@ -6665,13 +6665,13 @@
     },
     {
       "id": "themealdb-52997",
-      "title": "牛肉班米碗配 Sriracha 蛋黄酱、胡萝卜和腌黄瓜",
+      "title": "牛肉越南法棍风味饭碗配辣椒蛋黄酱、胡萝卜和腌黄瓜",
       "theme": "牛肉",
       "location": "越南",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/z0ageb1583189517.jpg"
       ],
-      "description": "来自 TheMealDB 的牛肉班米碗配 Sriracha 蛋黄酱、胡萝卜和腌黄瓜食谱。食谱和图片均源自同一来源餐点记录。",
+      "description": "来自 TheMealDB 的牛肉班米碗配 是拉差辣椒酱 蛋黄酱、胡萝卜和腌黄瓜食谱。食谱和图片均源自同一来源餐点记录。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=52997",
       "status": "published",
@@ -6681,7 +6681,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "牛肉班米碗配 Sriracha 蛋黄酱、胡萝卜和腌黄瓜",
+        "name": "牛肉越南法棍风味饭碗配辣椒蛋黄酱、胡萝卜和腌黄瓜",
         "ingredients": [
           "白米饭",
           "1 个 洋葱",
@@ -6706,7 +6706,7 @@
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点 ID 52997。图片和说明与此特定餐点记录匹配。",
         "steps": [
-          "额外食材：蛋黄酱、Sriracha 辣椒酱。",
+          "额外食材：蛋黄酱、是拉差辣椒酱 辣椒酱。",
           "1. 将米放入细网筛中，冲洗至水变清。",
           "2. 将米倒入小锅中，加入 1 杯水（4 人份加 2 杯水）和一撮盐。",
           "3. 煮沸，然后盖上锅盖，转小火。",
@@ -7006,13 +7006,13 @@
     },
     {
       "id": "themealdb-53166",
-      "title": "鹰嘴豆、chorizo香肠与菠菜炖菜",
+      "title": "鹰嘴豆、西班牙辣香肠与菠菜炖菜",
       "theme": "猪肉",
       "location": "西班牙",
       "image_urls": [
         "https://www.themealdb.com/images/media/meals/xvnx8j1763287209.jpg"
       ],
-      "description": "来自 TheMealDB 的鹰嘴豆、chorizo香肠与菠菜炖菜。食谱和图片均源自同一来源餐点记录。",
+      "description": "来自 TheMealDB 的鹰嘴豆、西班牙辣香肠香肠与菠菜炖菜。食谱和图片均源自同一来源餐点记录。",
       "source_name": "TheMealDB 同源菜谱和图片",
       "source_url": "https://www.themealdb.com/api/json/v1/1/lookup.php?i=53166",
       "status": "published",
@@ -7022,7 +7022,7 @@
       "recipe": {
         "id": "main",
         "day": "post",
-        "name": "鹰嘴豆、chorizo香肠与菠菜炖菜",
+        "name": "鹰嘴豆、西班牙辣香肠与菠菜炖菜",
         "ingredients": [
           "4汤匙 特级初榨橄榄油",
           "1个 切碎的洋葱",
@@ -7031,7 +7031,7 @@
           "3枝 百里香",
           "2片 月桂叶",
           "2瓣 切碎的大蒜",
-          "200克 Chorizo香肠",
+          "200克 西班牙辣香肠香肠",
           "1/4茶匙 肉桂粉",
           "1茶匙 红椒粉",
           "800克 鹰嘴豆",
@@ -7056,8 +7056,8 @@
           "在大锅中加热油，然后轻轻煎洋葱3-4分钟，直到开始变软。",
           "拌入胡萝卜、西芹、百里香和月桂叶。",
           "调味，然后继续煮2-3分钟，偶尔搅拌。",
-          "加入大蒜、chorizo香肠、肉桂粉和烟熏红椒粉。",
-          "轻轻煎炒，直到蔬菜变软，chorizo香肠开始释放油脂并变得酥脆。",
+          "加入大蒜、西班牙辣香肠香肠、肉桂粉和烟熏红椒粉。",
+          "轻轻煎炒，直到蔬菜变软，西班牙辣香肠香肠开始释放油脂并变得酥脆。",
           "拌入鹰嘴豆、醋和150毫升水，然后煮沸1-2分钟，直到鹰嘴豆热透。",
           "加入菠菜，然后拌入鹰嘴豆中，直到菠菜稍微萎蔫。",
           "离火，根据口味调味，然后趁热搭配脆面包食用。"
