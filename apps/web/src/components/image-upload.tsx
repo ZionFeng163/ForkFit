@@ -106,20 +106,18 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
           onDragLeave={() => setDragover(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className="rounded-xl py-10 text-center cursor-pointer transition-all duration-200"
+          className="cursor-pointer rounded-lg py-10 text-center transition-colors duration-150"
           style={{
             border: `2px dashed ${dragover ? "var(--lp-accent)" : "var(--lp-border)"}`,
             background: dragover ? "var(--lp-accent-light)" : "var(--lp-warm-100)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.background = "var(--lp-accent-light)"; }}
-          onMouseLeave={(e) => { if (!dragover) { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.background = "var(--lp-warm-100)"; } }}
         >
           {uploading ? (
             <Loader2 size={20} className="animate-spin mx-auto" style={{ color: "var(--lp-muted)" }} />
           ) : (
             <>
               <div
-                className="w-12 h-12 rounded-full grid place-items-center mx-auto mb-3"
+                className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-lg"
                 style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
               >
                 <ImagePlus size={22} />

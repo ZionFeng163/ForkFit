@@ -7,10 +7,12 @@ export function RemoteImage({
   src,
   alt,
   className,
+  priority = false,
 }: {
   src: string;
   alt: string;
   className?: string;
+  priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -31,7 +33,8 @@ export function RemoteImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
       className={className}

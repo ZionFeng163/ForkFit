@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 284 64" fill="none">
+  <g stroke="#C84C32" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 34h40c-1.7 12.1-9 19-20 19S7.7 46.1 6 34Z"/>
+    <path d="M26 34V10M26 23 15 12M26 23l11-11M17 57h18"/>
+  </g>
+  <text x="64" y="38" fill="#201C18" font-family="Noto Sans SC, PingFang SC, sans-serif" font-size="25" font-weight="700">吃什么</text>
+  <path d="M151 17v30" stroke="#DED7CD"/>
+  <text x="169" y="38" fill="#6F675E" font-family="Noto Sans SC, sans-serif" font-size="19" font-weight="600">ForkFit</text>
+</svg>

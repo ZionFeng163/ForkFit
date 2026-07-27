@@ -92,7 +92,7 @@ function ProfileContent() {
   const postCount = profile?.post_count ?? 0;
 
   return (
-    <div className="mx-auto max-w-[960px] px-7 pb-20">
+    <div className="site-container max-w-[980px] pb-20">
       {/* Profile header */}
       <div className="flex gap-8 items-start py-8" style={{ borderBottom: "1px solid var(--lp-border)" }}>
         <div className="relative flex-shrink-0">

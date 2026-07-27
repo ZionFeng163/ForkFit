@@ -98,7 +98,7 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
   const isOwnProfile = currentUser?.id === userId;
 
   return (
-    <section className="mx-auto max-w-[960px] px-7 pb-20">
+    <section className="site-container max-w-[980px] pb-20">
       {/* Profile header */}
       <div className="flex gap-8 items-start py-8" style={{ borderBottom: "1px solid var(--lp-border)" }}>
         <div

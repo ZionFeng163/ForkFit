@@ -38,12 +38,11 @@ export function ConfirmModal({
   return (
     <div
       className="fixed inset-0 z-[200] grid place-items-center"
-      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(32,28,24,0.46)" }}
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl p-6 relative"
-        style={{ background: "var(--lp-surface)", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+        className="relative w-full max-w-sm rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_2px_8px_rgba(32,28,24,.14)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -56,10 +55,10 @@ export function ConfirmModal({
 
         <div className="flex items-start gap-3 mb-4">
           <div
-            className="w-10 h-10 rounded-xl grid place-items-center flex-shrink-0"
+            className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg"
             style={{
-              background: danger ? "#fef0ef" : "var(--lp-accent-light)",
-              color: danger ? "#e0524a" : "var(--lp-accent)",
+              background: danger ? "var(--danger-soft)" : "var(--lp-accent-light)",
+              color: danger ? "var(--danger)" : "var(--lp-accent)",
             }}
           >
             <AlertTriangle size={20} />
@@ -73,15 +72,14 @@ export function ConfirmModal({
         <div className="flex gap-2 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
-            style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
+            className="button-secondary h-9 min-h-9"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-all duration-150"
-            style={{ background: danger ? "#e0524a" : "var(--lp-accent)" }}
+            className="button-primary h-9 min-h-9"
+            style={{ background: danger ? "var(--danger)" : undefined, borderColor: danger ? "var(--danger)" : undefined }}
           >
             {confirmLabel}
           </button>

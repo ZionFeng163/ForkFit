@@ -128,7 +128,6 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
   return (
     <AuthLayout>
-      {/* Tab switcher */}
       <div className="auth-tabs">
         <button onClick={() => setTab("login")} className={`auth-tab ${tab === "login" ? "active" : ""}`}>
           登录
@@ -140,16 +139,16 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
       {/* Error */}
       {getErrorMsg() && (
-        <div className="mb-4 px-4 py-3 rounded-xl text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
+        <div className="mb-5 rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-[13px] text-[var(--danger)]">
           {getErrorMsg()}
         </div>
       )}
 
       {/* ===== LOGIN ===== */}
       <div style={{ display: tab === "login" ? "block" : "none" }}>
-        <div className="auth-form-header">
-          <h1 style={{ color: "var(--lp-fg)" }}>欢迎回来</h1>
-          <p>登录你的账号，继续探索美味</p>
+          <div className="auth-form-header">
+            <h1 style={{ color: "var(--lp-fg)" }}>欢迎回来</h1>
+            <p>登录后继续收藏、发布和定制菜谱</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -181,9 +180,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
       {/* ===== REGISTER ===== */}
       <div style={{ display: tab === "register" ? "block" : "none" }}>
-        <div className="auth-form-header">
-          <h1 style={{ color: "var(--lp-fg)" }}>创建账号</h1>
-          <p>加入「吃什么」，让 AI 帮你解决每天吃什么</p>
+          <div className="auth-form-header">
+            <h1 style={{ color: "var(--lp-fg)" }}>创建账号</h1>
+            <p>保存口味偏好，让每份菜谱更适合你</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">

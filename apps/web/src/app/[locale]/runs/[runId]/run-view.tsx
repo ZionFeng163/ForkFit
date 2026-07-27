@@ -132,7 +132,7 @@ export function RunView({ runId }: { runId: string }) {
   // Loading / error states
   if (query.isLoading) {
     return (
-      <div className="mx-auto max-w-[860px] px-7 pb-20">
+      <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6 flex justify-center py-20">
           <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
         </div>
@@ -142,7 +142,7 @@ export function RunView({ runId }: { runId: string }) {
 
   if (!run) {
     return (
-      <div className="mx-auto max-w-[860px] px-7 pb-20">
+      <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6">
           <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
@@ -163,40 +163,36 @@ export function RunView({ runId }: { runId: string }) {
     ];
     const activeStep = run.status === "queued" ? 0 : Math.min(3, Math.max(1, run.trace?.steps?.length ?? 1));
     return (
-      <div className="mx-auto max-w-[860px] px-7 pb-20">
+      <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6">
           <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <div className="py-16 text-center">
-          <Loader2 size={32} className="animate-spin mx-auto mb-4" style={{ color: "var(--lp-accent)" }} />
-          <div className="text-base font-semibold" style={{ color: "var(--lp-fg)" }}>
+        <div className="py-12 md:py-16">
+          <Loader2 size={28} className="mb-4 animate-spin text-[var(--brand)]" />
+          <h1 className="text-2xl font-bold tracking-[-0.03em]">
             {run.status === "queued" ? "已加入队列" : "定制中..."}
-          </div>
-          <div className="text-sm mt-1" style={{ color: "var(--lp-muted)" }}>
+          </h1>
+          <div className="mt-2 text-sm text-[var(--muted-text)]">
             {run.user_message || "AI 正在为你调整菜谱"}
           </div>
-          <div className="mt-3 text-xs" style={{ color: "var(--lp-muted)" }}>
+          <div className="mt-2 text-xs text-[var(--muted-text)]">
             {run.queue_position ? `队列位置 ${run.queue_position}` : "正在处理"}
             {run.estimated_wait_seconds ? ` · 预计 ${run.estimated_wait_seconds} 秒` : ""}
           </div>
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+          <ol className="mt-8 max-w-lg border-t border-[var(--line)]">
             {steps.map((step, index) => (
-              <div
+              <li
                 key={step}
-                className="rounded-xl px-3.5 py-3"
-                style={{
-                  border: "1px solid var(--lp-border)",
-                  background: index <= activeStep ? "var(--lp-accent-light)" : "var(--lp-surface)",
-                  color: index <= activeStep ? "var(--lp-accent)" : "var(--lp-muted)",
-                }}
+                className="grid grid-cols-[34px_1fr_auto] items-center gap-3 border-b border-[var(--line)] py-4"
               >
-                <div className="text-[11px] font-semibold">阶段 {index + 1}</div>
-                <div className="mt-1 text-[13px] font-bold">{step}</div>
-              </div>
+                <span className={`grid h-7 w-7 place-items-center rounded-md text-xs font-bold ${index <= activeStep ? "bg-[var(--brand)] text-white" : "border border-[var(--line)] text-[var(--muted-text)]"}`}>{index + 1}</span>
+                <span className={index <= activeStep ? "font-semibold" : "text-[var(--muted-text)]"}>{step}</span>
+                <span className="text-xs text-[var(--muted-text)]">{index < activeStep ? "完成" : index === activeStep ? "进行中" : "等待"}</span>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </div>
     );

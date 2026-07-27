@@ -207,7 +207,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
   return (
     <form onSubmit={submit}>
-      <div className="mx-auto max-w-[960px] px-7 pb-20">
+      <div className="site-container max-w-[980px] pb-20">
         {/* Back */}
         <div className="pt-6">
           <button
@@ -240,11 +240,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 style={{
                   flex: 1,
                   height: "3px",
-                  borderRadius: "999px",
+                  borderRadius: "2px",
                   background: i < 1
                     ? "var(--lp-accent)"
-                    : i === 1
-                    ? "linear-gradient(90deg, var(--lp-accent) 0%, var(--lp-border) 100%)"
                     : "var(--lp-border)",
                 }}
               />
@@ -267,7 +265,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
           {/* ── Left: Form ── */}
           <div>
             {/* Section 1: Basic Info */}
-            <div className="rounded-xl p-7 mb-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+            <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                 基本信息
@@ -317,7 +315,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             </div>
 
             {/* Section 2: Recipe Details */}
-            <div className="rounded-xl p-7 mb-5" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+            <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 菜谱详情
@@ -332,7 +330,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                       key={min}
                       type="button"
                       onClick={() => update("cook_time_minutes", min)}
-                      className="px-4 py-2 rounded-full text-[13px] font-medium transition-all duration-150"
+                      className="rounded-md px-4 py-2 text-[13px] font-medium transition-colors duration-150"
                       style={{
                         border: `1.5px solid ${form.cook_time_minutes === min ? "var(--lp-accent)" : "var(--lp-border)"}`,
                         background: form.cook_time_minutes === min ? "var(--lp-accent-light)" : "var(--lp-surface)",
@@ -391,7 +389,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             </div>
 
             {/* Section 3: Cooking Steps */}
-            <div className="rounded-xl p-7" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+            <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
                 烹饪步骤

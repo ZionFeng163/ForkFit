@@ -15,12 +15,6 @@ import {
 import { errorMessage } from "@/lib/errors";
 import type { RecipePost, RunResultPayload } from "@/types/forkfit";
 
-const GRADIENTS = [
-  "linear-gradient(135deg, #f9ddd4, #fde2d3, #fef0ec)",
-  "linear-gradient(135deg, #e8f5ee, #c8e6d5)",
-  "linear-gradient(135deg, #eef4fd, #d4e4f9)",
-];
-
 export function ForkContent({ post }: { post: RecipePost }) {
   const router = useRouter();
   const firstMeal = post.recipe;
@@ -188,7 +182,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
   }
 
   return (
-    <div className="mx-auto max-w-[860px] px-7 pb-20">
+    <div className="site-container max-w-[920px] pb-20">
       {/* Back */}
       <div className="pt-6 pb-4">
         <Link href={`/packs/${post.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors" style={{ color: "var(--lp-muted)" }}>
@@ -197,86 +191,50 @@ export function ForkContent({ post }: { post: RecipePost }) {
       </div>
 
       {/* Recipe Hero */}
-      <div className="rounded-2xl overflow-hidden mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-        <div className="relative w-full" style={{ height: "280px", background: GRADIENTS[0] }}>
+      <div className="mb-6 grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:grid-cols-[320px_1fr]">
+        <div className="relative min-h-[240px] w-full bg-[#e9e3da]">
           {post.image_urls.length > 0 ? (
             <RemoteImage src={post.image_urls[0]} alt={post.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full grid place-items-center">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="1.2" opacity="0.35">
-                <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 5 4 6.5V22l4-2.5c.6.2 1.3.5 2 .5 5.52 0 10-4 10-8s-4.48-8-10-8z" />
-              </svg>
-            </div>
-          )}
-          <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold"
-            style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", color: "var(--lp-accent)", boxShadow: "var(--lp-shadow-sm)" }}>
-            <Sparkles size={14} /> AI 推荐菜谱
-          </div>
+          ) : <RemoteImage src="" alt={post.title} className="h-full w-full" />}
         </div>
-        <div className="p-7">
-          <div className="flex gap-2 flex-wrap mb-4">
-            {firstMeal.cook_time_minutes > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style={{ background: "var(--lp-green-light)", color: "var(--lp-green)" }}>
-                {firstMeal.cook_time_minutes} 分钟
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style={{ background: "var(--lp-warm-100)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-              中等难度
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-[-0.02em] mb-2" style={{ color: "var(--lp-fg)" }}>{post.title}</h1>
+        <div className="p-6 md:p-7">
+          <p className="mb-3 text-sm font-semibold text-[var(--brand-hover)]">正在定制</p>
+          <h1 className="text-2xl font-bold tracking-[-0.03em] mb-2" style={{ color: "var(--lp-fg)" }}>{post.title}</h1>
           <p className="text-[15px] leading-[1.6] max-w-[560px]" style={{ color: "var(--lp-muted)" }}>{post.description}</p>
-          {firstMeal.ingredients.length > 0 && (
-            <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--lp-border)" }}>
-              <div className="text-xs font-semibold uppercase tracking-[0.08em] mb-2.5" style={{ color: "var(--lp-muted)" }}>主要食材</div>
-              <div className="flex flex-wrap gap-2">
-                {firstMeal.ingredients.slice(0, 8).map((ing: string, i: number) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium" style={{ background: "var(--lp-warm-100)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--lp-accent)", opacity: 0.6 }} />{ing}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="mt-5 flex gap-4 border-t border-[var(--line)] pt-4 text-sm text-[var(--muted-text)]"><span>{firstMeal.cook_time_minutes} 分钟</span><span>{firstMeal.ingredients.length} 种食材</span></div>
         </div>
       </div>
 
       {/* Requirement input */}
       {!runResult && (
-        <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-          <h2 className="text-base font-bold mb-3" style={{ color: "var(--lp-fg)" }}>你的定制需求</h2>
-          <p className="text-[13px] mb-4" style={{ color: "var(--lp-muted)" }}>告诉 AI 你想怎么调整这道菜</p>
+        <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6">
+          <h2 className="section-heading">你的定制需求</h2>
+          <p className="mb-4 mt-2 text-[13px] text-[var(--muted-text)]">可以写时间、人数、过敏、忌口、厨具或口味要求。</p>
           <textarea
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
             placeholder="例如：少放盐、换成鸡胸肉、多加蔬菜、做成素食版本…"
             rows={4}
-            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-y min-h-[100px] leading-[1.65] mb-3"
-            style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+            className="mb-3 min-h-[120px] w-full resize-y rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm leading-[1.65] outline-none focus:border-[var(--focus)]"
           />
           {/* Quick presets */}
           <div className="flex flex-wrap gap-2 mb-4">
             {["少放盐", "更辣一点", "减少食材", "素食版本", "缩短时间", "多加蔬菜", "换成鸡胸肉", "去掉花生"].map((preset) => (
               <button key={preset} type="button"
                 onClick={() => setRequirement((prev) => prev ? prev + "、" + preset : preset)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150"
-                style={{ border: "1px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--lp-accent)"; e.currentTarget.style.color = "var(--lp-accent)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; }}>
+                className="rounded-md border border-[var(--line)] bg-transparent px-3 py-1.5 text-[12px] font-medium text-[var(--muted-text)] hover:border-[var(--brand)] hover:text-[var(--brand-hover)]">
                 + {preset}
               </button>
             ))}
           </div>
           <div className="flex gap-3 flex-wrap">
             <button onClick={handleStart} disabled={creating || isRunning}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50"
-              style={{ background: "var(--lp-accent)", boxShadow: "0 2px 8px rgba(232,93,58,0.25)" }}>
+              className="button-primary disabled:opacity-50">
               {creating || isRunning ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
               开始定制
             </button>
             <button onClick={handleExtract} disabled={extracting}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50"
-              style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
+              className="button-secondary disabled:opacity-50">
               {extracting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               从我的帖子提取口味
             </button>
@@ -301,7 +259,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
 
       {/* Result */}
       {runResult && (
-        <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+        <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--lp-fg)" }}>
               <CheckCircle2 size={20} style={{ color: "var(--lp-green)" }} /> 定制完成

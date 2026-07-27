@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, CheckCircle2, Loader2, Shield } from "lucide-react";
 
 import { AuthGuard } from "@/components/auth-guard";
+import { BrandMark } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
 import {
@@ -109,22 +110,7 @@ export default function AdminPage() {
 function AdminLayout() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
-  const [clock, setClock] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Clock
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      setClock(
-        `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-      );
-    };
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   if (user?.role !== "admin") {
     return (
@@ -141,23 +127,21 @@ function AdminLayout() {
   const currentTab = TAB_CONFIG.find((t) => t.key === tab)!;
 
   return (
-    <div className="flex min-h-screen bg-[#fafaf8]">
+    <div className="flex min-h-screen bg-[#f6f2ea]">
       {/* ── Sidebar ── */}
-      <aside className="fixed left-0 top-0 z-10 flex h-screen w-[220px] flex-col border-r border-[#e8e6e0] bg-white p-4">
+      <aside className="fixed left-0 top-0 z-10 flex h-screen w-[220px] flex-col border-r border-[#ded7cd] bg-white p-4">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-2.5 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#e85d3a] text-sm font-bold text-white">
-            吃
-          </div>
-          <span className="text-[15px] font-bold text-[#1a1917]">吃什么</span>
-          <span className="ml-auto rounded bg-[#fef0ec] px-1.5 py-0.5 text-[10px] font-semibold text-[#e85d3a]">
+          <BrandMark className="h-8 w-8 text-[#c84c32]" />
+          <span className="text-[15px] font-bold text-[#201c18]">吃什么</span>
+          <span className="ml-auto rounded bg-[#f4e4de] px-1.5 py-0.5 text-[10px] font-semibold text-[#c84c32]">
             Admin
           </span>
         </div>
 
         {/* Nav */}
         <nav className="flex-1">
-          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-[#a8a59d]">
+          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-[#6f675e]">
             概览
           </div>
           {TAB_CONFIG.slice(0, 2).map((t) => (
@@ -166,8 +150,8 @@ function AdminLayout() {
               onClick={() => setTab(t.key)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-[#fef0ec] text-[#e85d3a] font-semibold"
-                  : "text-[#7c7a73] hover:bg-[#f5f4f0] hover:text-[#1a1917]"
+                  ? "bg-[#f4e4de] text-[#c84c32] font-semibold"
+                  : "text-[#6f675e] hover:bg-[#eee8df] hover:text-[#201c18]"
               }`}
             >
               {t.icon}
@@ -175,7 +159,7 @@ function AdminLayout() {
             </button>
           ))}
 
-          <div className="mb-2 mt-6 px-2 text-[10px] font-bold uppercase tracking-widest text-[#a8a59d]">
+          <div className="mb-2 mt-6 px-2 text-[10px] font-bold uppercase tracking-widest text-[#6f675e]">
             管理
           </div>
           {TAB_CONFIG.slice(2).map((t) => (
@@ -184,8 +168,8 @@ function AdminLayout() {
               onClick={() => setTab(t.key)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-[#fef0ec] text-[#e85d3a] font-semibold"
-                  : "text-[#7c7a73] hover:bg-[#f5f4f0] hover:text-[#1a1917]"
+                  ? "bg-[#f4e4de] text-[#c84c32] font-semibold"
+                  : "text-[#6f675e] hover:bg-[#eee8df] hover:text-[#201c18]"
               }`}
             >
               {t.icon}
@@ -195,16 +179,16 @@ function AdminLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[#e8e6e0] pt-4">
+        <div className="border-t border-[#ded7cd] pt-4">
           <div className="flex items-center gap-2.5 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fef0ec] text-[13px] font-bold text-[#e85d3a]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4e4de] text-[13px] font-bold text-[#c84c32]">
               {user?.display_name?.[0] || "管"}
             </div>
             <div>
-              <div className="text-[13px] font-semibold text-[#1a1917]">
+              <div className="text-[13px] font-semibold text-[#201c18]">
                 {user?.display_name || "管理员"}
               </div>
-              <div className="text-[11px] text-[#7c7a73]">超级管理员</div>
+              <div className="text-[11px] text-[#6f675e]">超级管理员</div>
             </div>
           </div>
         </div>
@@ -213,14 +197,13 @@ function AdminLayout() {
       {/* ── Main ── */}
       <main className="ml-[220px] flex min-h-screen flex-1 flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-[5] flex h-14 items-center justify-between border-b border-[#e8e6e0] bg-[#fafaf8]/85 px-8 backdrop-blur-xl">
+        <header className="flex h-14 items-center justify-between border-b border-[#ded7cd] bg-[#fffefb] px-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-base font-bold text-[#1a1917]">{currentTab.label}</h1>
-            <span className="text-xs text-[#7c7a73]">{clock}</span>
+            <h1 className="text-base font-bold text-[#201c18]">{currentTab.label}</h1>
           </div>
           <button
             onClick={() => setRefreshKey((value) => value + 1)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#e8e6e0] bg-white px-3 py-1.5 text-xs font-medium text-[#7c7a73] transition-colors hover:border-[#e85d3a] hover:text-[#e85d3a]"
+            className="flex items-center gap-1.5 rounded-lg border border-[#ded7cd] bg-white px-3 py-1.5 text-xs font-medium text-[#6f675e] transition-colors hover:border-[#c84c32] hover:text-[#c84c32]"
           >
             {Icons.refresh}
             刷新数据
@@ -313,11 +296,11 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#2d8a56] animate-pulse" : "bg-[#c9a030]"
+            allOk ? "bg-[#527047] animate-pulse" : "bg-[#8a642b]"
           }`}
         />
-        <span className="text-[15px] font-bold text-[#1a1917]">服务状态</span>
-        <span className="ml-1 text-xs font-normal text-[#7c7a73]">
+        <span className="text-[15px] font-bold text-[#201c18]">服务状态</span>
+        <span className="ml-1 text-xs font-normal text-[#6f675e]">
           {allOk ? "所有服务正常运行" : "部分服务异常"}
         </span>
       </div>
@@ -325,23 +308,23 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
         {health.map((svc) => (
           <div
             key={svc.name}
-            className="rounded-xl border border-[#e8e6e0] bg-white p-4 text-center"
+            className="rounded-xl border border-[#ded7cd] bg-white p-4 text-center"
           >
-            <div className="mb-1.5 text-[11px] text-[#7c7a73]">{svc.name}</div>
+            <div className="mb-1.5 text-[11px] text-[#6f675e]">{svc.name}</div>
             <div
               className="text-xl font-bold"
               style={{
                 color:
                   svc.status === "ok"
-                    ? "#2d8a56"
+                    ? "#527047"
                     : svc.status === "warn"
-                    ? "#c9a030"
-                    : "#d94452",
+                    ? "#8a642b"
+                    : "#a33f32",
               }}
             >
               {svc.status === "ok" ? "正常" : svc.status === "warn" ? "警告" : "异常"}
             </div>
-            <div className="mt-1 text-[11px] text-[#7c7a73]">
+            <div className="mt-1 text-[11px] text-[#6f675e]">
               延迟 {svc.latency_ms}ms
             </div>
           </div>
@@ -349,61 +332,61 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {/* Recent Activity */}
-      <div className="mb-4 text-[15px] font-bold text-[#1a1917]">最近动态</div>
-      <div className="rounded-xl border border-[#e8e6e0] bg-white">
+      <div className="mb-4 text-[15px] font-bold text-[#201c18]">最近动态</div>
+      <div className="rounded-xl border border-[#ded7cd] bg-white">
         <ul className="px-5 py-2">
           {activities.length === 0 && (
-            <li className="py-8 text-center text-sm text-[#a8a59d]">暂无动态</li>
+            <li className="py-8 text-center text-sm text-[#6f675e]">暂无动态</li>
           )}
           {activities.map((a, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 border-b border-[#e8e6e0] py-3 last:border-0"
+              className="flex items-start gap-3 border-b border-[#ded7cd] py-3 last:border-0"
             >
               <span
                 className="mt-1.5 inline-block h-2 w-2 min-w-2 rounded-full"
                 style={{
                   background:
                     a.color === "green"
-                      ? "#2d8a56"
+                      ? "#527047"
                       : a.color === "blue"
                       ? "#4a8ac9"
                       : a.color === "orange"
-                      ? "#e85d3a"
-                      : "#d94452",
+                      ? "#c84c32"
+                      : "#a33f32",
                 }}
               />
               <div>
-                <div className="text-[13px] leading-relaxed text-[#1a1917]">
+                <div className="text-[13px] leading-relaxed text-[#201c18]">
                   {a.text}
                 </div>
-                <div className="mt-0.5 text-[11px] text-[#a8a59d]">{a.time}</div>
+                <div className="mt-0.5 text-[11px] text-[#6f675e]">{a.time}</div>
               </div>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="mb-4 mt-8 text-[15px] font-bold text-[#1a1917]">AI 反馈</div>
-      <div className="rounded-xl border border-[#e8e6e0] bg-white">
+      <div className="mb-4 mt-8 text-[15px] font-bold text-[#201c18]">AI 反馈</div>
+      <div className="rounded-xl border border-[#ded7cd] bg-white">
         <ul className="px-5 py-2">
           {feedback.length === 0 && (
-            <li className="py-8 text-center text-sm text-[#a8a59d]">暂无反馈</li>
+            <li className="py-8 text-center text-sm text-[#6f675e]">暂无反馈</li>
           )}
           {feedback.map((item) => (
             <li
               key={item.id}
-              className="flex items-start justify-between gap-4 border-b border-[#e8e6e0] py-3 last:border-0"
+              className="flex items-start justify-between gap-4 border-b border-[#ded7cd] py-3 last:border-0"
             >
               <div>
-                <div className="text-[13px] font-semibold text-[#1a1917]">
+                <div className="text-[13px] font-semibold text-[#201c18]">
                   {item.rating === "helpful" ? "有用" : "没用"} · {item.run_id.slice(0, 16)}...
                 </div>
-                <div className="mt-0.5 text-xs text-[#7c7a73]">
+                <div className="mt-0.5 text-xs text-[#6f675e]">
                   {item.reason || "用户未填写原因"}
                 </div>
               </div>
-              <span className="whitespace-nowrap text-[11px] text-[#a8a59d]">
+              <span className="whitespace-nowrap text-[11px] text-[#6f675e]">
                 {new Date(item.created_at).toLocaleString("zh-CN")}
               </span>
             </li>
@@ -452,13 +435,13 @@ function ServicesTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-6 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#2d8a56] animate-pulse" : "bg-[#c9a030]"
+            allOk ? "bg-[#527047] animate-pulse" : "bg-[#8a642b]"
           }`}
         />
-        <span className="text-[15px] font-bold text-[#1a1917]">
+        <span className="text-[15px] font-bold text-[#201c18]">
           {allOk ? "所有服务运行正常" : "部分服务异常"}
         </span>
-        <span className="ml-1 text-xs font-normal text-[#7c7a73]">上次检查：刚刚</span>
+        <span className="ml-1 text-xs font-normal text-[#6f675e]">上次检查：刚刚</span>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -476,8 +459,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
 > = {
   database: {
     desc: "用户数据 + 菜谱内容",
-    iconBg: "#e8f5ee",
-    iconColor: "#2d8a56",
+    iconBg: "#e9eee5",
+    iconColor: "#527047",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -493,8 +476,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   redis: {
     desc: "限流 + 运行态缓存",
-    iconBg: "#fde8ea",
-    iconColor: "#d94452",
+    iconBg: "#f4e5e1",
+    iconColor: "#a33f32",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -523,8 +506,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   llm: {
     desc: "AI 定制模型连通性",
-    iconBg: "#fef0ec",
-    iconColor: "#e85d3a",
+    iconBg: "#f4e4de",
+    iconColor: "#c84c32",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
@@ -538,8 +521,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   default: {
     desc: "系统服务",
-    iconBg: "#f5f4f0",
-    iconColor: "#7c7a73",
+    iconBg: "#eee8df",
+    iconColor: "#6f675e",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <circle cx="12" cy="12" r="3" /><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
@@ -557,13 +540,13 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
   const statusLabel = service.status === "ok" ? "运行中" : service.status === "warn" ? "警告" : "异常";
   const statusClasses =
     service.status === "ok"
-      ? "bg-[#e8f5ee] text-[#2d8a56]"
+      ? "bg-[#e9eee5] text-[#527047]"
       : service.status === "warn"
-      ? "bg-[#fef9ec] text-[#c9a030]"
-      : "bg-[#fde8ea] text-[#d94452]";
+      ? "bg-[#fef9ec] text-[#8a642b]"
+      : "bg-[#f4e5e1] text-[#a33f32]";
 
   return (
-    <div className="flex flex-col gap-3.5 rounded-xl border border-[#e8e6e0] bg-white p-5">
+    <div className="flex flex-col gap-3.5 rounded-xl border border-[#ded7cd] bg-white p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -574,8 +557,8 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
             {service.icon}
           </div>
           <div>
-            <div className="text-sm font-semibold text-[#1a1917]">{service.name}</div>
-            <div className="text-xs text-[#7c7a73]">{service.desc}</div>
+            <div className="text-sm font-semibold text-[#201c18]">{service.name}</div>
+            <div className="text-xs text-[#6f675e]">{service.desc}</div>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses}`}>
@@ -586,14 +569,14 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
 
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-[#f5f4f0] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#7c7a73]">
+        <div className="rounded-lg bg-[#eee8df] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
             响应时间
           </div>
           <div className="text-base font-bold tabular-nums">{service.latency_ms}ms</div>
         </div>
-        <div className="rounded-lg bg-[#f5f4f0] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#7c7a73]">
+        <div className="rounded-lg bg-[#eee8df] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
             状态
           </div>
           <div
@@ -601,17 +584,17 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
             style={{
               color:
                 service.status === "ok"
-                  ? "#2d8a56"
+                  ? "#527047"
                   : service.status === "warn"
-                  ? "#c9a030"
-                  : "#d94452",
+                  ? "#8a642b"
+                  : "#a33f32",
             }}
           >
             {statusLabel}
           </div>
         </div>
-        <div className="rounded-lg bg-[#f5f4f0] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#7c7a73]">
+        <div className="rounded-lg bg-[#eee8df] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
             详情
           </div>
           <div className="truncate text-base font-bold" title={service.details}>
@@ -621,19 +604,19 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
       </div>
 
       {/* Latency bar */}
-      <div className="flex items-center gap-2 text-[11px] text-[#7c7a73]">
+      <div className="flex items-center gap-2 text-[11px] text-[#6f675e]">
         <span>延迟</span>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#f5f4f0]">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eee8df]">
           <div
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(100, (service.latency_ms / 500) * 100)}%`,
               background:
                 service.latency_ms < 100
-                  ? "#2d8a56"
+                  ? "#527047"
                   : service.latency_ms < 300
-                  ? "#c9a030"
-                  : "#d94452",
+                  ? "#8a642b"
+                  : "#a33f32",
             }}
           />
         </div>
@@ -752,15 +735,15 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#e8e6e0] bg-white">
+    <div className="overflow-hidden rounded-xl border border-[#ded7cd] bg-white">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e6e0] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-[#1a1917]">菜谱管理</span>
+          <span className="text-sm font-semibold text-[#201c18]">菜谱管理</span>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setPendingDelete("batch")}
-              className="rounded-md border border-[#d94452] px-2.5 py-1 text-xs font-medium text-[#d94452]"
+              className="rounded-md border border-[#a33f32] px-2.5 py-1 text-xs font-medium text-[#a33f32]"
             >
               删除所选（{selectedIds.size}）
             </button>
@@ -770,7 +753,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as PostStatus | "all"); setPage(0); }}
-            className="rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none"
+            className="rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none"
           >
             <option value="all">全部状态</option>
             <option value="published">已发布</option>
@@ -780,7 +763,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           <select
             value={qualityFilter}
             onChange={(e) => { setQualityFilter(e.target.value as PostQuality | "all"); setPage(0); }}
-            className="rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none"
+            className="rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none"
           >
             <option value="all">全部质量</option>
             <option value="complete">完整</option>
@@ -788,14 +771,14 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
             <option value="missing_steps">缺步骤</option>
             <option value="incomplete">缺图和步骤</option>
           </select>
-          <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-3 py-1.5">
             {Icons.search}
             <input
               type="text"
               placeholder="标题 / 标签..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              className="w-36 border-none bg-transparent text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
+              className="w-36 border-none bg-transparent text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
             />
           </div>
           <input
@@ -803,7 +786,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
             placeholder="标签筛选"
             value={tagFilter}
             onChange={(e) => { setTagFilter(e.target.value); setPage(0); }}
-            className="w-24 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-2.5 py-1.5 text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
+            className="w-24 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
           />
         </div>
       </div>
@@ -814,7 +797,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
       <div className="overflow-x-auto">
       <table className="w-full min-w-[960px] border-collapse">
         <thead>
-          <tr className="border-b border-[#e8e6e0] bg-[#f5f4f0]">
+          <tr className="border-b border-[#ded7cd] bg-[#eee8df]">
             <th className="w-12 px-5 py-3 text-left">
               <input
                 type="checkbox"
@@ -823,25 +806,25 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                 onChange={toggleAll}
               />
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               菜谱
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               状态
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               质量
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               作者
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               来源
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               发布时间
             </th>
-            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               操作
             </th>
           </tr>
@@ -849,7 +832,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
         <tbody>
           {posts.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
+              <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#6f675e]">
                 {loading ? "正在加载..." : search ? "没有匹配的菜谱" : "暂无菜谱"}
               </td>
             </tr>
@@ -857,7 +840,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           {posts.map((p) => (
             <tr
               key={p.id}
-              className="border-b border-[#e8e6e0] transition-colors last:border-0 hover:bg-[#f5f4f0]"
+              className="border-b border-[#ded7cd] transition-colors last:border-0 hover:bg-[#eee8df]"
             >
               <td className="px-5 py-3.5">
                 <input
@@ -868,8 +851,8 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                 />
               </td>
               <td className="px-5 py-3.5">
-                <div className="text-sm font-semibold text-[#1a1917]">{p.title}</div>
-                <div className="mt-0.5 text-[11px] text-[#a8a59d]">{p.id}</div>
+                <div className="text-sm font-semibold text-[#201c18]">{p.title}</div>
+                <div className="mt-0.5 text-[11px] text-[#6f675e]">{p.id}</div>
               </td>
               <td className="px-5 py-3.5">
                 <StatusBadge status={p.status} />
@@ -879,31 +862,31 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
               </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#fef0ec] text-[11px] font-bold text-[#e85d3a]">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#f4e4de] text-[11px] font-bold text-[#c84c32]">
                     {p.author[0]}
                   </div>
-                  <span className="text-sm font-semibold text-[#1a1917]">{p.author}</span>
+                  <span className="text-sm font-semibold text-[#201c18]">{p.author}</span>
                 </div>
               </td>
-              <td className="px-5 py-3.5 text-xs text-[#7c7a73]">
+              <td className="px-5 py-3.5 text-xs text-[#6f675e]">
                 <div className="max-w-[150px] truncate" title={p.source_url || p.source_name}>
                   {p.source_name || "用户投稿"}
                 </div>
               </td>
-              <td className="px-5 py-3.5 text-sm text-[#7c7a73]">
+              <td className="px-5 py-3.5 text-sm text-[#6f675e]">
                 {new Date(p.created_at).toLocaleDateString("zh-CN")}
               </td>
               <td className="px-5 py-3.5 text-right">
                 <button
                   onClick={() => void changePostStatus(p, p.status === "published" ? "hidden" : "published")}
                   disabled={actionPending}
-                  className="mr-2 rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#1a1917] transition-colors hover:border-[#2d8a56] hover:text-[#2d8a56] disabled:opacity-50"
+                  className="mr-2 rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#201c18] transition-colors hover:border-[#527047] hover:text-[#527047] disabled:opacity-50"
                 >
                   {p.status === "published" ? "下架" : "恢复"}
                 </button>
                 <button
                   onClick={() => setPendingDelete(p)}
-                  className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452]"
+                  className="rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6f675e] transition-colors hover:border-[#a33f32] hover:text-[#a33f32]"
                 >
                   删除
                 </button>
@@ -915,7 +898,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-[#e8e6e0] px-5 py-3 text-xs text-[#7c7a73]">
+      <div className="flex items-center justify-between border-t border-[#ded7cd] px-5 py-3 text-xs text-[#6f675e]">
         <span>
           共 {total} 条，第 {page + 1} / {totalPages || 1} 页
         </span>
@@ -963,10 +946,10 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
 function StatusBadge({ status }: { status: PostStatus }) {
   const label = status === "published" ? "已发布" : status === "hidden" ? "已下架" : "草稿";
   const classes = status === "published"
-    ? "bg-[#e8f5ee] text-[#2d8a56]"
+    ? "bg-[#e9eee5] text-[#527047]"
     : status === "hidden"
-    ? "bg-[#fef0ec] text-[#e85d3a]"
-    : "bg-[#f5f4f0] text-[#7c7a73]";
+    ? "bg-[#f4e4de] text-[#c84c32]"
+    : "bg-[#eee8df] text-[#6f675e]";
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${classes}`}>
       {label}
@@ -985,7 +968,7 @@ function QualityBadge({ quality }: { quality: PostQuality }) {
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-        ok ? "bg-[#e8f5ee] text-[#2d8a56]" : "bg-[#fde8ea] text-[#d94452]"
+        ok ? "bg-[#e9eee5] text-[#527047]" : "bg-[#f4e5e1] text-[#a33f32]"
       }`}
     >
       {label[quality]}
@@ -1102,28 +1085,28 @@ function UsersTab({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#e8e6e0] bg-white">
+    <div className="overflow-hidden rounded-xl border border-[#ded7cd] bg-white">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8e6e0] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-[#1a1917]">用户管理</span>
+          <span className="text-sm font-semibold text-[#201c18]">用户管理</span>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setPendingAction({ type: "batch-delete" })}
-              className="rounded-md border border-[#d94452] px-2.5 py-1 text-xs font-medium text-[#d94452]"
+              className="rounded-md border border-[#a33f32] px-2.5 py-1 text-xs font-medium text-[#a33f32]"
             >
               删除所选（{selectedIds.size}）
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-[#e8e6e0] bg-[#f5f4f0] px-3 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-3 py-1.5">
           {Icons.search}
           <input
             type="text"
             placeholder="搜索用户昵称..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-44 border-none bg-transparent text-xs text-[#1a1917] outline-none placeholder:text-[#a8a59d]"
+            className="w-44 border-none bg-transparent text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
           />
         </div>
       </div>
@@ -1134,7 +1117,7 @@ function UsersTab({
       <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] border-collapse">
         <thead>
-          <tr className="border-b border-[#e8e6e0] bg-[#f5f4f0]">
+          <tr className="border-b border-[#ded7cd] bg-[#eee8df]">
             <th className="w-12 px-5 py-3 text-left">
               <input
                 type="checkbox"
@@ -1143,16 +1126,16 @@ function UsersTab({
                 onChange={toggleAll}
               />
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               用户
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               角色
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               注册时间
             </th>
-            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#7c7a73]">
+            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
               操作
             </th>
           </tr>
@@ -1160,7 +1143,7 @@ function UsersTab({
         <tbody>
           {users.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#a8a59d]">
+              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#6f675e]">
                 {loading ? "正在加载..." : search ? "没有匹配的用户" : "暂无用户"}
               </td>
             </tr>
@@ -1168,7 +1151,7 @@ function UsersTab({
           {users.map((u) => (
             <tr
               key={u.id}
-              className="border-b border-[#e8e6e0] transition-colors last:border-0 hover:bg-[#f5f4f0]"
+              className="border-b border-[#ded7cd] transition-colors last:border-0 hover:bg-[#eee8df]"
             >
               <td className="px-5 py-3.5">
                 <input
@@ -1181,12 +1164,12 @@ function UsersTab({
               </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#fef0ec] text-[11px] font-bold text-[#e85d3a]">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#f4e4de] text-[11px] font-bold text-[#c84c32]">
                     {u.display_name[0]}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-[#1a1917]">{u.display_name}</div>
-                    <div className="text-[11px] text-[#7c7a73]">
+                    <div className="text-sm font-semibold text-[#201c18]">{u.display_name}</div>
+                    <div className="text-[11px] text-[#6f675e]">
                       @{u.username}{u.id === currentUserId ? " · 当前账号" : ""}
                     </div>
                   </div>
@@ -1202,21 +1185,21 @@ function UsersTab({
                   disabled={u.id === currentUserId}
                   className={`rounded-md border px-2.5 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
                     u.role === "admin"
-                      ? "border-[#2d8a56] text-[#2d8a56]"
-                      : "border-[#e8e6e0] text-[#7c7a73]"
+                      ? "border-[#527047] text-[#527047]"
+                      : "border-[#ded7cd] text-[#6f675e]"
                   }`}
                 >
                   {u.role === "admin" ? "管理员" : "用户"}
                 </button>
               </td>
-              <td className="px-5 py-3.5 text-sm text-[#7c7a73]">
+              <td className="px-5 py-3.5 text-sm text-[#6f675e]">
                 {new Date(u.created_at).toLocaleDateString("zh-CN")}
               </td>
               <td className="px-5 py-3.5 text-right">
                 <button
                   onClick={() => setPendingAction({ type: "delete", user: u })}
                   disabled={u.id === currentUserId}
-                  className="rounded-lg border border-[#e8e6e0] bg-white px-2.5 py-1 text-[11px] font-medium text-[#7c7a73] transition-colors hover:border-[#d94452] hover:text-[#d94452] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6f675e] transition-colors hover:border-[#a33f32] hover:text-[#a33f32] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   删除
                 </button>
@@ -1228,7 +1211,7 @@ function UsersTab({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-[#e8e6e0] px-5 py-3 text-xs text-[#7c7a73]">
+      <div className="flex items-center justify-between border-t border-[#ded7cd] px-5 py-3 text-xs text-[#6f675e]">
         <span>
           共 {total} 位用户，第 {page + 1} / {totalPages || 1} 页
         </span>
@@ -1296,18 +1279,18 @@ function StatCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#e8e6e0] bg-white p-5 transition-shadow hover:shadow-md">
-      <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#7c7a73]">
+    <div className="rounded-xl border border-[#ded7cd] bg-white p-5 transition-shadow hover:shadow-md">
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#6f675e]">
         {icon}
         {label}
       </div>
       <div
         className="mb-1.5 text-[28px] font-extrabold leading-tight tabular-nums"
-        style={{ color: highlight ? "#c9a030" : undefined }}
+        style={{ color: highlight ? "#8a642b" : undefined }}
       >
         {value.toLocaleString()}
       </div>
-      <div className={highlight ? "text-xs text-[#c9a030]" : "text-xs text-[#7c7a73]"}>
+      <div className={highlight ? "text-xs text-[#8a642b]" : "text-xs text-[#6f675e]"}>
         {detail}
       </div>
     </div>
@@ -1331,8 +1314,8 @@ function PaginationBtn({
       disabled={disabled}
       className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs font-medium transition-colors ${
         active
-          ? "border-[#e85d3a] bg-[#e85d3a] text-white"
-          : "border-[#e8e6e0] bg-white text-[#7c7a73] hover:border-[#1a1917] hover:text-[#1a1917]"
+          ? "border-[#c84c32] bg-[#c84c32] text-white"
+          : "border-[#ded7cd] bg-white text-[#6f675e] hover:border-[#201c18] hover:text-[#201c18]"
       } ${disabled ? "opacity-30" : ""}`}
     >
       {children}
@@ -1358,14 +1341,14 @@ function ErrorState({
   return (
     <div className="rounded-lg border border-[#edc8c4] bg-[#fff7f5] p-5">
       <div className="flex items-start gap-3">
-        <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#d94452]" />
+        <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#a33f32]" />
         <div className="flex-1">
-          <div className="text-sm font-semibold text-[#7f3525]">数据加载失败</div>
-          <div className="mt-1 text-xs text-[#7f3525]">{message}</div>
+          <div className="text-sm font-semibold text-[#a33f32]">数据加载失败</div>
+          <div className="mt-1 text-xs text-[#a33f32]">{message}</div>
         </div>
         <button
           onClick={onRetry}
-          className="rounded-md border border-[#edc8c4] bg-white px-3 py-1.5 text-xs font-medium text-[#7f3525]"
+          className="rounded-md border border-[#edc8c4] bg-white px-3 py-1.5 text-xs font-medium text-[#a33f32]"
         >
           重试
         </button>
@@ -1387,7 +1370,7 @@ function FeedbackBanner({
     <div
       className={`flex items-center gap-2 border-b px-5 py-3 text-xs ${
         error
-          ? "border-[#edc8c4] bg-[#fff7f5] text-[#7f3525]"
+          ? "border-[#edc8c4] bg-[#fff7f5] text-[#a33f32]"
           : "border-[#cce4d5] bg-[#f2faf5] text-[#256b43]"
       }`}
     >
