@@ -132,8 +132,8 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
         <ArrowLeft size={16} />{isZh ? "返回发现" : "Back to discover"}
       </Link>
 
-      <article className="mt-5">
-        <div className="relative aspect-[3/2] max-h-[720px] overflow-hidden rounded-lg bg-[#e9e3da]">
+      <article className="mt-2 flex flex-col">
+        <div className="relative h-[230px] overflow-hidden rounded-lg bg-[#e9e3da] sm:h-[360px] lg:h-[440px] xl:h-[460px]">
           {post.image_urls.length > 0 ? (
             <div
               ref={galleryRef}
@@ -162,7 +162,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
           )}
         </div>
 
-        <header className="grid gap-6 border-b border-[var(--line)] py-7 lg:grid-cols-[1fr_auto] lg:items-end">
+        <header className="order-first grid gap-6 border-b border-[var(--line)] py-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="max-w-3xl">
             <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--muted-text)]">
               {recipe.tags.slice(0, 3).map((tag) => <span key={tag} className="font-semibold text-[var(--brand-hover)]">{tag}</span>)}

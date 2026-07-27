@@ -14,7 +14,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           <Link href="/discover" className="text-sm font-medium text-[var(--muted-text)] hover:text-[var(--text)]">先看看菜谱</Link>
         </div>
       </header>
-      <main className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-[440px] items-center px-5 py-10">
+      <main className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-[420px] items-start px-5 pb-12 pt-20 md:pt-24">
         <div className="w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-8">
           {children}
         </div>

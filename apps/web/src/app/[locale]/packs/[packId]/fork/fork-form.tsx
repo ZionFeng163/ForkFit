@@ -243,7 +243,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       )}
 
       {(actionError || runError) && (
-        <div className="mb-4 px-4 py-3 rounded-xl text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
+        <div className="mb-4 px-4 py-3 rounded-lg text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
           {actionError || runError}
           <button
             onClick={() => {
@@ -280,7 +280,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
           </div>
 
           {actionError && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
+            <div className="mb-4 px-4 py-3 rounded-lg text-[13px]" style={{ background: "#fef0ef", color: "#7f3525" }}>
               {actionError}
               <button onClick={() => setActionError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
             </div>

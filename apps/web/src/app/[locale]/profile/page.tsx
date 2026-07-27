@@ -188,7 +188,7 @@ function ProfileContent() {
         </div>
 
         {error && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-lg text-sm font-medium text-white" style={{ background: "#e0524a" }}>
             {error}
             <button onClick={() => setError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
           </div>
@@ -358,7 +358,7 @@ function FollowCard({ user: u }: { user: { id: string; username: string; display
   return (
     <Link href={`/users/${u.id}`}>
       <div
-        className="flex items-center gap-3.5 p-4 rounded-xl transition-all duration-200"
+        className="flex items-center gap-3.5 p-4 rounded-lg transition-all duration-200"
         style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}
         onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.04)")}
         onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}

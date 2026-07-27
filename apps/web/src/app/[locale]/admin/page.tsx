@@ -127,7 +127,7 @@ function AdminLayout() {
   const currentTab = TAB_CONFIG.find((t) => t.key === tab)!;
 
   return (
-    <div className="flex min-h-screen bg-[#f6f2ea]">
+    <div className="flex min-h-screen bg-[#f7f5f1]">
       {/* ── Sidebar ── */}
       <aside className="fixed left-0 top-0 z-10 flex h-screen w-[220px] flex-col border-r border-[#ded7cd] bg-white p-4">
         {/* Logo */}
@@ -141,7 +141,7 @@ function AdminLayout() {
 
         {/* Nav */}
         <nav className="flex-1">
-          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-[#6f675e]">
+          <div className="mb-2 px-2 text-[10px] font-bold text-[#6f675e]">
             概览
           </div>
           {TAB_CONFIG.slice(0, 2).map((t) => (
@@ -159,7 +159,7 @@ function AdminLayout() {
             </button>
           ))}
 
-          <div className="mb-2 mt-6 px-2 text-[10px] font-bold uppercase tracking-widest text-[#6f675e]">
+          <div className="mb-2 mt-6 px-2 text-[10px] font-bold text-[#6f675e]">
             管理
           </div>
           {TAB_CONFIG.slice(2).map((t) => (
@@ -197,7 +197,7 @@ function AdminLayout() {
       {/* ── Main ── */}
       <main className="ml-[220px] flex min-h-screen flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-14 items-center justify-between border-b border-[#ded7cd] bg-[#fffefb] px-8">
+        <header className="flex h-14 items-center justify-between border-b border-[#ded7cd] bg-white px-8">
           <div className="flex items-center gap-4">
             <h1 className="text-base font-bold text-[#201c18]">{currentTab.label}</h1>
           </div>
@@ -263,8 +263,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
 
   return (
     <>
-      {/* Stat Cards */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="mb-7 grid grid-cols-2 overflow-hidden rounded-lg border border-[#ded7cd] bg-white lg:grid-cols-4">
         <StatCard
           icon={Icons.postsStat}
           label="发布内容"
@@ -296,7 +295,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#527047] animate-pulse" : "bg-[#8a642b]"
+            allOk ? "bg-[#527047]" : "bg-[#8a642b]"
           }`}
         />
         <span className="text-[15px] font-bold text-[#201c18]">服务状态</span>
@@ -304,11 +303,11 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
           {allOk ? "所有服务正常运行" : "部分服务异常"}
         </span>
       </div>
-      <div className="mb-8 grid grid-cols-5 gap-4">
+      <div className="mb-8 grid overflow-hidden rounded-lg border border-[#ded7cd] bg-white sm:grid-cols-2 lg:grid-cols-5">
         {health.map((svc) => (
           <div
             key={svc.name}
-            className="rounded-xl border border-[#ded7cd] bg-white p-4 text-center"
+            className="border-b border-r border-[#ded7cd] p-4 text-center last:border-r-0 lg:border-b-0"
           >
             <div className="mb-1.5 text-[11px] text-[#6f675e]">{svc.name}</div>
             <div
@@ -333,7 +332,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
 
       {/* Recent Activity */}
       <div className="mb-4 text-[15px] font-bold text-[#201c18]">最近动态</div>
-      <div className="rounded-xl border border-[#ded7cd] bg-white">
+      <div className="rounded-lg border border-[#ded7cd] bg-white">
         <ul className="px-5 py-2">
           {activities.length === 0 && (
             <li className="py-8 text-center text-sm text-[#6f675e]">暂无动态</li>
@@ -368,7 +367,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       </div>
 
       <div className="mb-4 mt-8 text-[15px] font-bold text-[#201c18]">AI 反馈</div>
-      <div className="rounded-xl border border-[#ded7cd] bg-white">
+      <div className="rounded-lg border border-[#ded7cd] bg-white">
         <ul className="px-5 py-2">
           {feedback.length === 0 && (
             <li className="py-8 text-center text-sm text-[#6f675e]">暂无反馈</li>
@@ -435,7 +434,7 @@ function ServicesTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-6 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#527047] animate-pulse" : "bg-[#8a642b]"
+            allOk ? "bg-[#527047]" : "bg-[#8a642b]"
           }`}
         />
         <span className="text-[15px] font-bold text-[#201c18]">
@@ -546,7 +545,7 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
       : "bg-[#f4e5e1] text-[#a33f32]";
 
   return (
-    <div className="flex flex-col gap-3.5 rounded-xl border border-[#ded7cd] bg-white p-5">
+    <div className="flex flex-col gap-3.5 rounded-lg border border-[#ded7cd] bg-white p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -735,7 +734,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#ded7cd] bg-white">
+    <div className="overflow-hidden rounded-lg border border-[#ded7cd] bg-white">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
         <div className="flex items-center gap-3">
@@ -1085,7 +1084,7 @@ function UsersTab({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#ded7cd] bg-white">
+    <div className="overflow-hidden rounded-lg border border-[#ded7cd] bg-white">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
         <div className="flex items-center gap-3">
@@ -1279,7 +1278,7 @@ function StatCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#ded7cd] bg-white p-5 transition-shadow hover:shadow-md">
+    <div className="border-b border-r border-[#ded7cd] p-4 last:border-r-0 lg:border-b-0">
       <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#6f675e]">
         {icon}
         {label}

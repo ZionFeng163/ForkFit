@@ -146,26 +146,26 @@ export function DiscoverContent({
       </div>
 
       {showFeatured && featuredPost && (
-        <section className="py-8">
+        <section className="py-7">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="section-heading">{locale === "zh" ? "编辑推荐" : "Editor’s pick"}</h2>
             <span className="meta-text">{featuredPost.author}</span>
           </div>
-          <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:grid-cols-[1.25fr_0.75fr]">
-            <Link href={`/packs/${featuredPost.id}`} className="min-h-[260px] overflow-hidden md:min-h-[380px]">
+          <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:h-[340px] md:grid-cols-[1.2fr_0.8fr]">
+            <Link href={`/packs/${featuredPost.id}`} className="h-[200px] overflow-hidden md:h-full">
               <RemoteImage src={featuredPost.image_urls[0] ?? ""} alt={featuredPost.title} className="h-full w-full object-cover" priority />
             </Link>
-            <div className="flex flex-col justify-center p-6 md:p-8">
+            <div className="flex flex-col justify-center p-5 md:p-8">
               <span className="recipe-label">{featuredPost.recipe.tags[0] || (locale === "zh" ? "今日推荐" : "Recommended")}</span>
               <h3 className="mt-3 text-2xl font-bold leading-tight tracking-[-0.03em] md:text-3xl">
                 <Link href={`/packs/${featuredPost.id}`} className="hover:text-[var(--brand-hover)]">{featuredPost.title}</Link>
               </h3>
-              <p className="mt-4 line-clamp-3 leading-7 text-[var(--muted-text)]">{featuredPost.description}</p>
+              <p className="mt-4 hidden line-clamp-3 leading-7 text-[var(--muted-text)] sm:block">{featuredPost.description}</p>
               <div className="mt-6 flex items-center gap-4 border-t border-[var(--line)] pt-4 text-sm text-[var(--muted-text)]">
                 <span className="flex items-center gap-1.5"><Clock3 size={15} />{featuredPost.recipe.cook_time_minutes} {locale === "zh" ? "分钟" : "min"}</span>
                 <span>{featuredPost.forks} {locale === "zh" ? "次定制" : "forks"}</span>
               </div>
-              <Link href={`/packs/${featuredPost.id}/fork`} className="button-primary mt-6 w-fit"><SlidersHorizontal size={16} />{locale === "zh" ? "按我的需求调整" : "Adapt this recipe"}</Link>
+              <Link href={`/packs/${featuredPost.id}/fork`} className="button-primary mt-5 w-fit"><SlidersHorizontal size={16} />{locale === "zh" ? "按我的需求调整" : "Adapt this recipe"}</Link>
             </div>
           </article>
         </section>

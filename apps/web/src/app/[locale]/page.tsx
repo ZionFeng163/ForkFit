@@ -32,7 +32,6 @@ export default async function Home({ params }: HomeProps) {
     loadPosts("素食", 6),
   ]);
   const featured = recommended[0] ?? homeCooking[0] ?? quick[0] ?? null;
-  const supporting = recommended.slice(1, 3);
 
   return (
     <AppShell>
@@ -51,18 +50,18 @@ export default async function Home({ params }: HomeProps) {
           </div>
 
           {featured ? (
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,0.75fr)]">
-              <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:grid-cols-[1.3fr_0.9fr]">
-                <Link href={`/packs/${featured.id}`} className="min-h-[280px] overflow-hidden md:min-h-[430px]">
+            <div>
+              <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:h-[410px] md:grid-cols-[1.15fr_0.85fr]">
+                <Link href={`/packs/${featured.id}`} className="h-[240px] overflow-hidden md:h-full">
                   <RemoteImage src={featured.image_urls[0] ?? ""} alt={featured.title} className="h-full w-full object-cover" priority />
                 </Link>
-                <div className="flex flex-col justify-between p-6 md:p-8">
+                <div className="flex flex-col justify-between p-5 md:p-8 lg:p-10">
                   <div>
                     <span className="recipe-label">{isZh ? "今日推荐" : "Today’s pick"}</span>
                     <h2 className="mt-3 text-[clamp(25px,3vw,38px)] font-bold leading-[1.22] tracking-[-0.035em]">
                       <Link href={`/packs/${featured.id}`} className="hover:text-[var(--brand-hover)]">{featured.title}</Link>
                     </h2>
-                    <p className="mt-4 line-clamp-4 text-[15px] leading-7 text-[var(--muted-text)]">{featured.description}</p>
+                    <p className="mt-4 line-clamp-3 text-[15px] leading-7 text-[var(--muted-text)]">{featured.description}</p>
                   </div>
                   <div className="mt-8">
                     <div className="mb-5 flex items-center gap-4 border-t border-[var(--line)] pt-4 text-sm text-[var(--muted-text)]">
@@ -76,15 +75,6 @@ export default async function Home({ params }: HomeProps) {
                   </div>
                 </div>
               </article>
-
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-                {supporting.map((post) => <PostCard key={post.id} post={post} compact />)}
-                {supporting.length === 0 && (
-                  <div className="status-panel flex min-h-48 items-center justify-center text-sm text-[var(--muted-text)]">
-                    {isZh ? "更多推荐正在准备中" : "More recommendations are coming"}
-                  </div>
-                )}
-              </div>
             </div>
           ) : (
             <div className="status-panel py-16 text-center text-[var(--muted-text)]">{isZh ? "暂时没有可展示的菜谱" : "No recipes available"}</div>

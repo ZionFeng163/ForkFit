@@ -108,11 +108,11 @@ a {
 :root {
   --font-noto-sans-sc: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-geist-mono: "SFMono-Regular", Consolas, monospace;
-  --canvas: #f6f2ea;
-  --surface: #fffefb;
+  --canvas: #f7f5f1;
+  --surface: #ffffff;
   --text: #201c18;
-  --muted-text: #6f675e;
-  --line: #ded7cd;
+  --muted-text: #716b64;
+  --line: #ddd8d0;
   --brand: #c84c32;
   --brand-hover: #a83a24;
   --brand-soft: #f4e4de;
@@ -356,8 +356,8 @@ a[style*="background: var(--lp-accent)"] {
 .form-section {
   background: var(--lp-surface);
   border: 1px solid var(--lp-border);
-  border-radius: 12px;
-  padding: 28px;
+  border-radius: 8px;
+  padding: 24px;
   margin-bottom: 20px;
 }
 .form-section-title {
@@ -478,7 +478,7 @@ a[style*="background: var(--lp-accent)"] {
 .fp-side-panel { position: sticky; top: 84px; }
 .fp-publish-card {
   background: var(--lp-surface); border: 1px solid var(--lp-border);
-  border-radius: 12px; padding: 24px; margin-bottom: 16px;
+  border-radius: 8px; padding: 20px; margin-bottom: 16px;
 }
 .fp-publish-card p { font-size: 13px; color: var(--lp-muted); line-height: 1.6; margin-bottom: 16px; }
 .fp-btn-publish {
@@ -486,11 +486,10 @@ a[style*="background: var(--lp-accent)"] {
   background: var(--lp-accent); color: white; border: none;
   border-radius: 8px; font-family: var(--font-sans);
   font-size: 14px; font-weight: 700; cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .fp-btn-publish:hover { background: var(--lp-accent-hover); }
-.fp-btn-publish:active { transform: scale(0.98); }
 .fp-btn-publish svg { width: 16px; height: 16px; }
 .fp-btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
 .fp-btn-draft {
@@ -503,7 +502,7 @@ a[style*="background: var(--lp-accent)"] {
 .fp-btn-draft:hover { border-color: var(--lp-muted); color: var(--lp-fg); }
 
 /* Tips card */
-.fp-tips { background: var(--lp-surface); border: 1px solid var(--lp-border); border-radius: 12px; padding: 20px; }
+.fp-tips { background: var(--lp-surface); border: 1px solid var(--lp-border); border-radius: 8px; padding: 20px; }
 .fp-tips-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .fp-tips-title svg { width: 15px; height: 15px; color: var(--lp-accent); }
 .fp-tips-list { list-style: none; }

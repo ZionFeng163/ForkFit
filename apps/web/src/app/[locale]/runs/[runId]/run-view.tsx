@@ -233,7 +233,7 @@ export function RunView({ runId }: { runId: string }) {
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <section className="rounded-2xl p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+        <section className="rounded-lg p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
           <div className="flex items-start gap-3 mb-6">
             <AlertTriangle size={22} className="mt-0.5 shrink-0" style={{ color: "#a35b21" }} />
             <div>
@@ -290,14 +290,14 @@ export function RunView({ runId }: { runId: string }) {
       </div>
 
       {actionError && (
-        <div className="mb-4 px-4 py-3 rounded-xl text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
+        <div className="mb-4 px-4 py-3 rounded-lg text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
           {actionError}
           <button onClick={() => setActionError(null)} className="ml-auto opacity-70 hover:opacity-100">×</button>
         </div>
       )}
 
       {/* Header + editable fields */}
-      <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--lp-fg)" }}>
             <CheckCircle2 size={20} style={{ color: "var(--lp-green)" }} /> 定制结果
@@ -345,7 +345,7 @@ export function RunView({ runId }: { runId: string }) {
       </div>
 
       {/* Editable steps */}
-      <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
         <h3 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "var(--lp-fg)" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
           烹饪步骤
@@ -371,14 +371,14 @@ export function RunView({ runId }: { runId: string }) {
       </div>
 
       {/* Image upload */}
-      <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
         <h3 className="text-sm font-bold mb-3" style={{ color: "var(--lp-fg)" }}>菜谱图片</h3>
         <ImageUpload images={editImages} onChange={setEditImages} maxImages={4} />
       </div>
 
       {/* Comparison table */}
       {result.change_log.length > 0 && (
-        <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
           <h3 className="text-sm font-bold mb-3" style={{ color: "var(--lp-fg)" }}>调整对比</h3>
           <div className="overflow-hidden rounded-lg" style={{ border: "1px solid var(--lp-border)" }}>
             <table className="w-full text-xs">
@@ -413,7 +413,7 @@ export function RunView({ runId }: { runId: string }) {
 
       {/* Final review */}
       {result.final_review && (
-        <div className="rounded-2xl p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
           <h3 className="text-sm font-bold mb-2" style={{ color: "var(--lp-fg)" }}>AI 评审</h3>
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
             style={{
@@ -436,7 +436,7 @@ export function RunView({ runId }: { runId: string }) {
       )}
 
       {/* Actions */}
-      <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
         <div className="flex gap-3 flex-wrap">
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"

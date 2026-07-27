@@ -148,7 +148,7 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
           </button>
         )}
         {followError && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-lg text-sm font-medium text-white" style={{ background: "#e0524a" }}>
             {followError}
             <button onClick={() => setFollowError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
           </div>
