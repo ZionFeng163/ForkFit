@@ -28,15 +28,27 @@ class RunRecord:
     created_at: datetime = field(default_factory=utc_now)
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    workflow_version: str = "v2"
+    current_stage: str = "queued"
+    attempt_count: int = 0
+    lease_expires_at: datetime | None = None
+    input_hash: str = ""
+    checkpoint_payload: dict | None = None
 
 
 class RunStore(Protocol):
     def create_run(
-        self, *, user_id: str, input_payload: dict, original_meal_pack: MealPack
+        self, *, user_id: str, input_payload: dict, original_meal_pack: MealPack,
+        input_hash: str = "", workflow_version: str = "v2",
     ) -> RunRecord:
         ...
 
     def get_run(self, run_id: str) -> RunRecord | None:
+        ...
+
+    def find_reusable_run(
+        self, *, user_id: str, input_hash: str, workflow_version: str
+    ) -> RunRecord | None:
         ...
 
     def mark_running(self, run_id: str) -> RunRecord:
@@ -48,6 +60,12 @@ class RunStore(Protocol):
         ...
 
     def update_trace(self, run_id: str, trace: RunTrace) -> None:
+        ...
+
+    def update_checkpoint(
+        self, run_id: str, *, stage: str, checkpoint: dict | None,
+        trace: RunTrace, lease_seconds: int = 180,
+    ) -> None:
         ...
 
     def mark_succeeded(

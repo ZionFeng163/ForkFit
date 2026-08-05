@@ -33,7 +33,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 28.8,
         "tags": [
           "推荐",
           "家常",
@@ -94,7 +93,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -155,7 +153,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 18.0,
         "tags": [
           "推荐",
           "家常",
@@ -212,7 +209,6 @@
           "烤架"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 29.0,
         "tags": [
           "推荐",
           "家常",
@@ -268,7 +264,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 30,
-        "estimated_cost": 17.0,
         "tags": [
           "推荐",
           "家常",
@@ -324,14 +319,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 52839。图片和说明与此特定餐点记录匹配。",
@@ -379,7 +372,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 21.6,
         "tags": [
           "推荐",
           "家常",
@@ -436,7 +428,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -499,14 +490,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "中国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53373。图片和说明与此确切的餐点记录匹配。",
@@ -556,14 +545,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 17.0,
         "tags": [
           "推荐",
           "家常",
           "前菜",
           "西班牙",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53169。图片和说明与此确切的餐点记录匹配。",
@@ -605,14 +592,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 13.0,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "叙利亚",
           "素食",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -662,13 +647,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.8,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "西班牙",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -720,13 +703,11 @@
           "汤锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 12.8,
         "tags": [
           "推荐",
           "家常",
           "早餐",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53430。图片和说明与此特定餐点记录匹配。",
@@ -785,7 +766,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
@@ -843,7 +823,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 28.8,
         "tags": [
           "推荐",
           "家常",
@@ -901,7 +880,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -960,7 +938,6 @@
           "烤箱"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 16.8,
         "tags": [
           "推荐",
           "家常",
@@ -1014,7 +991,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.2,
         "tags": [
           "推荐",
           "家常",
@@ -1062,7 +1038,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 16.4,
         "tags": [
           "推荐",
           "家常",
@@ -1112,14 +1087,12 @@
           "汤锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 13.6,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 53064。图片和说明与此特定餐点记录匹配。",
@@ -1174,7 +1147,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -1232,7 +1204,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 28.2,
         "tags": [
           "推荐",
           "家常",
@@ -1291,14 +1262,12 @@
           "烤箱"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "阿尔及利亚",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53284。图片和说明与此确切的餐点记录匹配。",
@@ -1352,14 +1321,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 19.4,
         "tags": [
           "推荐",
           "家常",
           "前菜",
           "英国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 52842。图片和说明与此确切的餐点记录匹配。",
@@ -1406,14 +1373,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 11.2,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "西班牙",
           "素食",
-          "低预算",
           "减脂",
           "快手"
         ],
@@ -1460,13 +1425,11 @@
           "烤箱"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.2,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "阿尔及利亚",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -1518,7 +1481,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 18.2,
         "tags": [
           "推荐",
           "家常",
@@ -1577,7 +1539,6 @@
           "烤箱"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -1638,7 +1599,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -1692,7 +1652,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 16.2,
         "tags": [
           "推荐",
           "家常",
@@ -1757,7 +1716,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 32.0,
         "tags": [
           "推荐",
           "家常",
@@ -1817,7 +1775,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
@@ -1875,14 +1832,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.2,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐食ID 52835。图片和说明已匹配至该确切的餐食记录。",
@@ -1936,7 +1891,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -1998,7 +1952,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -2060,14 +2013,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "阿尔及利亚",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐食ID 53282。图片和说明已匹配至该确切的餐食记录。",
@@ -2123,14 +2074,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "前菜",
           "美国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 52840。图片和说明与此确切的餐点记录匹配。",
@@ -2182,14 +2131,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 13.6,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "挪威",
           "素食",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -2240,13 +2187,11 @@
           "烤架"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "土耳其",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -2299,14 +2244,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 13.4,
         "tags": [
           "推荐",
           "家常",
           "早餐",
           "加拿大",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 52965。图片和说明与此确切的餐点记录匹配。",
@@ -2355,7 +2298,6 @@
           "烤架"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 26.4,
         "tags": [
           "推荐",
           "家常",
@@ -2418,7 +2360,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -2478,7 +2419,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 17.4,
         "tags": [
           "推荐",
           "家常",
@@ -2532,7 +2472,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 29.6,
         "tags": [
           "推荐",
           "家常",
@@ -2593,7 +2532,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
@@ -2659,14 +2597,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "美国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 52829。图片和说明与此确切的餐点记录匹配。",
@@ -2724,7 +2660,6 @@
           "烤箱"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -2782,7 +2717,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 30,
-        "estimated_cost": 28.8,
         "tags": [
           "推荐",
           "家常",
@@ -2838,14 +2772,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "荷兰",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53389。图片和说明与此特定餐点记录匹配。",
@@ -2903,14 +2835,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "前菜",
           "美国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 52779。图片和说明与此特定餐点记录匹配。",
@@ -2970,14 +2900,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "西班牙",
           "素食",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -3031,13 +2959,11 @@
           "烤架"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.8,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "土耳其",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -3087,14 +3013,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 13.4,
         "tags": [
           "推荐",
           "家常",
           "早餐",
           "荷兰",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53379。图片和说明已匹配到此确切的餐点记录。",
@@ -3143,7 +3067,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 27.0,
         "tags": [
           "推荐",
           "家常",
@@ -3205,7 +3128,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -3263,7 +3185,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 17.4,
         "tags": [
           "推荐",
           "家常",
@@ -3324,7 +3245,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 32.0,
         "tags": [
           "推荐",
           "家常",
@@ -3383,7 +3303,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 18.8,
         "tags": [
           "推荐",
           "家常",
@@ -3441,14 +3360,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "美国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点 ID 52987。图片和说明与此特定餐点记录匹配。",
@@ -3507,7 +3424,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -3569,7 +3485,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -3628,13 +3543,11 @@
           "烤箱"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 15.8,
         "tags": [
           "推荐",
           "家常",
           "配菜",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 53439。图片和说明与此确切的餐点记录匹配。",
@@ -3687,14 +3600,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "前菜",
           "英国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 52841。图片和说明与此确切的餐点记录匹配。",
@@ -3747,14 +3658,12 @@
           "烤箱"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "越南",
           "素食",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -3805,13 +3714,11 @@
           "汤锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "澳大利亚",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -3861,14 +3768,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 12.2,
         "tags": [
           "推荐",
           "家常",
           "早餐",
           "英国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 52895。图片和说明与此特定餐点记录匹配。",
@@ -3928,7 +3833,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -3990,7 +3894,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -4051,7 +3954,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 17.4,
         "tags": [
           "推荐",
           "家常",
@@ -4115,7 +4017,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 32.0,
         "tags": [
           "推荐",
           "家常",
@@ -4172,7 +4073,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 17.6,
         "tags": [
           "推荐",
           "家常",
@@ -4239,14 +4139,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 52844。图片和说明与此特定餐点记录匹配。",
@@ -4304,7 +4202,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -4366,7 +4263,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 29.4,
         "tags": [
           "推荐",
           "家常",
@@ -4426,14 +4322,12 @@
           "烤架"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "叙利亚",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 53094。图片和说明与此确切的餐点记录匹配。",
@@ -4488,13 +4382,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
           "前菜",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 53402。图片和说明与此确切的餐点记录匹配。",
@@ -4547,14 +4439,12 @@
           "烤箱"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.8,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "美国",
           "素食",
-          "低预算",
           "减脂",
           "快手"
         ],
@@ -4602,13 +4492,11 @@
           "烤架"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "印度",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -4667,13 +4555,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 14.0,
         "tags": [
           "推荐",
           "家常",
           "早餐",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 53413。图片和说明已匹配至该确切餐点记录。",
@@ -4725,7 +4611,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -4788,7 +4673,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -4849,7 +4733,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 17.4,
         "tags": [
           "推荐",
           "家常",
@@ -4908,7 +4791,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.8,
         "tags": [
           "推荐",
           "家常",
@@ -4968,7 +4850,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 19.4,
         "tags": [
           "推荐",
           "家常",
@@ -5023,14 +4904,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 15.4,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐食ID 52837。图片和说明已与此确切的餐食记录匹配。",
@@ -5077,7 +4956,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 22.2,
         "tags": [
           "推荐",
           "家常",
@@ -5139,7 +5017,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -5193,13 +5070,11 @@
           "烤箱"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 17.6,
         "tags": [
           "推荐",
           "家常",
           "配菜",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐食ID 53456。图片和说明已与此确切的餐食记录匹配。",
@@ -5247,13 +5122,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 16.4,
         "tags": [
           "推荐",
           "家常",
           "前菜",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53429。图片和说明与此特定餐点记录匹配。",
@@ -5306,14 +5179,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "纯素",
           "意大利",
           "素食",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -5358,13 +5229,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 13.0,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "波兰",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -5410,14 +5279,12 @@
           "烤箱"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 12.8,
         "tags": [
           "推荐",
           "家常",
           "早餐",
           "美国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 52957。图片和说明与此特定餐点记录匹配。",
@@ -5477,7 +5344,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -5547,7 +5413,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -5612,7 +5477,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 32.0,
         "tags": [
           "推荐",
           "家常",
@@ -5668,7 +5532,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 18.2,
         "tags": [
           "推荐",
           "家常",
@@ -5726,14 +5589,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 13.6,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 52982。图片和说明与此特定餐点记录匹配。",
@@ -5786,7 +5647,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 22.8,
         "tags": [
           "推荐",
           "家常",
@@ -5838,7 +5698,6 @@
           "烤架"
         ],
         "cook_time_minutes": 30,
-        "estimated_cost": 28.2,
         "tags": [
           "推荐",
           "家常",
@@ -5888,15 +5747,13 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 18.2,
         "tags": [
           "推荐",
           "家常",
           "配菜",
           "俄罗斯",
           "早餐",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 53080。图片和说明与此特定餐点记录匹配。",
@@ -5954,13 +5811,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "乌克兰",
-          "低预算",
           "减脂"
         ],
         "difficulty": "medium",
@@ -6011,14 +5866,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 12.8,
         "tags": [
           "推荐",
           "家常",
           "早餐",
           "英国",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点ID 52896。图片和说明与此确切的餐点记录匹配。",
@@ -6077,7 +5930,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -6148,7 +6000,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",
@@ -6204,7 +6055,6 @@
           "烤箱"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 15.0,
         "tags": [
           "推荐",
           "家常",
@@ -6262,7 +6112,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 30.8,
         "tags": [
           "推荐",
           "家常",
@@ -6319,7 +6168,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 20.0,
         "tags": [
           "推荐",
           "家常",
@@ -6373,14 +6221,12 @@
           "汤锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.2,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "叙利亚",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 53093。图片和说明与此确切的餐点记录匹配。",
@@ -6427,7 +6273,6 @@
           "烤箱"
         ],
         "cook_time_minutes": 30,
-        "estimated_cost": 22.8,
         "tags": [
           "推荐",
           "家常",
@@ -6482,7 +6327,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 30.0,
         "tags": [
           "推荐",
           "家常",
@@ -6539,13 +6383,11 @@
           "平底锅"
         ],
         "cook_time_minutes": 18,
-        "estimated_cost": 18.2,
         "tags": [
           "推荐",
           "家常",
           "配菜",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53401。图片和说明与此特定餐点记录匹配。",
@@ -6597,13 +6439,11 @@
           "汤锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 14.2,
         "tags": [
           "推荐",
           "家常",
           "素食",
           "乌克兰",
-          "低预算",
           "减脂",
           "快手"
         ],
@@ -6645,13 +6485,11 @@
           "汤锅"
         ],
         "cook_time_minutes": 15,
-        "estimated_cost": 9.8,
         "tags": [
           "推荐",
           "家常",
           "早餐",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "easy",
         "notes": "来源：TheMealDB 餐点 ID 53450。图片和说明与此特定餐点记录匹配。",
@@ -6696,7 +6534,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 28.8,
         "tags": [
           "推荐",
           "家常",
@@ -6756,7 +6593,6 @@
           "汤锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 23.4,
         "tags": [
           "推荐",
           "家常",
@@ -6808,7 +6644,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 45,
-        "estimated_cost": 14.4,
         "tags": [
           "推荐",
           "家常",
@@ -6865,7 +6700,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 55,
-        "estimated_cost": 32.0,
         "tags": [
           "推荐",
           "家常",
@@ -6915,7 +6749,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 16.4,
         "tags": [
           "推荐",
           "家常",
@@ -6977,14 +6810,12 @@
           "平底锅"
         ],
         "cook_time_minutes": 25,
-        "estimated_cost": 16.0,
         "tags": [
           "推荐",
           "家常",
           "意面",
           "意大利",
-          "快手",
-          "低预算"
+          "快手"
         ],
         "difficulty": "medium",
         "notes": "来源：TheMealDB 餐点ID 52838。图片和说明与此确切的餐点记录匹配。",
@@ -7043,7 +6874,6 @@
           "平底锅"
         ],
         "cook_time_minutes": 40,
-        "estimated_cost": 24.0,
         "tags": [
           "推荐",
           "家常",

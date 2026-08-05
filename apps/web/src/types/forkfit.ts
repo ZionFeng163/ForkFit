@@ -9,7 +9,6 @@ export type Meal = {
   ingredients: string[];
   equipment: string[];
   cook_time_minutes: number;
-  estimated_cost: number;
   tags: string[];
   notes: string;
   steps: string[];
@@ -84,6 +83,13 @@ export type RunResultPayload = {
   final_review: AgentReview;
   summary: string;
   description: string;
+  safety_notices?: string[];
+  quality_report?: {
+    status: "pass" | "warn" | "block";
+    issues: { code: string; severity: "low" | "medium" | "high"; meal_id: string; message: string }[];
+    critic_used: boolean;
+    repair_count: number;
+  } | null;
 };
 
 export type CreateRunResponse = {
@@ -113,6 +119,111 @@ export type RunStatusResponse = {
   queue_position?: number | null;
   estimated_wait_seconds?: number | null;
   user_message?: string | null;
+};
+
+export type MealPlanSelectionInput = {
+  days: number;
+  people_count: number;
+  request_text: string;
+  selected_post_ids: string[];
+  locale?: string;
+  start_date?: string | null;
+  user_profile: UserProfile;
+};
+
+export type MealPlanDay = {
+  day_index: number;
+  label: string;
+  source_post_id: string | null;
+  meal: Meal;
+  reason: string;
+};
+
+export type MealPlanAgentReport = {
+  agent: string;
+  role: string;
+  status: "completed" | "failed" | "skipped";
+  summary: string;
+  duration_ms: number;
+};
+
+export type MealPlanResult = {
+  title: string;
+  summary: string;
+  mode: "guided" | "team";
+  days: MealPlanDay[];
+  shopping_list: { name: string; amount: string; used_on: number[] }[];
+  prep_notes: string[];
+  decision_summary: string;
+  agent_reports: MealPlanAgentReport[];
+  workflow_version: string;
+};
+
+export type CreateMealPlanResponse = {
+  plan_id: string;
+  status: RunStatus;
+  mode: "guided" | "team";
+};
+
+export type MealPlanStatusResponse = {
+  plan_id: string;
+  user_id: string;
+  status: RunStatus;
+  mode: "guided" | "team";
+  stage: string;
+  progress: number;
+  workflow_version: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  result: MealPlanResult | null;
+  error: { message: string } | null;
+  current_version_id?: string | null;
+  conversation_id?: string | null;
+  pending_message_id?: string | null;
+  pending_change?: Record<string, unknown> | null;
+  locked_days?: number[];
+  last_change_summary?: string;
+  editable?: boolean;
+};
+
+export type MealPlanMessage = {
+  message_id: string;
+  plan_id: string;
+  base_version_id?: string | null;
+  version_id?: string | null;
+  role: "user" | "assistant" | "system";
+  content: string;
+  intent: string;
+  status: string;
+  response?: {
+    message?: string;
+    summary?: string;
+    requires_confirmation?: boolean;
+    changes?: Array<{
+      day_index: number;
+      before: string;
+      after: string;
+      changed_fields?: string[];
+    }>;
+  } | null;
+  error?: { message: string } | null;
+  created_at: string;
+};
+
+export type MealPlanConversation = {
+  plan_id: string;
+  current_version_id?: string | null;
+  messages: MealPlanMessage[];
+  pending_message_id?: string | null;
+  pending_change?: Record<string, unknown> | null;
+};
+
+export type CreateMealPlanMessageResponse = {
+  message_id: string;
+  run_id: string;
+  status: string;
+  base_version_id?: string | null;
 };
 
 export type RecipePost = {

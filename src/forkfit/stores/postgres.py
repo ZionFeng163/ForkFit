@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy import func
@@ -30,7 +30,8 @@ class PostgresRunStore:
         self.session_factory = session_factory
 
     def create_run(
-        self, *, user_id: str, input_payload: dict, original_meal_pack: MealPack
+        self, *, user_id: str, input_payload: dict, original_meal_pack: MealPack,
+        input_hash: str = "", workflow_version: str = "v2",
     ) -> RunRecord:
         run_id = f"run_{uuid4().hex}"
         with self.session_factory() as session:
@@ -40,6 +41,9 @@ class PostgresRunStore:
                 status="queued",
                 input_payload=input_payload,
                 original_meal_pack=original_meal_pack.to_dict(),
+                input_hash=input_hash,
+                workflow_version=workflow_version,
+                current_stage="queued",
             )
             session.add(row)
             session.commit()
@@ -68,11 +72,33 @@ class PostgresRunStore:
             ]
             return record
 
+    def find_reusable_run(
+        self, *, user_id: str, input_hash: str, workflow_version: str
+    ) -> RunRecord | None:
+        if not input_hash:
+            return None
+        with self.session_factory() as session:
+            row = (
+                session.query(RunRow)
+                .filter(
+                    RunRow.user_id == user_id,
+                    RunRow.input_hash == input_hash,
+                    RunRow.workflow_version == workflow_version,
+                    RunRow.status.in_(["queued", "running", "succeeded"]),
+                    RunRow.created_at >= utc_now() - timedelta(hours=24),
+                )
+                .order_by(RunRow.created_at.desc())
+                .first()
+            )
+            return _record_from_row(row) if row else None
+
     def mark_running(self, run_id: str) -> RunRecord:
         with self.session_factory() as session:
             row = _require_row(session, run_id)
             row.status = "running"
             row.started_at = utc_now()
+            row.current_stage = "starting"
+            row.attempt_count += 1
             session.commit()
         self.append_event(run_id, "run_started", {})
         return self.get_run(run_id)
@@ -91,6 +117,9 @@ class PostgresRunStore:
             row.unresolved_payload = None
             row.started_at = None
             row.finished_at = None
+            row.current_stage = "queued"
+            row.lease_expires_at = None
+            row.checkpoint_payload = None
             session.commit()
         self.append_event(run_id, "run_requeued", {})
         return self.get_run(run_id)
@@ -101,6 +130,66 @@ class PostgresRunStore:
             row.trace_payload = asdict(trace)
             session.commit()
 
+    def update_checkpoint(
+        self,
+        run_id: str,
+        *,
+        stage: str,
+        checkpoint: dict | None,
+        trace: RunTrace,
+        lease_seconds: int = 180,
+    ) -> None:
+        with self.session_factory() as session:
+            row = _require_row(session, run_id)
+            row.current_stage = stage
+            row.checkpoint_payload = checkpoint
+            row.trace_payload = asdict(trace)
+            if row.status == "running":
+                row.lease_expires_at = utc_now() + timedelta(seconds=lease_seconds)
+            session.commit()
+
+    def claim_next_run(self, lease_seconds: int = 180) -> RunRecord | None:
+        run_id = None
+        with self.session_factory() as session:
+            row = (
+                session.query(RunRow)
+                .filter(RunRow.status == "queued")
+                .order_by(RunRow.created_at.asc(), RunRow.id.asc())
+                .with_for_update(skip_locked=True)
+                .first()
+            )
+            if row is None:
+                return None
+            row.status = "running"
+            row.current_stage = "starting"
+            row.started_at = row.started_at or utc_now()
+            row.finished_at = None
+            row.attempt_count += 1
+            row.lease_expires_at = utc_now() + timedelta(seconds=lease_seconds)
+            run_id = row.id
+            session.commit()
+        self.append_event(run_id, "run_started", {"attempt": self.get_run(run_id).attempt_count})
+        return self.get_run(run_id)
+
+    def requeue_expired_runs(self) -> int:
+        now = utc_now()
+        run_ids: list[str] = []
+        with self.session_factory() as session:
+            rows = session.query(RunRow).filter(
+                RunRow.status == "running",
+                RunRow.lease_expires_at.is_not(None),
+                RunRow.lease_expires_at < now,
+            ).all()
+            for row in rows:
+                row.status = "queued"
+                row.current_stage = "queued"
+                row.lease_expires_at = None
+                run_ids.append(row.id)
+            session.commit()
+        for run_id in run_ids:
+            self.append_event(run_id, "run_recovered", {})
+        return len(run_ids)
+
     def mark_succeeded(
         self, run_id: str, *, result: RunResultPayload, trace: RunTrace | None
     ) -> RunRecord:
@@ -110,6 +199,8 @@ class PostgresRunStore:
             row.result_payload = result.model_dump(mode="json")
             row.trace_payload = asdict(trace) if trace else None
             row.finished_at = utc_now()
+            row.current_stage = "completed"
+            row.lease_expires_at = None
             session.commit()
         self.append_event(run_id, "run_succeeded", {})
         return self.get_run(run_id)
@@ -128,6 +219,8 @@ class PostgresRunStore:
                 row.result_payload = None
             row.trace_payload = asdict(trace) if trace else None
             row.finished_at = utc_now()
+            row.current_stage = "failed"
+            row.lease_expires_at = None
             session.commit()
         self.append_event(run_id, "run_failed", {"message": error.message})
         return self.get_run(run_id)
@@ -164,18 +257,6 @@ class PostgresRunStore:
                 RunRow.status == "queued",
                 RunRow.created_at < row.created_at,
             ).scalar()
-
-    def fail_active_runs(self, message: str) -> int:
-        with self.session_factory() as session:
-            rows = session.query(RunRow).filter(
-                RunRow.status.in_(["queued", "running"]),
-            ).all()
-            for row in rows:
-                row.status = "failed"
-                row.error_payload = {"message": message}
-                row.finished_at = utc_now()
-            session.commit()
-            return len(rows)
 
     def list_runs_for_user(self, user_id: str) -> list[RunRecord]:
         with self.session_factory() as session:
@@ -221,6 +302,8 @@ class PostgresRunStore:
             row.unresolved_payload = unresolved
             row.trace_payload = asdict(trace) if trace else None
             row.finished_at = utc_now()
+            row.current_stage = "clarify"
+            row.lease_expires_at = None
             session.commit()
         self.append_event(run_id, "run_needs_input", {})
         return self.get_run(run_id)
@@ -311,4 +394,10 @@ def _record_from_row(row: RunRow) -> RunRecord:
         created_at=row.created_at,
         started_at=row.started_at,
         finished_at=row.finished_at,
+        workflow_version=getattr(row, "workflow_version", "v1"),
+        current_stage=getattr(row, "current_stage", row.status),
+        attempt_count=getattr(row, "attempt_count", 0),
+        lease_expires_at=getattr(row, "lease_expires_at", None),
+        input_hash=getattr(row, "input_hash", ""),
+        checkpoint_payload=getattr(row, "checkpoint_payload", None),
     )

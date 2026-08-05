@@ -6,6 +6,28 @@ from typing import Any, Literal
 
 ReviewStatus = Literal["pass", "warn", "block"]
 Severity = Literal["low", "medium", "high"]
+ConstraintKind = Literal[
+    "allergy",
+    "diet_rule",
+    "equipment",
+    "excluded_equipment",
+    "time",
+    "people_count",
+    "preference",
+]
+PatchOperationType = Literal[
+    "replace_recipe",
+    "replace_ingredient",
+    "add_ingredient",
+    "remove_ingredient",
+    "replace_equipment",
+    "remove_equipment",
+    "set_cook_time",
+    "replace_steps",
+    "update_tags",
+    "set_name",
+    "set_notes",
+]
 
 
 @dataclass(slots=True)
@@ -16,7 +38,6 @@ class Meal:
     ingredients: list[str]
     equipment: list[str]
     cook_time_minutes: int
-    estimated_cost: float
     tags: list[str] = field(default_factory=list)
     notes: str = ""
     steps: list[str] = field(default_factory=list)
@@ -47,10 +68,6 @@ class MealPack:
 
     def clone(self) -> "MealPack":
         return deepcopy(self)
-
-    @property
-    def estimated_cost(self) -> float:
-        return round(sum(meal.estimated_cost for meal in self.meals), 2)
 
     def find_meal(self, meal_id_or_label: str) -> Meal | None:
         target = meal_id_or_label.lower()
@@ -131,6 +148,90 @@ class ConstraintSet:
 
 
 @dataclass(slots=True)
+class ConstraintEvidence:
+    kind: ConstraintKind
+    value: str
+    hard: bool
+    source: Literal["profile", "request_text", "user_confirmation"]
+    confidence: float = 1.0
+    raw_text: str = ""
+
+
+@dataclass(slots=True)
+class ConstraintSpec:
+    items: list[ConstraintEvidence]
+    people_count: int
+    max_cook_time_minutes: int
+    likes: list[str] = field(default_factory=list)
+    dislikes: list[str] = field(default_factory=list)
+    soft_preferences: list[str] = field(default_factory=list)
+    clarification: "ClarificationRequest | None" = None
+
+    def to_constraint_set(self) -> ConstraintSet:
+        return ConstraintSet(
+            allergies=[item.value for item in self.items if item.kind == "allergy"],
+            diet_rules=[item.value for item in self.items if item.kind == "diet_rule"],
+            equipment=[item.value for item in self.items if item.kind == "equipment"],
+            max_cook_time_minutes=self.max_cook_time_minutes,
+            people_count=self.people_count,
+        )
+
+
+@dataclass(slots=True)
+class ClarificationRequest:
+    code: str
+    question: str
+    options: list[str] = field(default_factory=list)
+    affected_items: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class ToolEvidence:
+    id: str
+    source: str
+    source_ref: str
+    summary: str
+    confidence: float
+    approved: bool = False
+
+
+@dataclass(slots=True)
+class RecipePatchOperation:
+    op: PatchOperationType
+    meal_id: str
+    target: str
+    value: Any
+    reason: str
+    evidence_refs: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class RecipePatch:
+    operations: list[RecipePatchOperation]
+    summary: str
+    description: str = ""
+    unresolved_items: list[AgentFinding] = field(default_factory=list)
+    evidence: list[ToolEvidence] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class QualityIssue:
+    code: str
+    severity: Severity
+    meal_id: str
+    message: str
+    repair_instruction: str = ""
+
+
+@dataclass(slots=True)
+class QualityReport:
+    status: ReviewStatus
+    issues: list[QualityIssue] = field(default_factory=list)
+    critic_used: bool = False
+    repair_count: int = 0
+
+
+@dataclass(slots=True)
 class AgentReview:
     agent: str
     status: ReviewStatus
@@ -165,6 +266,9 @@ class ForkFitResult:
     adapter_output: AdapterOutput
     final_review: AgentReview
     trace: "RunTrace | None" = None
+    evidence: list[ToolEvidence] = field(default_factory=list)
+    quality_report: QualityReport | None = None
+    safety_notices: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -179,6 +283,7 @@ class LLMCallTrace:
     completion_tokens: int | None
     status: Literal["success", "error"]
     error: str = ""
+    prompt_version: str = ""
 
 
 @dataclass(slots=True)
@@ -187,12 +292,16 @@ class StepTrace:
     duration_ms: float
     status: Literal["success", "error"]
     error: str = ""
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
 class RunTrace:
     steps: list[StepTrace] = field(default_factory=list)
     llm_calls: list[LLMCallTrace] = field(default_factory=list)
+    workflow_version: str = "v2"
+    knowledge_version: str = ""
+    repair_count: int = 0
 
     @property
     def llm_call_count(self) -> int:

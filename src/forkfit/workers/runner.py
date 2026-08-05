@@ -36,6 +36,7 @@ def _build_failure_message(result, locale: str = "zh") -> str:
 
     # Use finding messages directly (already user-friendly from ConstraintGuard)
     messages = []
+    actions = []
     seen = set()
     for f in findings:
         if f.type in seen:
@@ -43,28 +44,46 @@ def _build_failure_message(result, locale: str = "zh") -> str:
         seen.add(f.type)
         if f.message:
             messages.append(f.message)
+        if f.required_action and f.required_action not in actions:
+            actions.append(f.required_action)
 
     if not messages:
         return "这道菜暂时无法适配你的偏好，建议换个菜谱试试。" if is_zh else "This dish can't be adapted to your preferences right now. Try another recipe."
 
-    prefix = "很抱歉，这道菜没法为你适配：\n" if is_zh else "Sorry, this dish couldn't be adapted:\n"
-    return prefix + "\n".join(f"• {m}" for m in messages)
+    if is_zh:
+        detail = "这道菜按现在的要求会走样：\n" + "\n".join(f"• {m}" for m in messages)
+        next_step = actions[0] if actions else "请调整需求，或换一道更合适的菜谱。"
+        return f"{detail}\n\n接下来可以这样做：{next_step} 修改后再点一次“开始定制”。"
+    detail = "This dish would lose its identity under the current request:\n" + "\n".join(
+        f"• {message}" for message in messages
+    )
+    next_step = actions[0] if actions else "Adjust the request or choose a different recipe."
+    return f"{detail}\n\nNext step: {next_step} Then start customization again."
 
 
-def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: dict, locale: str = "en") -> None:
+def run_forkfit_job(
+    run_id: str,
+    user_profile_payload: dict,
+    meal_pack_payload: dict,
+    locale: str = "en",
+    already_running: bool = False,
+    request_text: str = "",
+) -> None:
     settings = get_settings()
     store = PostgresRunStore(make_session_factory(settings.database_url))
     meal_pack = meal_pack_from_dict(meal_pack_payload)
     user_profile = user_profile_from_dict(user_profile_payload)
 
-    store.mark_running(run_id)
+    if not already_running:
+        store.mark_running(run_id)
     exporter = LangSmithRunExporter(settings)
     try:
         def on_step_complete(trace):
-            store.update_trace(run_id, trace)
+            stage = trace.steps[-1].node if trace.steps else "starting"
+            store.update_checkpoint(run_id, stage=stage, checkpoint=None, trace=trace)
 
         result = _get_workflow().run(
-            user_profile, meal_pack, locale=locale,
+            user_profile, meal_pack, locale=locale, request_text=request_text,
             on_step_complete=on_step_complete,
         )
         if result.success:
@@ -98,7 +117,7 @@ def run_forkfit_job(run_id: str, user_profile_payload: dict, meal_pack_payload: 
         exporter.export_run(record)
     except Exception as exc:
         logger.exception("Run %s failed", run_id)
-        error_msg = f"运行失败：{type(exc).__name__}: {str(exc)[:200]}"
+        error_msg = "运行暂时失败，请稍后重试。" if locale.startswith("zh") else "The run failed temporarily. Please retry."
         record = store.mark_failed(
             run_id,
             error=PublicRunError(message=error_msg),

@@ -12,6 +12,7 @@ from forkfit.api.routes_admin import router as admin_router
 from forkfit.api.routes_auth import router as auth_router
 from forkfit.api.routes_comments import router as comments_router
 from forkfit.api.routes_health import router as health_router
+from forkfit.api.routes_meal_plans import router as meal_plans_router
 from forkfit.api.routes_posts import router as posts_router
 from forkfit.api.routes_runs import router as runs_router
 from forkfit.api.routes_upload import router as upload_router
@@ -21,7 +22,7 @@ from forkfit.config import get_settings
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    from forkfit.api.deps import get_run_store, get_user_store
+    from forkfit.api.deps import get_meal_plan_service, get_run_service, get_user_store
     from forkfit.auth.password import hash_password
     from forkfit.config import _is_strong_admin_password, get_settings, validate_startup_settings
 
@@ -40,9 +41,21 @@ async def lifespan(_: FastAPI):
             if admin is not None:
                 store.set_role(admin.id, "admin")
 
-    if settings.job_executor == "inline":
-        get_run_store().fail_active_runs("服务曾重启，本次定制已中断，请重新提交。")
+    run_service = get_run_service()
+    meal_plan_service = get_meal_plan_service()
+    start = getattr(run_service.executor, "start", None)
+    if start is not None:
+        await start()
+    plan_start = getattr(meal_plan_service.executor, "start", None)
+    if plan_start is not None:
+        await plan_start()
     yield
+    plan_stop = getattr(meal_plan_service.executor, "stop", None)
+    if plan_stop is not None:
+        await plan_stop()
+    stop = getattr(run_service.executor, "stop", None)
+    if stop is not None:
+        await stop()
 
 
 def create_app() -> FastAPI:
@@ -68,6 +81,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(posts_router)
     app.include_router(runs_router)
+    app.include_router(meal_plans_router)
     app.include_router(admin_router)
     app.include_router(users_router)
     app.include_router(upload_router)

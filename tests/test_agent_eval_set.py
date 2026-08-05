@@ -65,6 +65,24 @@ class AgentEvalSetTests(unittest.TestCase):
 
         self.assertGreaterEqual(passed / len(EVAL_CASES), 0.9)
 
+    def test_negated_note_is_not_treated_as_an_ingredient(self) -> None:
+        pack = _pack(["鸡胸肉 200 克"], ["炒锅"], 20)
+        pack.meals[0].notes = "按要求不放香菜"
+
+        review = ConstraintGuard().review(
+            pack,
+            ConstraintSet(
+                allergies=[],
+                diet_rules=["不吃香菜"],
+                equipment=["炒锅"],
+                max_cook_time_minutes=30,
+                people_count=1,
+            ),
+            locale="zh",
+        )
+
+        self.assertNotIn("diet_rule", {finding.type for finding in review.findings})
+
 
 def _pack(ingredients: list[str], equipment: list[str], cook_time: int) -> MealPack:
     return MealPack(
@@ -79,7 +97,6 @@ def _pack(ingredients: list[str], equipment: list[str], cook_time: int) -> MealP
                 ingredients=ingredients,
                 equipment=equipment,
                 cook_time_minutes=cook_time,
-                estimated_cost=10,
                 tags=[],
                 notes="",
                 steps=["准备食材。", "完成烹饪。"],

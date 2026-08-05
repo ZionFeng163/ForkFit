@@ -5,6 +5,7 @@ import { Loader2, UserPlus, UserCheck } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { PostCard } from "@/components/post-card";
+import { RemoteImage } from "@/components/remote-image";
 import { useAuth } from "@/components/auth-provider";
 import {
   getUserProfile,
@@ -82,14 +83,14 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: "var(--muted)" }} />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="py-20 text-center" style={{ color: "var(--lp-muted)" }}>
+      <div className="py-20 text-center" style={{ color: "var(--muted)" }}>
         <p>用户不存在</p>
       </div>
     );
@@ -100,28 +101,28 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
   return (
     <section className="site-container max-w-[980px] pb-20">
       {/* Profile header */}
-      <div className="flex gap-8 items-start py-8" style={{ borderBottom: "1px solid var(--lp-border)" }}>
+      <div className="flex gap-8 items-start py-8" style={{ borderBottom: "1px solid var(--separator)" }}>
         <div
           className="w-24 h-24 rounded-full grid place-items-center text-[36px] font-bold flex-shrink-0"
           style={{
-            background: "var(--lp-accent-soft)",
-            color: "var(--lp-accent)",
-            border: "3px solid var(--lp-surface)",
+            background: "var(--brand-soft)",
+            color: "var(--brand)",
+            border: "3px solid var(--surface)",
             boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
           }}
         >
           {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+            <RemoteImage src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
           ) : (
             (profile.display_name || profile.username)[0].toUpperCase()
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-[22px] font-bold tracking-[-0.01em] mb-1" style={{ color: "var(--lp-fg)" }}>
+          <h1 className="text-[22px] font-bold tracking-[-0.01em] mb-1" style={{ color: "var(--text)" }}>
             {profile.display_name || profile.username}
           </h1>
-          <div className="text-[13px]" style={{ color: "var(--lp-muted)" }}>
+          <div className="text-[13px]" style={{ color: "var(--muted)" }}>
             @{profile.username} · {profile.post_count} 篇菜谱
           </div>
         </div>
@@ -132,15 +133,15 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
             disabled={followLoading}
             className="flex-shrink-0 inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
             style={{
-              background: isFollowing ? "var(--lp-surface)" : "var(--lp-accent)",
-              color: isFollowing ? "var(--lp-fg-secondary, var(--lp-muted))" : "white",
-              border: isFollowing ? "1px solid var(--lp-border)" : "none",
+              background: isFollowing ? "var(--surface)" : "var(--brand)",
+              color: isFollowing ? "var(--muted, var(--muted))" : "white",
+              border: isFollowing ? "1px solid var(--separator)" : "none",
             }}
             onMouseEnter={(e) => {
-              if (isFollowing) { e.currentTarget.style.borderColor = "#e44"; e.currentTarget.style.color = "#e44"; e.currentTarget.style.background = "#fef2f2"; }
+              if (isFollowing) { e.currentTarget.style.borderColor = "var(--danger)"; e.currentTarget.style.color = "var(--danger)"; e.currentTarget.style.background = "var(--danger-soft)"; }
             }}
             onMouseLeave={(e) => {
-              if (isFollowing) { e.currentTarget.style.borderColor = "var(--lp-border)"; e.currentTarget.style.color = "var(--lp-fg-secondary, var(--lp-muted))"; e.currentTarget.style.background = "var(--lp-surface)"; }
+              if (isFollowing) { e.currentTarget.style.borderColor = "var(--separator)"; e.currentTarget.style.color = "var(--muted, var(--muted))"; e.currentTarget.style.background = "var(--surface)"; }
             }}
           >
             {isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
@@ -148,7 +149,7 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
           </button>
         )}
         {followError && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-lg text-sm font-medium text-white" style={{ background: "#e0524a" }}>
+          <div className="app-toast fixed bottom-6 left-1/2 z-[200] -translate-x-1/2 px-5 py-3 text-sm font-medium text-white" style={{ background: "var(--danger)" }}>
             {followError}
             <button onClick={() => setFollowError(null)} className="ml-3 opacity-70 hover:opacity-100">×</button>
           </div>
@@ -158,7 +159,7 @@ function UserProfileContent({ params }: { params: Promise<{ userId: string }> })
       {/* Posts */}
       {posts.length === 0 ? (
         <div className="py-20 text-center">
-          <p className="text-sm" style={{ color: "var(--lp-muted)" }}>暂无帖子</p>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>暂无帖子</p>
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

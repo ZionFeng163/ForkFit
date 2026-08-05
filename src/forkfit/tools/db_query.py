@@ -24,7 +24,6 @@ class DBQueryTool:
                 lines.append(
                     f"- {post.title} | ingredients: {ingredients} | "
                     f"tags: {', '.join(recipe.tags)} | "
-                    f"cost: ${recipe.estimated_cost} | "
                     f"time: {recipe.cook_time_minutes}min"
                 )
 

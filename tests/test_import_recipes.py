@@ -26,7 +26,6 @@ class ImportRecipesTests(unittest.TestCase):
                 "ingredients": ["豆腐", "青菜"],
                 "equipment": ["炒锅"],
                 "cook_time_minutes": 12,
-                "estimated_cost": 6,
                 "tags": ["家常"],
                 "steps": ["洗净食材。", "炒熟调味。"],
             },
@@ -55,7 +54,6 @@ class ImportRecipesTests(unittest.TestCase):
                         "ingredients": ["豆腐"],
                         "equipment": [],
                         "cook_time_minutes": 10,
-                        "estimated_cost": 5,
                         "steps": ["拌匀。"],
                     },
                 }

@@ -38,17 +38,17 @@ export function ConfirmModal({
   return (
     <div
       className="fixed inset-0 z-[200] grid place-items-center"
-      style={{ background: "rgba(32,28,24,0.46)" }}
+      style={{ background: "rgba(0,0,0,0.46)" }}
       onClick={onCancel}
     >
       <div
-        className="relative w-full max-w-sm rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_2px_8px_rgba(32,28,24,.14)]"
+        className="relative w-full max-w-sm rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_2px_8px_rgba(0,0,0,.14)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onCancel}
           className="absolute top-4 right-4 p-1 rounded-lg transition-colors"
-          style={{ color: "var(--lp-muted)" }}
+          style={{ color: "var(--muted)" }}
         >
           <X size={18} />
         </button>
@@ -57,15 +57,15 @@ export function ConfirmModal({
           <div
             className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg"
             style={{
-              background: danger ? "var(--danger-soft)" : "var(--lp-accent-light)",
-              color: danger ? "var(--danger)" : "var(--lp-accent)",
+              background: danger ? "var(--danger-soft)" : "var(--brand-soft)",
+              color: danger ? "var(--danger)" : "var(--brand)",
             }}
           >
             <AlertTriangle size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--lp-fg)" }}>{title}</h3>
-            <p className="text-[13px] mt-1 leading-[1.6]" style={{ color: "var(--lp-muted)" }}>{message}</p>
+            <h3 className="text-base font-bold" style={{ color: "var(--text)" }}>{title}</h3>
+            <p className="text-[13px] mt-1 leading-[1.6]" style={{ color: "var(--muted)" }}>{message}</p>
           </div>
         </div>
 

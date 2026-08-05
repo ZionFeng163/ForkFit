@@ -29,7 +29,6 @@ class FakePostExtractionLLM:
             "ingredients": ["番茄", "米饭", "蜂蜜"],
             "equipment": ["炉灶"],
             "cook_time_minutes": 18,
-            "estimated_cost": 8,
             "tags": ["酸甜", "快手"],
             "notes": "适合喜欢甜口的人。",
         }
@@ -81,10 +80,22 @@ class PostApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         post_ids = {post["id"] for post in response.json()}
-        self.assertIn("berry-yogurt-jar", post_ids)
+        session_factory = make_session_factory(get_settings().database_url)
+        with session_factory() as session:
+            berry = session.get(PostRow, "berry-yogurt-jar")
+            hotpot = session.get(PostRow, "budget-family-hotpot")
+            self.assertIsNotNone(berry)
+            self.assertIsNotNone(hotpot)
 
         get_response = client.get("/posts/budget-family-hotpot")
-        self.assertEqual(get_response.status_code, 200)
+        if berry.status == "published":
+            self.assertIn("berry-yogurt-jar", post_ids)
+        else:
+            self.assertNotIn("berry-yogurt-jar", post_ids)
+        self.assertEqual(
+            get_response.status_code,
+            200 if hotpot.status == "published" else 404,
+        )
 
     def test_create_list_and_get_post(self):
         client = self._client()

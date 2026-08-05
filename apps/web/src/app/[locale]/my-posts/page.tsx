@@ -75,7 +75,7 @@ export default function MyPostsPage() {
             <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
               {filtered.map((post) => (
                 <article key={post.id} className="grid gap-4 py-5 sm:grid-cols-[152px_1fr_auto] sm:items-center">
-                  <Link href={`/packs/${post.id}`} className="h-28 overflow-hidden rounded-lg bg-[#e9e3da] sm:h-24"><RemoteImage src={post.image_urls[0] ?? ""} alt={post.title} className="h-full w-full object-cover" /></Link>
+                  <Link href={`/packs/${post.id}`} className="h-28 overflow-hidden rounded-lg bg-[var(--surface-container-high)] sm:h-24"><RemoteImage src={post.image_urls[0] ?? ""} alt={post.title} className="h-full w-full object-cover" /></Link>
                   <div className="min-w-0">
                     <div className="mb-1 text-xs font-semibold text-[var(--brand-hover)]">{post.status === "draft" ? "草稿" : "已发布"}</div>
                     <h2 className="truncate text-base font-bold"><Link href={`/packs/${post.id}`} className="hover:text-[var(--brand-hover)]">{post.title}</Link></h2>

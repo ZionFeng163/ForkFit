@@ -24,7 +24,6 @@ PRESET_POSTS = [
             ingredients=["米饭", "鸡胸肉", "花生酱", "西兰花"],
             equipment=["灶台", "烤箱"],
             cook_time_minutes=35,
-            estimated_cost=12.5,
             tags=["高蛋白", "饭碗", "家常", "快手"],
             notes="酱汁和烤箱步骤要根据口味调整。",
             steps=[
@@ -55,7 +54,6 @@ PRESET_POSTS = [
             ingredients=["三文鱼", "土豆", "青豆", "柠檬酸奶"],
             equipment=["空气炸锅"],
             cook_time_minutes=26,
-            estimated_cost=15.8,
             tags=["鱼肉", "便当", "快手"],
             notes="趁热吃最好，酸奶酱单独装。",
             steps=[
@@ -80,7 +78,7 @@ PRESET_POSTS = [
         ],
         "saves": 312,
         "forks": 88,
-        "description": "适合三四个人一起吃的低预算小火锅，汤底浓一点会更下饭。",
+        "description": "适合三四个人一起吃的周末小火锅，汤底浓一点会更下饭。",
         "recipe": Meal(
             id="main",
             day="周末",
@@ -88,8 +86,7 @@ PRESET_POSTS = [
             ingredients=["肥牛卷", "番茄汤底", "豆皮", "小白菜"],
             equipment=["炉灶"],
             cook_time_minutes=32,
-            estimated_cost=18.6,
-            tags=["家庭餐", "热锅", "家常", "低预算"],
+            tags=["家庭餐", "热锅", "家常"],
             notes="汤底和蔬菜可以按人数加量，适合边煮边吃。",
             steps=[
                 "番茄切块炒出汁，加入清水和少量盐煮成汤底。",
@@ -119,8 +116,7 @@ PRESET_POSTS = [
             ingredients=["鹰嘴豆", "花椰菜", "芝麻酱", "香菜"],
             equipment=["烤箱"],
             cook_time_minutes=30,
-            estimated_cost=8.7,
-            tags=["素食", "烤盘菜", "低预算"],
+            tags=["素食", "烤盘菜"],
             notes="配米饭或馕饼都行。",
             steps=[
                 "花椰菜掰小朵，鹰嘴豆沥干水分。",
@@ -150,8 +146,7 @@ PRESET_POSTS = [
             ingredients=["希腊酸奶", "莓果", "燕麦脆", "蜂蜜"],
             equipment=[],
             cook_time_minutes=8,
-            estimated_cost=5.2,
-            tags=["免开火", "早餐", "快手", "低预算"],
+            tags=["免开火", "早餐", "快手"],
             notes="如果有坚果过敏，燕麦脆要选无坚果版本。",
             steps=[
                 "杯底铺一层希腊酸奶。",

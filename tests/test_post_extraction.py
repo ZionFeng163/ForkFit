@@ -31,7 +31,6 @@ class PostExtractionTests(unittest.TestCase):
                 ingredients=["番茄", "米饭", "鸡蛋"],
                 equipment=["电饭锅"],
                 cook_time_minutes=20,
-                estimated_cost=8,
                 tags=["家常", "快手"],
                 notes="保留备注。",
                 steps=["淘米。", "焖熟。"],

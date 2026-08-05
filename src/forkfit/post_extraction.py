@@ -18,7 +18,7 @@ def extract_post_details(
         system=(
             "Extract structured recipe metadata from a community food post. "
             "Return only JSON with keys: theme, location, ingredients, "
-            "equipment, cook_time_minutes, estimated_cost, tags, notes. "
+            "equipment, cook_time_minutes, tags, notes. "
             "Use the post language. Infer theme from meal occasion, taste, or style "
             "when possible. Use unknown only for location if no place is mentioned. "
             "Do not invent specific ingredients unless implied by title or description."
@@ -53,8 +53,6 @@ def extract_post_details(
             equipment=_string_list(raw.get("equipment")) or recipe.equipment,
             cook_time_minutes=_positive_int(raw.get("cook_time_minutes"))
             or recipe.cook_time_minutes,
-            estimated_cost=_positive_float(raw.get("estimated_cost"))
-            or recipe.estimated_cost,
             tags=_string_list(raw.get("tags")) or recipe.tags,
             notes=_string(raw.get("notes")) or recipe.notes,
             steps=list(recipe.steps),
@@ -83,11 +81,3 @@ def _positive_int(value: object) -> int:
     except (TypeError, ValueError):
         return 0
     return number if number > 0 else 0
-
-
-def _positive_float(value: object) -> float:
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return 0
-    return number if number >= 0 else 0

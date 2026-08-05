@@ -86,6 +86,94 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX IF NOT EXISTS ix_posts_status ON posts (status)",
         ),
     ),
+    (
+        7,
+        "durable_agent_runs",
+        (
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS workflow_version varchar(40) NOT NULL DEFAULT 'v2'",
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS current_stage varchar(80) NOT NULL DEFAULT 'queued'",
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS attempt_count integer NOT NULL DEFAULT 0",
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS lease_expires_at timestamptz",
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS input_hash varchar(64) NOT NULL DEFAULT ''",
+            "ALTER TABLE runs ADD COLUMN IF NOT EXISTS checkpoint_payload json",
+            "CREATE INDEX IF NOT EXISTS ix_runs_input_hash ON runs (input_hash)",
+            "CREATE INDEX IF NOT EXISTS ix_runs_queue_claim ON runs (status, created_at)",
+        ),
+    ),
+    (
+        8,
+        "multi_day_meal_plans",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS meal_plans (
+                id varchar(80) PRIMARY KEY,
+                user_id varchar(120) NOT NULL,
+                status varchar(40) NOT NULL,
+                mode varchar(40) NOT NULL DEFAULT 'guided',
+                request_payload json NOT NULL,
+                result_payload json,
+                error_payload json,
+                current_stage varchar(80) NOT NULL DEFAULT 'queued',
+                progress integer NOT NULL DEFAULT 0,
+                workflow_version varchar(40) NOT NULL DEFAULT 'meal-plan-v1',
+                attempt_count integer NOT NULL DEFAULT 0,
+                lease_expires_at timestamptz,
+                created_at timestamptz NOT NULL DEFAULT now(),
+                started_at timestamptz,
+                finished_at timestamptz
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_meal_plans_user_id ON meal_plans (user_id)",
+            "CREATE INDEX IF NOT EXISTS ix_meal_plans_status ON meal_plans (status)",
+            "CREATE INDEX IF NOT EXISTS ix_meal_plans_queue_claim ON meal_plans (status, created_at)",
+        ),
+    ),
+    (
+        9,
+        "meal_plan_conversations_and_versions",
+        (
+            "ALTER TABLE meal_plans ADD COLUMN IF NOT EXISTS current_version_id varchar(100)",
+            "ALTER TABLE meal_plans ADD COLUMN IF NOT EXISTS locked_days json NOT NULL DEFAULT '[]'::json",
+            "ALTER TABLE meal_plans ADD COLUMN IF NOT EXISTS last_change_summary text NOT NULL DEFAULT ''",
+            """
+            CREATE TABLE IF NOT EXISTS meal_plan_versions (
+                id varchar(100) PRIMARY KEY,
+                plan_id varchar(80) NOT NULL,
+                parent_version_id varchar(100),
+                request_text text NOT NULL DEFAULT '',
+                patch_payload json,
+                result_payload json NOT NULL,
+                quality_report json,
+                created_by varchar(120) NOT NULL,
+                is_current boolean NOT NULL DEFAULT true,
+                created_at timestamptz NOT NULL DEFAULT now()
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_meal_plan_versions_plan_id ON meal_plan_versions (plan_id, created_at)",
+            """
+            CREATE TABLE IF NOT EXISTS meal_plan_messages (
+                id varchar(100) PRIMARY KEY,
+                plan_id varchar(80) NOT NULL,
+                user_id varchar(120) NOT NULL,
+                base_version_id varchar(100),
+                version_id varchar(100),
+                role varchar(20) NOT NULL DEFAULT 'user',
+                content text NOT NULL,
+                intent varchar(60) NOT NULL DEFAULT '',
+                status varchar(40) NOT NULL DEFAULT 'queued',
+                response_payload json,
+                patch_payload json,
+                error_payload json,
+                lease_expires_at timestamptz,
+                created_at timestamptz NOT NULL DEFAULT now(),
+                processed_at timestamptz
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS ix_meal_plan_messages_plan_id ON meal_plan_messages (plan_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS ix_meal_plan_messages_queue ON meal_plan_messages (status, created_at)",
+            "ALTER TABLE meal_plan_messages ADD COLUMN IF NOT EXISTS confirmed boolean NOT NULL DEFAULT false",
+        ),
+    ),
 )
 
 

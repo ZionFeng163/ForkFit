@@ -83,7 +83,7 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
             <div
               key={i}
               className="group relative w-[100px] h-[100px] rounded-lg overflow-hidden"
-              style={{ border: "1px solid var(--lp-border)" }}
+              style={{ border: "1px solid var(--separator)" }}
             >
               <RemoteImage src={url} alt={`上传图片 ${i + 1}`} className="w-full h-full object-cover" />
               <button
@@ -108,24 +108,24 @@ export function ImageUpload({ images, onChange, maxImages = 8 }: Props) {
           onClick={() => inputRef.current?.click()}
           className="cursor-pointer rounded-lg py-10 text-center transition-colors duration-150"
           style={{
-            border: `2px dashed ${dragover ? "var(--lp-accent)" : "var(--lp-border)"}`,
-            background: dragover ? "var(--lp-accent-light)" : "var(--lp-warm-100)",
+            border: `2px dashed ${dragover ? "var(--brand)" : "var(--separator)"}`,
+            background: dragover ? "var(--brand-soft)" : "var(--surface-soft)",
           }}
         >
           {uploading ? (
-            <Loader2 size={20} className="animate-spin mx-auto" style={{ color: "var(--lp-muted)" }} />
+            <Loader2 size={20} className="animate-spin mx-auto" style={{ color: "var(--muted)" }} />
           ) : (
             <>
               <div
                 className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-lg"
-                style={{ background: "var(--lp-accent-light)", color: "var(--lp-accent)" }}
+                style={{ background: "var(--brand-soft)", color: "var(--brand)" }}
               >
                 <ImagePlus size={22} />
               </div>
-              <div className="text-sm font-semibold mb-1" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
+              <div className="text-sm font-semibold mb-1" style={{ color: "var(--muted, var(--muted))" }}>
                 点击或拖拽上传图片
               </div>
-              <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
+              <div className="text-xs" style={{ color: "var(--muted)" }}>
                 支持 JPG、PNG，最多 {maxImages} 张
               </div>
             </>

@@ -1,4 +1,4 @@
-from .agents import AdapterAgent, ConstraintAgent, ConstraintGuard, UserAgent
+from .constraints import ConstraintGuard, ConstraintNormalizer
 from .llm import BailianLLMClient
 from .fixtures import demo_meal_pack, demo_user_profile
 from .models import (
@@ -21,14 +21,13 @@ from .models import (
 from .langgraph_workflow import ForkFitLangGraphWorkflow
 
 __all__ = [
-    "AdapterAgent",
     "AdapterOutput",
     "AgentFinding",
     "AgentReview",
     "BailianLLMClient",
     "ChangeLogEntry",
-    "ConstraintAgent",
     "ConstraintGuard",
+    "ConstraintNormalizer",
     "ConstraintSet",
     "ForkFitResult",
     "ForkFitLangGraphWorkflow",
@@ -39,7 +38,6 @@ __all__ = [
     "PreferenceReview",
     "RunTrace",
     "StepTrace",
-    "UserAgent",
     "UserAgentOutput",
     "UserProfile",
 ]

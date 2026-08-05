@@ -7,7 +7,12 @@ import type {
   AdminUser,
   AuthResponse,
   CreatePostInput,
+  CreateMealPlanResponse,
+  CreateMealPlanMessageResponse,
   CreateRunResponse,
+  MealPlanSelectionInput,
+  MealPlanConversation,
+  MealPlanStatusResponse,
   MealPack,
   RecipePost,
   RunStatusResponse,
@@ -65,6 +70,11 @@ async function requestResponse(path: string, init?: RequestOptions): Promise<Res
         else if (Array.isArray(body.detail)) msg = body.detail.map((d: { msg?: string }) => d.msg).join(", ");
       }
     } catch {}
+    if (response.status >= 500) {
+      msg = response.status === 503
+        ? "服务暂时不可用，请稍后重试"
+        : "服务暂时出了问题，请稍后重试";
+    }
     // Make validation errors user-friendly
     msg = msg
       .replace(/List should have at least 1 item after validation, not 0/g, "请至少填写一项内容")
@@ -131,6 +141,7 @@ export function createRun(input: {
   user_profile: UserProfile;
   meal_pack: MealPack;
   locale?: string;
+  request_text?: string;
 }) {
   return request<CreateRunResponse>("/runs", {
     method: "POST",
@@ -150,7 +161,6 @@ export function publishRun(runId: string, data?: {
   ingredients?: string[];
   equipment?: string[];
   cook_time_minutes?: number;
-  estimated_cost?: number;
   tags?: string[];
   notes?: string;
   steps?: string[];
@@ -190,6 +200,48 @@ export function sendRunFeedback(runId: string, input: { rating: "helpful" | "not
 
 export function listSavedRuns() {
   return request<RunStatusResponse[]>("/runs/saved");
+}
+
+export function createMealPlan(input: MealPlanSelectionInput) {
+  return request<CreateMealPlanResponse>("/meal-plans", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getMealPlan(planId: string) {
+  return request<MealPlanStatusResponse>(`/meal-plans/${planId}`);
+}
+
+export function retryMealPlan(planId: string) {
+  return request<CreateMealPlanResponse>(`/meal-plans/${planId}/retry`, {
+    method: "POST",
+  });
+}
+
+export function listMealPlans() {
+  return request<MealPlanStatusResponse[]>("/meal-plans");
+}
+
+export function getMealPlanConversation(planId: string) {
+  return request<MealPlanConversation>(`/meal-plans/${planId}/conversation`);
+}
+
+export function sendMealPlanMessage(
+  planId: string,
+  input: { text: string; base_version_id?: string | null; locale?: string },
+) {
+  return request<CreateMealPlanMessageResponse>(`/meal-plans/${planId}/conversation/messages`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function confirmMealPlanMessage(planId: string, messageId: string) {
+  return request<CreateMealPlanMessageResponse>(
+    `/meal-plans/${planId}/conversation/messages/${messageId}/confirm`,
+    { method: "POST" },
+  );
 }
 
 export function listPosts(limit = 20, offset = 0, q = "", tag = "", category = "") {

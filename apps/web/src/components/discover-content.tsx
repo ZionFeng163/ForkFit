@@ -5,12 +5,14 @@ import { Clock3, Search, SlidersHorizontal, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PostCard } from "@/components/post-card";
+import { EmptyState, ErrorState, LoadingState } from "@/components/recipe-ui";
 import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
-import { listPostsPage } from "@/lib/api";
+import { getFrontendAdapter } from "@/lib/frontend-adapter";
 import type { RecipePost } from "@/types/forkfit";
 
 const PAGE_SIZE = 18;
+const frontendAdapter = getFrontendAdapter();
 const CATEGORIES = [
   { key: "推荐", zh: "推荐", en: "Recommended" },
   { key: "快手", zh: "快手", en: "Quick" },
@@ -18,7 +20,7 @@ const CATEGORIES = [
   { key: "家常", zh: "家常", en: "Home cooking" },
   { key: "早餐", zh: "早餐", en: "Breakfast" },
   { key: "素食", zh: "素食", en: "Vegetarian" },
-  { key: "低预算", zh: "低预算", en: "Budget" },
+  { key: "一人食", zh: "一人食", en: "Solo" },
 ];
 
 type DiscoverContentProps = {
@@ -62,7 +64,7 @@ export function DiscoverContent({
     const requestId = ++requestRef.current;
     setLoading(true);
     setError(null);
-    return listPostsPage(PAGE_SIZE, offset, q, "", nextCategory)
+    return frontendAdapter.listRecipes({ limit: PAGE_SIZE, offset, query: q, category: nextCategory })
       .then(({ posts: fresh, total: freshTotal }) => {
         if (requestId !== requestRef.current) return;
         const filtered = fresh.filter((post) => post.id !== featuredPost?.id);
@@ -115,7 +117,7 @@ export function DiscoverContent({
 
   return (
     <div className="pb-16 pt-8 md:pt-10">
-      <div className="grid items-end gap-5 border-b border-[var(--line)] pb-6 md:grid-cols-[1fr_360px]">
+      <div className="page-header md:grid-cols-[1fr_360px]">
         <div>
           <h1 className="page-heading">{locale === "zh" ? "发现菜谱" : "Discover recipes"}</h1>
           <p className="mt-2 text-[15px] text-[var(--muted-text)]">{t("discoverSubtitle")}</p>
@@ -130,7 +132,7 @@ export function DiscoverContent({
             aria-label={t("searchPlaceholder")}
           />
           {(search || category !== "推荐") && (
-            <button type="button" className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-[var(--muted-text)] hover:bg-[var(--muted)]" onClick={resetFilters} aria-label={locale === "zh" ? "清除筛选" : "Clear filters"}>
+            <button type="button" className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-[var(--muted-text)] hover:bg-[var(--surface-container)] hover:text-[var(--text)]" onClick={resetFilters} aria-label={locale === "zh" ? "清除筛选" : "Clear filters"}>
               <X size={15} />
             </button>
           )}
@@ -151,7 +153,7 @@ export function DiscoverContent({
             <h2 className="section-heading">{locale === "zh" ? "编辑推荐" : "Editor’s pick"}</h2>
             <span className="meta-text">{featuredPost.author}</span>
           </div>
-          <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:h-[340px] md:grid-cols-[1.2fr_0.8fr]">
+          <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:h-[300px] md:grid-cols-[1.2fr_0.8fr]">
             <Link href={`/packs/${featuredPost.id}`} className="h-[200px] overflow-hidden md:h-full">
               <RemoteImage src={featuredPost.image_urls[0] ?? ""} alt={featuredPost.title} className="h-full w-full object-cover" priority />
             </Link>
@@ -181,11 +183,11 @@ export function DiscoverContent({
           <div className="grid gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => <PostCard key={post.id} post={post} />)}
           </div>
-        ) : !loading && !error ? (
-          <div className="py-20 text-center text-[var(--muted-text)]">{t("noResults")}</div>
-        ) : null}
+        ) : loading ? <LoadingState label={locale === "zh" ? "正在找菜谱" : "Finding recipes"} />
+          : error ? null
+            : <EmptyState title={t("noResults")} description={locale === "zh" ? "换个关键词，或者先看看推荐分类。" : "Try another search or browse a category."} />}
 
-        {error && <div className="status-panel mt-6 border-[var(--danger)] text-sm text-[var(--danger)]">{error}</div>}
+        {error && <div className="mt-6"><ErrorState message={error} onRetry={() => void fetchPosts(search, category, 0)} /></div>}
 
         {hasMore && (
           <div className="flex justify-center pt-10">

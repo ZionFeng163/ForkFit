@@ -29,7 +29,6 @@ def demo_meal_pack() -> MealPack:
                 ingredients=["rice", "chicken breast", "peanut sauce", "broccoli"],
                 equipment=["oven"],
                 cook_time_minutes=35,
-                estimated_cost=14,
                 tags=["rice bowl", "high protein"],
                 steps=[
                     "Cook rice until fluffy.",

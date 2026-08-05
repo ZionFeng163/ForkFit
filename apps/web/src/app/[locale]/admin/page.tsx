@@ -116,9 +116,9 @@ function AdminLayout() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <Shield size={48} className="mx-auto mb-4 text-[#9f9890]" />
+          <Shield size={48} className="mx-auto mb-4 text-[var(--muted)]" />
           <h1 className="text-xl font-semibold">无权访问</h1>
-          <p className="mt-2 text-sm text-[#6f6a61]">你没有管理员权限。</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">你没有管理员权限。</p>
         </div>
       </div>
     );
@@ -127,21 +127,21 @@ function AdminLayout() {
   const currentTab = TAB_CONFIG.find((t) => t.key === tab)!;
 
   return (
-    <div className="flex min-h-screen bg-[#f7f5f1]">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--canvas)]">
       {/* ── Sidebar ── */}
-      <aside className="fixed left-0 top-0 z-10 flex h-screen w-[220px] flex-col border-r border-[#ded7cd] bg-white p-4">
+      <aside className="fixed left-0 top-0 z-10 hidden h-screen w-[220px] flex-col border-r border-[var(--outline-variant)] bg-[var(--surface)] p-4 lg:flex">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-2.5 px-2">
-          <BrandMark className="h-8 w-8 text-[#c84c32]" />
-          <span className="text-[15px] font-bold text-[#201c18]">吃什么</span>
-          <span className="ml-auto rounded bg-[#f4e4de] px-1.5 py-0.5 text-[10px] font-semibold text-[#c84c32]">
+          <BrandMark className="h-8 w-8 text-[var(--brand)]" />
+          <span className="text-[15px] font-bold text-[var(--text)]">吃什么</span>
+          <span className="ml-auto rounded bg-[var(--primary-container)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
             Admin
           </span>
         </div>
 
         {/* Nav */}
         <nav className="flex-1">
-          <div className="mb-2 px-2 text-[10px] font-bold text-[#6f675e]">
+          <div className="mb-2 px-2 text-[10px] font-bold text-[var(--muted)]">
             概览
           </div>
           {TAB_CONFIG.slice(0, 2).map((t) => (
@@ -150,8 +150,8 @@ function AdminLayout() {
               onClick={() => setTab(t.key)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-[#f4e4de] text-[#c84c32] font-semibold"
-                  : "text-[#6f675e] hover:bg-[#eee8df] hover:text-[#201c18]"
+                  ? "bg-[var(--primary-container)] text-[var(--brand)] font-semibold"
+                  : "text-[var(--muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
               }`}
             >
               {t.icon}
@@ -159,7 +159,7 @@ function AdminLayout() {
             </button>
           ))}
 
-          <div className="mb-2 mt-6 px-2 text-[10px] font-bold text-[#6f675e]">
+          <div className="mb-2 mt-6 px-2 text-[10px] font-bold text-[var(--muted)]">
             管理
           </div>
           {TAB_CONFIG.slice(2).map((t) => (
@@ -168,8 +168,8 @@ function AdminLayout() {
               onClick={() => setTab(t.key)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-[#f4e4de] text-[#c84c32] font-semibold"
-                  : "text-[#6f675e] hover:bg-[#eee8df] hover:text-[#201c18]"
+                  ? "bg-[var(--primary-container)] text-[var(--brand)] font-semibold"
+                  : "text-[var(--muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
               }`}
             >
               {t.icon}
@@ -179,39 +179,55 @@ function AdminLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[#ded7cd] pt-4">
+        <div className="border-t border-[var(--outline-variant)] pt-4">
           <div className="flex items-center gap-2.5 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4e4de] text-[13px] font-bold text-[#c84c32]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary-container)] text-[13px] font-bold text-[var(--brand)]">
               {user?.display_name?.[0] || "管"}
             </div>
             <div>
-              <div className="text-[13px] font-semibold text-[#201c18]">
+              <div className="text-[13px] font-semibold text-[var(--text)]">
                 {user?.display_name || "管理员"}
               </div>
-              <div className="text-[11px] text-[#6f675e]">超级管理员</div>
+              <div className="text-[11px] text-[var(--muted)]">超级管理员</div>
             </div>
           </div>
         </div>
       </aside>
 
       {/* ── Main ── */}
-      <main className="ml-[220px] flex min-h-screen flex-1 flex-col">
+      <main className="ml-0 flex min-h-screen min-w-0 flex-1 flex-col lg:ml-[220px]">
         {/* Header */}
-        <header className="flex h-14 items-center justify-between border-b border-[#ded7cd] bg-white px-8">
+        <header className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-[var(--outline-variant)] bg-[var(--surface)] px-4 py-3 sm:px-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-base font-bold text-[#201c18]">{currentTab.label}</h1>
+            <h1 className="text-base font-bold text-[var(--text)]">{currentTab.label}</h1>
           </div>
           <button
             onClick={() => setRefreshKey((value) => value + 1)}
-            className="flex items-center gap-1.5 rounded-lg border border-[#ded7cd] bg-white px-3 py-1.5 text-xs font-medium text-[#6f675e] transition-colors hover:border-[#c84c32] hover:text-[#c84c32]"
+            className="flex items-center gap-1.5 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)]"
           >
             {Icons.refresh}
             刷新数据
           </button>
         </header>
 
+        <nav className="admin-mobile-tabs flex gap-1 overflow-x-auto border-b border-[var(--outline-variant)] bg-[var(--surface)] px-4 py-2 lg:hidden" aria-label="后台模块">
+          {TAB_CONFIG.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium ${
+                tab === t.key ? "bg-[var(--primary-container)] font-semibold text-[var(--brand)]" : "text-[var(--muted)]"
+              }`}
+              aria-current={tab === t.key ? "page" : undefined}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
         {/* Content */}
-        <div className="p-8">
+        <div className="min-w-0 p-4 sm:p-8">
           {tab === "dashboard" && <DashboardTab refreshKey={refreshKey} />}
           {tab === "services" && <ServicesTab refreshKey={refreshKey} />}
           {tab === "content" && <ContentTab refreshKey={refreshKey} />}
@@ -263,7 +279,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
 
   return (
     <>
-      <div className="mb-7 grid grid-cols-2 overflow-hidden rounded-lg border border-[#ded7cd] bg-white lg:grid-cols-4">
+      <div className="mb-7 grid grid-cols-2 overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] lg:grid-cols-4">
         <StatCard
           icon={Icons.postsStat}
           label="发布内容"
@@ -295,35 +311,35 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#527047]" : "bg-[#8a642b]"
+            allOk ? "bg-[var(--success)]" : "bg-[var(--warning)]"
           }`}
         />
-        <span className="text-[15px] font-bold text-[#201c18]">服务状态</span>
-        <span className="ml-1 text-xs font-normal text-[#6f675e]">
+        <span className="text-[15px] font-bold text-[var(--text)]">服务状态</span>
+        <span className="ml-1 text-xs font-normal text-[var(--muted)]">
           {allOk ? "所有服务正常运行" : "部分服务异常"}
         </span>
       </div>
-      <div className="mb-8 grid overflow-hidden rounded-lg border border-[#ded7cd] bg-white sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-8 grid overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] sm:grid-cols-2 lg:grid-cols-5">
         {health.map((svc) => (
           <div
             key={svc.name}
-            className="border-b border-r border-[#ded7cd] p-4 text-center last:border-r-0 lg:border-b-0"
+            className="border-b border-r border-[var(--outline-variant)] p-4 text-center last:border-r-0 lg:border-b-0"
           >
-            <div className="mb-1.5 text-[11px] text-[#6f675e]">{svc.name}</div>
+            <div className="mb-1.5 text-[11px] text-[var(--muted)]">{svc.name}</div>
             <div
               className="text-xl font-bold"
               style={{
                 color:
                   svc.status === "ok"
-                    ? "#527047"
+                    ? "var(--success)"
                     : svc.status === "warn"
-                    ? "#8a642b"
-                    : "#a33f32",
+                    ? "var(--warning)"
+                    : "var(--danger)",
               }}
             >
               {svc.status === "ok" ? "正常" : svc.status === "warn" ? "警告" : "异常"}
             </div>
-            <div className="mt-1 text-[11px] text-[#6f675e]">
+            <div className="mt-1 text-[11px] text-[var(--muted)]">
               延迟 {svc.latency_ms}ms
             </div>
           </div>
@@ -331,61 +347,61 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {/* Recent Activity */}
-      <div className="mb-4 text-[15px] font-bold text-[#201c18]">最近动态</div>
-      <div className="rounded-lg border border-[#ded7cd] bg-white">
+      <div className="mb-4 text-[15px] font-bold text-[var(--text)]">最近动态</div>
+      <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)]">
         <ul className="px-5 py-2">
           {activities.length === 0 && (
-            <li className="py-8 text-center text-sm text-[#6f675e]">暂无动态</li>
+            <li className="py-8 text-center text-sm text-[var(--muted)]">暂无动态</li>
           )}
           {activities.map((a, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 border-b border-[#ded7cd] py-3 last:border-0"
+              className="flex items-start gap-3 border-b border-[var(--outline-variant)] py-3 last:border-0"
             >
               <span
                 className="mt-1.5 inline-block h-2 w-2 min-w-2 rounded-full"
                 style={{
                   background:
                     a.color === "green"
-                      ? "#527047"
+                      ? "var(--success)"
                       : a.color === "blue"
-                      ? "#4a8ac9"
+                      ? "var(--brand)"
                       : a.color === "orange"
-                      ? "#c84c32"
-                      : "#a33f32",
+                      ? "var(--brand)"
+                      : "var(--danger)",
                 }}
               />
               <div>
-                <div className="text-[13px] leading-relaxed text-[#201c18]">
+                <div className="text-[13px] leading-relaxed text-[var(--text)]">
                   {a.text}
                 </div>
-                <div className="mt-0.5 text-[11px] text-[#6f675e]">{a.time}</div>
+                <div className="mt-0.5 text-[11px] text-[var(--muted)]">{a.time}</div>
               </div>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="mb-4 mt-8 text-[15px] font-bold text-[#201c18]">AI 反馈</div>
-      <div className="rounded-lg border border-[#ded7cd] bg-white">
+      <div className="mb-4 mt-8 text-[15px] font-bold text-[var(--text)]">AI 反馈</div>
+      <div className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)]">
         <ul className="px-5 py-2">
           {feedback.length === 0 && (
-            <li className="py-8 text-center text-sm text-[#6f675e]">暂无反馈</li>
+            <li className="py-8 text-center text-sm text-[var(--muted)]">暂无反馈</li>
           )}
           {feedback.map((item) => (
             <li
               key={item.id}
-              className="flex items-start justify-between gap-4 border-b border-[#ded7cd] py-3 last:border-0"
+              className="flex items-start justify-between gap-4 border-b border-[var(--outline-variant)] py-3 last:border-0"
             >
               <div>
-                <div className="text-[13px] font-semibold text-[#201c18]">
+                <div className="text-[13px] font-semibold text-[var(--text)]">
                   {item.rating === "helpful" ? "有用" : "没用"} · {item.run_id.slice(0, 16)}...
                 </div>
-                <div className="mt-0.5 text-xs text-[#6f675e]">
+                <div className="mt-0.5 text-xs text-[var(--muted)]">
                   {item.reason || "用户未填写原因"}
                 </div>
               </div>
-              <span className="whitespace-nowrap text-[11px] text-[#6f675e]">
+              <span className="whitespace-nowrap text-[11px] text-[var(--muted)]">
                 {new Date(item.created_at).toLocaleString("zh-CN")}
               </span>
             </li>
@@ -434,13 +450,13 @@ function ServicesTab({ refreshKey }: { refreshKey: number }) {
       <div className="mb-6 flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            allOk ? "bg-[#527047]" : "bg-[#8a642b]"
+            allOk ? "bg-[var(--success)]" : "bg-[var(--warning)]"
           }`}
         />
-        <span className="text-[15px] font-bold text-[#201c18]">
+        <span className="text-[15px] font-bold text-[var(--text)]">
           {allOk ? "所有服务运行正常" : "部分服务异常"}
         </span>
-        <span className="ml-1 text-xs font-normal text-[#6f675e]">上次检查：刚刚</span>
+        <span className="ml-1 text-xs font-normal text-[var(--muted)]">上次检查：刚刚</span>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -458,8 +474,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
 > = {
   database: {
     desc: "用户数据 + 菜谱内容",
-    iconBg: "#e9eee5",
-    iconColor: "#527047",
+    iconBg: "var(--success-soft)",
+    iconColor: "var(--success)",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -475,8 +491,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   redis: {
     desc: "限流 + 运行态缓存",
-    iconBg: "#f4e5e1",
-    iconColor: "#a33f32",
+    iconBg: "var(--danger-soft)",
+    iconColor: "var(--danger)",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -490,8 +506,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   executor: {
     desc: "inline 任务执行器",
-    iconBg: "#eef4fd",
-    iconColor: "#4a8ac9",
+    iconBg: "var(--primary-container)",
+    iconColor: "var(--brand)",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
@@ -505,8 +521,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   llm: {
     desc: "AI 定制模型连通性",
-    iconBg: "#f4e4de",
-    iconColor: "#c84c32",
+    iconBg: "var(--primary-container)",
+    iconColor: "var(--brand)",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
@@ -520,8 +536,8 @@ const SERVICE_DISPLAY_CONFIG: Record<
   },
   default: {
     desc: "系统服务",
-    iconBg: "#eee8df",
-    iconColor: "#6f675e",
+    iconBg: "var(--surface-soft)",
+    iconColor: "var(--muted)",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
         <circle cx="12" cy="12" r="3" /><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
@@ -539,13 +555,13 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
   const statusLabel = service.status === "ok" ? "运行中" : service.status === "warn" ? "警告" : "异常";
   const statusClasses =
     service.status === "ok"
-      ? "bg-[#e9eee5] text-[#527047]"
+      ? "bg-[var(--success-soft)] text-[var(--success)]"
       : service.status === "warn"
-      ? "bg-[#fef9ec] text-[#8a642b]"
-      : "bg-[#f4e5e1] text-[#a33f32]";
+      ? "bg-[var(--warning-soft)] text-[var(--warning)]"
+      : "bg-[var(--danger-soft)] text-[var(--danger)]";
 
   return (
-    <div className="flex flex-col gap-3.5 rounded-lg border border-[#ded7cd] bg-white p-5">
+    <div className="flex flex-col gap-3.5 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -556,8 +572,8 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
             {service.icon}
           </div>
           <div>
-            <div className="text-sm font-semibold text-[#201c18]">{service.name}</div>
-            <div className="text-xs text-[#6f675e]">{service.desc}</div>
+            <div className="text-sm font-semibold text-[var(--text)]">{service.name}</div>
+            <div className="text-xs text-[var(--muted)]">{service.desc}</div>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses}`}>
@@ -568,14 +584,14 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
 
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-[#eee8df] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
+        <div className="rounded-lg bg-[var(--surface-soft)] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[var(--muted)]">
             响应时间
           </div>
           <div className="text-base font-bold tabular-nums">{service.latency_ms}ms</div>
         </div>
-        <div className="rounded-lg bg-[#eee8df] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
+        <div className="rounded-lg bg-[var(--surface-soft)] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[var(--muted)]">
             状态
           </div>
           <div
@@ -583,17 +599,17 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
             style={{
               color:
                 service.status === "ok"
-                  ? "#527047"
+                  ? "var(--success)"
                   : service.status === "warn"
-                  ? "#8a642b"
-                  : "#a33f32",
+                  ? "var(--warning)"
+                  : "var(--danger)",
             }}
           >
             {statusLabel}
           </div>
         </div>
-        <div className="rounded-lg bg-[#eee8df] p-2.5">
-          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#6f675e]">
+        <div className="rounded-lg bg-[var(--surface-soft)] p-2.5">
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[var(--muted)]">
             详情
           </div>
           <div className="truncate text-base font-bold" title={service.details}>
@@ -603,19 +619,19 @@ function ServiceCard({ service }: { service: ServiceHealth & { desc: string; ico
       </div>
 
       {/* Latency bar */}
-      <div className="flex items-center gap-2 text-[11px] text-[#6f675e]">
+      <div className="flex items-center gap-2 text-[11px] text-[var(--muted)]">
         <span>延迟</span>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eee8df]">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-soft)]">
           <div
             className="h-full rounded-full transition-all"
             style={{
               width: `${Math.min(100, (service.latency_ms / 500) * 100)}%`,
               background:
                 service.latency_ms < 100
-                  ? "#527047"
+                  ? "var(--success)"
                   : service.latency_ms < 300
-                  ? "#8a642b"
-                  : "#a33f32",
+                  ? "var(--warning)"
+                  : "var(--danger)",
             }}
           />
         </div>
@@ -734,15 +750,15 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#ded7cd] bg-white">
+    <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)]">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--outline-variant)] px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-[#201c18]">菜谱管理</span>
+          <span className="text-sm font-semibold text-[var(--text)]">菜谱管理</span>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setPendingDelete("batch")}
-              className="rounded-md border border-[#a33f32] px-2.5 py-1 text-xs font-medium text-[#a33f32]"
+              className="rounded-md border border-[var(--danger)] px-2.5 py-1 text-xs font-medium text-[var(--danger)]"
             >
               删除所选（{selectedIds.size}）
             </button>
@@ -752,7 +768,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as PostStatus | "all"); setPage(0); }}
-            className="rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none"
+            className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-soft)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none"
           >
             <option value="all">全部状态</option>
             <option value="published">已发布</option>
@@ -762,7 +778,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           <select
             value={qualityFilter}
             onChange={(e) => { setQualityFilter(e.target.value as PostQuality | "all"); setPage(0); }}
-            className="rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none"
+            className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-soft)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none"
           >
             <option value="all">全部质量</option>
             <option value="complete">完整</option>
@@ -770,14 +786,14 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
             <option value="missing_steps">缺步骤</option>
             <option value="incomplete">缺图和步骤</option>
           </select>
-          <div className="flex items-center gap-2 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-soft)] px-3 py-1.5">
             {Icons.search}
             <input
               type="text"
               placeholder="标题 / 标签..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              className="w-36 border-none bg-transparent text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
+              className="w-36 border-none bg-transparent text-xs text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
             />
           </div>
           <input
@@ -785,7 +801,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
             placeholder="标签筛选"
             value={tagFilter}
             onChange={(e) => { setTagFilter(e.target.value); setPage(0); }}
-            className="w-24 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-2.5 py-1.5 text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
+            className="w-24 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-soft)] px-2.5 py-1.5 text-xs text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
           />
         </div>
       </div>
@@ -796,7 +812,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
       <div className="overflow-x-auto">
       <table className="w-full min-w-[960px] border-collapse">
         <thead>
-          <tr className="border-b border-[#ded7cd] bg-[#eee8df]">
+          <tr className="border-b border-[var(--outline-variant)] bg-[var(--surface-soft)]">
             <th className="w-12 px-5 py-3 text-left">
               <input
                 type="checkbox"
@@ -805,25 +821,25 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                 onChange={toggleAll}
               />
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               菜谱
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               状态
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               质量
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               作者
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               来源
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               发布时间
             </th>
-            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               操作
             </th>
           </tr>
@@ -831,7 +847,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
         <tbody>
           {posts.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-5 py-12 text-center text-sm text-[#6f675e]">
+              <td colSpan={8} className="px-5 py-12 text-center text-sm text-[var(--muted)]">
                 {loading ? "正在加载..." : search ? "没有匹配的菜谱" : "暂无菜谱"}
               </td>
             </tr>
@@ -839,7 +855,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
           {posts.map((p) => (
             <tr
               key={p.id}
-              className="border-b border-[#ded7cd] transition-colors last:border-0 hover:bg-[#eee8df]"
+              className="border-b border-[var(--outline-variant)] transition-colors last:border-0 hover:bg-[var(--surface-soft)]"
             >
               <td className="px-5 py-3.5">
                 <input
@@ -850,8 +866,8 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
                 />
               </td>
               <td className="px-5 py-3.5">
-                <div className="text-sm font-semibold text-[#201c18]">{p.title}</div>
-                <div className="mt-0.5 text-[11px] text-[#6f675e]">{p.id}</div>
+                <div className="text-sm font-semibold text-[var(--text)]">{p.title}</div>
+                <div className="mt-0.5 text-[11px] text-[var(--muted)]">{p.id}</div>
               </td>
               <td className="px-5 py-3.5">
                 <StatusBadge status={p.status} />
@@ -861,31 +877,31 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
               </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#f4e4de] text-[11px] font-bold text-[#c84c32]">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--primary-container)] text-[11px] font-bold text-[var(--brand)]">
                     {p.author[0]}
                   </div>
-                  <span className="text-sm font-semibold text-[#201c18]">{p.author}</span>
+                  <span className="text-sm font-semibold text-[var(--text)]">{p.author}</span>
                 </div>
               </td>
-              <td className="px-5 py-3.5 text-xs text-[#6f675e]">
+              <td className="px-5 py-3.5 text-xs text-[var(--muted)]">
                 <div className="max-w-[150px] truncate" title={p.source_url || p.source_name}>
                   {p.source_name || "用户投稿"}
                 </div>
               </td>
-              <td className="px-5 py-3.5 text-sm text-[#6f675e]">
+              <td className="px-5 py-3.5 text-sm text-[var(--muted)]">
                 {new Date(p.created_at).toLocaleDateString("zh-CN")}
               </td>
               <td className="px-5 py-3.5 text-right">
                 <button
                   onClick={() => void changePostStatus(p, p.status === "published" ? "hidden" : "published")}
                   disabled={actionPending}
-                  className="mr-2 rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#201c18] transition-colors hover:border-[#527047] hover:text-[#527047] disabled:opacity-50"
+                  className="mr-2 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text)] transition-colors hover:border-[var(--success)] hover:text-[var(--success)] disabled:opacity-50"
                 >
                   {p.status === "published" ? "下架" : "恢复"}
                 </button>
                 <button
                   onClick={() => setPendingDelete(p)}
-                  className="rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6f675e] transition-colors hover:border-[#a33f32] hover:text-[#a33f32]"
+                  className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted)] transition-colors hover:border-[var(--danger)] hover:text-[var(--danger)]"
                 >
                   删除
                 </button>
@@ -897,7 +913,7 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-[#ded7cd] px-5 py-3 text-xs text-[#6f675e]">
+      <div className="flex items-center justify-between border-t border-[var(--outline-variant)] px-5 py-3 text-xs text-[var(--muted)]">
         <span>
           共 {total} 条，第 {page + 1} / {totalPages || 1} 页
         </span>
@@ -945,10 +961,10 @@ function ContentTab({ refreshKey }: { refreshKey: number }) {
 function StatusBadge({ status }: { status: PostStatus }) {
   const label = status === "published" ? "已发布" : status === "hidden" ? "已下架" : "草稿";
   const classes = status === "published"
-    ? "bg-[#e9eee5] text-[#527047]"
+    ? "bg-[var(--success-soft)] text-[var(--success)]"
     : status === "hidden"
-    ? "bg-[#f4e4de] text-[#c84c32]"
-    : "bg-[#eee8df] text-[#6f675e]";
+    ? "bg-[var(--primary-container)] text-[var(--brand)]"
+    : "bg-[var(--surface-soft)] text-[var(--muted)]";
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${classes}`}>
       {label}
@@ -967,7 +983,7 @@ function QualityBadge({ quality }: { quality: PostQuality }) {
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-        ok ? "bg-[#e9eee5] text-[#527047]" : "bg-[#f4e5e1] text-[#a33f32]"
+        ok ? "bg-[var(--success-soft)] text-[var(--success)]" : "bg-[var(--danger-soft)] text-[var(--danger)]"
       }`}
     >
       {label[quality]}
@@ -1084,28 +1100,28 @@ function UsersTab({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#ded7cd] bg-white">
+    <div className="overflow-hidden rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)]">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded7cd] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--outline-variant)] px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-[#201c18]">用户管理</span>
+          <span className="text-sm font-semibold text-[var(--text)]">用户管理</span>
           {selectedIds.size > 0 && (
             <button
               onClick={() => setPendingAction({ type: "batch-delete" })}
-              className="rounded-md border border-[#a33f32] px-2.5 py-1 text-xs font-medium text-[#a33f32]"
+              className="rounded-md border border-[var(--danger)] px-2.5 py-1 text-xs font-medium text-[var(--danger)]"
             >
               删除所选（{selectedIds.size}）
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-[#ded7cd] bg-[#eee8df] px-3 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-soft)] px-3 py-1.5">
           {Icons.search}
           <input
             type="text"
             placeholder="搜索用户昵称..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-44 border-none bg-transparent text-xs text-[#201c18] outline-none placeholder:text-[#6f675e]"
+            className="w-44 border-none bg-transparent text-xs text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
           />
         </div>
       </div>
@@ -1116,7 +1132,7 @@ function UsersTab({
       <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] border-collapse">
         <thead>
-          <tr className="border-b border-[#ded7cd] bg-[#eee8df]">
+          <tr className="border-b border-[var(--outline-variant)] bg-[var(--surface-soft)]">
             <th className="w-12 px-5 py-3 text-left">
               <input
                 type="checkbox"
@@ -1125,16 +1141,16 @@ function UsersTab({
                 onChange={toggleAll}
               />
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               用户
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               角色
             </th>
-            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               注册时间
             </th>
-            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[#6f675e]">
+            <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               操作
             </th>
           </tr>
@@ -1142,7 +1158,7 @@ function UsersTab({
         <tbody>
           {users.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#6f675e]">
+              <td colSpan={5} className="px-5 py-12 text-center text-sm text-[var(--muted)]">
                 {loading ? "正在加载..." : search ? "没有匹配的用户" : "暂无用户"}
               </td>
             </tr>
@@ -1150,7 +1166,7 @@ function UsersTab({
           {users.map((u) => (
             <tr
               key={u.id}
-              className="border-b border-[#ded7cd] transition-colors last:border-0 hover:bg-[#eee8df]"
+              className="border-b border-[var(--outline-variant)] transition-colors last:border-0 hover:bg-[var(--surface-soft)]"
             >
               <td className="px-5 py-3.5">
                 <input
@@ -1163,12 +1179,12 @@ function UsersTab({
               </td>
               <td className="px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#f4e4de] text-[11px] font-bold text-[#c84c32]">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--primary-container)] text-[11px] font-bold text-[var(--brand)]">
                     {u.display_name[0]}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-[#201c18]">{u.display_name}</div>
-                    <div className="text-[11px] text-[#6f675e]">
+                    <div className="text-sm font-semibold text-[var(--text)]">{u.display_name}</div>
+                    <div className="text-[11px] text-[var(--muted)]">
                       @{u.username}{u.id === currentUserId ? " · 当前账号" : ""}
                     </div>
                   </div>
@@ -1184,21 +1200,21 @@ function UsersTab({
                   disabled={u.id === currentUserId}
                   className={`rounded-md border px-2.5 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
                     u.role === "admin"
-                      ? "border-[#527047] text-[#527047]"
-                      : "border-[#ded7cd] text-[#6f675e]"
+                      ? "border-[var(--success)] text-[var(--success)]"
+                      : "border-[var(--outline-variant)] text-[var(--muted)]"
                   }`}
                 >
                   {u.role === "admin" ? "管理员" : "用户"}
                 </button>
               </td>
-              <td className="px-5 py-3.5 text-sm text-[#6f675e]">
+              <td className="px-5 py-3.5 text-sm text-[var(--muted)]">
                 {new Date(u.created_at).toLocaleDateString("zh-CN")}
               </td>
               <td className="px-5 py-3.5 text-right">
                 <button
                   onClick={() => setPendingAction({ type: "delete", user: u })}
                   disabled={u.id === currentUserId}
-                  className="rounded-lg border border-[#ded7cd] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6f675e] transition-colors hover:border-[#a33f32] hover:text-[#a33f32] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted)] transition-colors hover:border-[var(--danger)] hover:text-[var(--danger)] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   删除
                 </button>
@@ -1210,7 +1226,7 @@ function UsersTab({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-[#ded7cd] px-5 py-3 text-xs text-[#6f675e]">
+      <div className="flex items-center justify-between border-t border-[var(--outline-variant)] px-5 py-3 text-xs text-[var(--muted)]">
         <span>
           共 {total} 位用户，第 {page + 1} / {totalPages || 1} 页
         </span>
@@ -1278,18 +1294,18 @@ function StatCard({
   detail: string;
 }) {
   return (
-    <div className="border-b border-r border-[#ded7cd] p-4 last:border-r-0 lg:border-b-0">
-      <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#6f675e]">
+    <div className="border-b border-r border-[var(--outline-variant)] p-4 last:border-r-0 lg:border-b-0">
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[var(--muted)]">
         {icon}
         {label}
       </div>
       <div
         className="mb-1.5 text-[28px] font-extrabold leading-tight tabular-nums"
-        style={{ color: highlight ? "#8a642b" : undefined }}
+        style={{ color: highlight ? "var(--warning)" : undefined }}
       >
         {value.toLocaleString()}
       </div>
-      <div className={highlight ? "text-xs text-[#8a642b]" : "text-xs text-[#6f675e]"}>
+      <div className={highlight ? "text-xs text-[var(--warning)]" : "text-xs text-[var(--muted)]"}>
         {detail}
       </div>
     </div>
@@ -1313,8 +1329,8 @@ function PaginationBtn({
       disabled={disabled}
       className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs font-medium transition-colors ${
         active
-          ? "border-[#c84c32] bg-[#c84c32] text-white"
-          : "border-[#ded7cd] bg-white text-[#6f675e] hover:border-[#201c18] hover:text-[#201c18]"
+          ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+          : "border-[var(--outline-variant)] bg-[var(--surface)] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)]"
       } ${disabled ? "opacity-30" : ""}`}
     >
       {children}
@@ -1325,7 +1341,7 @@ function PaginationBtn({
 function Loading() {
   return (
     <div className="flex justify-center py-12">
-      <Loader2 size={24} className="animate-spin text-[#9f9890]" />
+      <Loader2 size={24} className="animate-spin text-[var(--muted)]" />
     </div>
   );
 }
@@ -1338,16 +1354,16 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-[#edc8c4] bg-[#fff7f5] p-5">
+    <div className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-5">
       <div className="flex items-start gap-3">
-        <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#a33f32]" />
+        <AlertCircle size={18} className="mt-0.5 shrink-0 text-[var(--danger)]" />
         <div className="flex-1">
-          <div className="text-sm font-semibold text-[#a33f32]">数据加载失败</div>
-          <div className="mt-1 text-xs text-[#a33f32]">{message}</div>
+          <div className="text-sm font-semibold text-[var(--danger)]">数据加载失败</div>
+          <div className="mt-1 text-xs text-[var(--danger)]">{message}</div>
         </div>
         <button
           onClick={onRetry}
-          className="rounded-md border border-[#edc8c4] bg-white px-3 py-1.5 text-xs font-medium text-[#a33f32]"
+          className="rounded-md border border-[var(--danger-soft)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--danger)]"
         >
           重试
         </button>
@@ -1369,8 +1385,8 @@ function FeedbackBanner({
     <div
       className={`flex items-center gap-2 border-b px-5 py-3 text-xs ${
         error
-          ? "border-[#edc8c4] bg-[#fff7f5] text-[#a33f32]"
-          : "border-[#cce4d5] bg-[#f2faf5] text-[#256b43]"
+          ? "border-[var(--danger-soft)] bg-[var(--danger-soft)] text-[var(--danger)]"
+          : "border-[var(--success-soft)] bg-[var(--success-soft)] text-[var(--success)]"
       }`}
     >
       {error ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}

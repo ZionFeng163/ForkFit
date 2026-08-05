@@ -9,9 +9,11 @@ from forkfit.auth.models import CurrentUser
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.executors.inline import InlineJobExecutor
+from forkfit.executors.limits import get_global_work_semaphore
+from forkfit.executors.meal_plans import MealPlanExecutor
 from forkfit.llm import BailianLLMClient
-from forkfit.services import RunService
-from forkfit.stores import PostgresPostStore, PostgresRunStore
+from forkfit.services import MealPlanService, RunService
+from forkfit.stores import PostgresMealPlanStore, PostgresPostStore, PostgresRunStore
 from forkfit.stores.comments import CommentStore
 from forkfit.stores.user import UserStore
 
@@ -41,6 +43,12 @@ def get_comment_store() -> CommentStore:
 
 
 @lru_cache(maxsize=1)
+def get_meal_plan_store() -> PostgresMealPlanStore:
+    settings = get_settings()
+    return PostgresMealPlanStore(make_session_factory(settings.database_url))
+
+
+@lru_cache(maxsize=1)
 def get_post_extraction_llm() -> BailianLLMClient:
     settings = get_settings()
     return BailianLLMClient(
@@ -54,16 +62,35 @@ def get_run_service() -> RunService:
     settings = get_settings()
     store = get_run_store()
     if settings.job_executor == "inline":
-        executor = InlineJobExecutor()
-    elif settings.job_executor == "kafka":
-        try:
-            from forkfit.executors.kafka import KafkaJobExecutor
-        except ImportError as exc:
-            raise RuntimeError("JOB_EXECUTOR=kafka requires the optional confluent-kafka dependency.") from exc
-        executor = KafkaJobExecutor()
+        executor = InlineJobExecutor(
+            store=store,
+            max_concurrency=settings.max_global_concurrent_runs,
+            global_semaphore=get_global_work_semaphore(
+                settings.max_global_concurrent_runs
+            ),
+        )
     else:
         raise RuntimeError(f"Unsupported JOB_EXECUTOR: {settings.job_executor}")
     return RunService(store=store, executor=executor, settings=settings)
+
+
+@lru_cache(maxsize=1)
+def get_meal_plan_service() -> MealPlanService:
+    settings = get_settings()
+    store = get_meal_plan_store()
+    executor = MealPlanExecutor(
+        store=store,
+        max_concurrency=1,
+        global_semaphore=get_global_work_semaphore(
+            settings.max_global_concurrent_runs
+        ),
+    )
+    return MealPlanService(
+        store=store,
+        post_store=get_post_store(),
+        executor=executor,
+        settings=settings,
+    )
 
 
 def current_user(

@@ -158,16 +158,17 @@ def parse_recipe(item: Any) -> ImportRecipe:
         ingredients=_required_str_list(recipe_payload, "ingredients", min_items=1),
         equipment=_str_list(recipe_payload.get("equipment", [])),
         cook_time_minutes=int(recipe_payload.get("cook_time_minutes") or 0),
-        estimated_cost=float(recipe_payload.get("estimated_cost") or 0),
-        tags=_str_list(recipe_payload.get("tags", [])),
+        tags=[
+            tag
+            for tag in _str_list(recipe_payload.get("tags", []))
+            if tag.lower() not in {"低预算", "省钱", "budget"}
+        ],
         notes=str(recipe_payload.get("notes") or ""),
         steps=_required_str_list(recipe_payload, "steps", min_items=1),
         difficulty=str(recipe_payload.get("difficulty") or "easy"),
     )
     if recipe.cook_time_minutes <= 0:
         raise ValueError("recipe.cook_time_minutes must be positive")
-    if recipe.estimated_cost <= 0:
-        raise ValueError("recipe.estimated_cost must be positive")
 
     post_id = _required_str(item, "id")
     image_urls = _required_str_list(item, "image_urls", min_items=1)

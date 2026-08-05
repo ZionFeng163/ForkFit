@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+import urllib.error
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
@@ -7,6 +10,7 @@ from forkfit.api.deps import current_user, get_comment_store, get_post_store, ge
 from forkfit.auth.models import CurrentUser
 
 router = APIRouter(prefix="/users", tags=["users"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/me/extracted-preferences")
@@ -28,18 +32,30 @@ def extract_my_preferences(
     user: CurrentUser = Depends(current_user),
 ) -> dict:
     locale = (body.locale if body else "en")
-    from forkfit.agents import UserPreferenceExtractor
+    from forkfit.preference_extractor import UserPreferenceExtractor
     from forkfit.llm import BailianLLMClient
     from forkfit.tools.db_query import DBQueryTool
     from forkfit.config import get_settings
 
     settings = get_settings()
-    llm = BailianLLMClient()
+    llm = BailianLLMClient(
+        model=settings.post_extraction_model,
+        timeout_seconds=settings.llm_timeout_seconds,
+    )
     post_store = get_post_store()
     db_query_tool = DBQueryTool(post_store)
     extractor = UserPreferenceExtractor(llm, db_query_tool=db_query_tool)
 
-    result = extractor.run(user.id, locale=locale)
+    try:
+        result = extractor.run(user.id, locale=locale)
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError):
+        logger.exception("Preference extraction failed for user %s", user.id)
+        message = (
+            "口味提取服务暂时不可用，请稍后重试。"
+            if locale.startswith("zh")
+            else "Preference extraction is temporarily unavailable. Please retry."
+        )
+        raise HTTPException(status_code=503, detail=message) from None
 
     # Save to database
     user_store = get_user_store()
@@ -168,7 +184,6 @@ def get_user_posts(
                     "ingredients": p.recipe.ingredients,
                     "equipment": p.recipe.equipment,
                     "cook_time_minutes": p.recipe.cook_time_minutes,
-                    "estimated_cost": p.recipe.estimated_cost,
                     "tags": p.recipe.tags,
                     "notes": p.recipe.notes,
                     "steps": p.recipe.steps,

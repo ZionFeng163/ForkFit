@@ -29,6 +29,12 @@ class RunRow(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     saved: Mapped[bool] = mapped_column(default=False, nullable=False)
+    workflow_version: Mapped[str] = mapped_column(String(40), default="v2", nullable=False)
+    current_stage: Mapped[str] = mapped_column(String(80), default="queued", nullable=False)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    input_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    checkpoint_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
 
 
 class RunEventRow(Base):
@@ -54,6 +60,73 @@ class RunFeedbackRow(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class MealPlanRow(Base):
+    __tablename__ = "meal_plans"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    mode: Mapped[str] = mapped_column(String(40), default="guided", nullable=False)
+    request_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    result_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    error_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    current_stage: Mapped[str] = mapped_column(String(80), default="queued", nullable=False)
+    progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    workflow_version: Mapped[str] = mapped_column(
+        String(40), default="meal-plan-v1", nullable=False
+    )
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    current_version_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    locked_days: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    last_change_summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+
+
+class MealPlanVersionRow(Base):
+    __tablename__ = "meal_plan_versions"
+
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
+    parent_version_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    request_text: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    patch_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    result_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    quality_report: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(120), nullable=False)
+    is_current: Mapped[bool] = mapped_column(default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class MealPlanMessageRow(Base):
+    __tablename__ = "meal_plan_messages"
+
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    base_version_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    version_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    intent: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True, nullable=False)
+    confirmed: Mapped[bool] = mapped_column(default=False, nullable=False)
+    response_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    patch_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    error_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class AdminAuditLogRow(Base):

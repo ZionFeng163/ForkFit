@@ -64,10 +64,14 @@ def meal_from_dict(data: dict) -> Meal:
         ingredients=list(data["ingredients"]),
         equipment=list(data["equipment"]),
         cook_time_minutes=int(data["cook_time_minutes"]),
-        estimated_cost=float(data["estimated_cost"]),
-        tags=list(data.get("tags", [])),
+        tags=[
+            tag
+            for tag in data.get("tags", [])
+            if str(tag).strip().lower() not in {"低预算", "省钱", "budget"}
+        ],
         notes=data.get("notes", ""),
         steps=list(data.get("steps", [])),
+        difficulty=data.get("difficulty", "medium"),
     )
 
 
@@ -136,6 +140,7 @@ def run_trace_from_dict(data: dict | None) -> RunTrace | None:
                 duration_ms=float(item["duration_ms"]),
                 status=item["status"],
                 error=item.get("error", ""),
+                details=dict(item.get("details", {})),
             )
             for item in data.get("steps", [])
         ],
@@ -148,9 +153,13 @@ def run_trace_from_dict(data: dict | None) -> RunTrace | None:
                 completion_tokens=item.get("completion_tokens"),
                 status=item["status"],
                 error=item.get("error", ""),
+                prompt_version=item.get("prompt_version", ""),
             )
             for item in data.get("llm_calls", [])
         ],
+        workflow_version=data.get("workflow_version", "v1"),
+        knowledge_version=data.get("knowledge_version", ""),
+        repair_count=int(data.get("repair_count", 0)),
     )
 
 

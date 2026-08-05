@@ -115,8 +115,8 @@ class SubstitutionStore:
             entry = self._entries[idx]
             for sub in entry.substitutes:
                 sub_allergens = set(a.lower() for a in sub.get("allergens_free", []))
-                # Check if substitute is safe (its allergens_free doesn't include excluded allergens)
-                is_safe = not exclude.intersection(sub_allergens)
+                # The field lists allergens the candidate is known to be free of.
+                is_safe = exclude.issubset(sub_allergens)
                 # Also check if the substitute itself doesn't contain excluded allergens
                 sub_name_lower = sub["name"].lower()
                 is_not_excluded = not any(a.lower() in sub_name_lower for a in exclude)

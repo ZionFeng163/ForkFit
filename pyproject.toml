@@ -1,7 +1,7 @@
 [project]
 name = "forkfit"
 version = "0.1.0"
-description = "Three-agent meal-pack personalization core for community meal plan forks."
+description = "Recipe adaptation and adaptive multi-agent meal planning for a cooking community."
 requires-python = ">=3.12"
 readme = "README.md"
 dependencies = [

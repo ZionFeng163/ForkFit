@@ -1,47 +1,66 @@
-# Recipe image sources
+# 菜谱、图片与营养数据源
 
-## Public beta content
+ForkFit 不依赖一个“万能菜谱 API”。菜谱正文、食物概念、营养值、过敏规则和图片是不同的数据问题，必须分别记录来源和版本。所有外部数据先离线同步到 PostgreSQL，线上请求不直接依赖第三方服务。
 
-The default public beta dataset is generated from TheMealDB with
-`scripts/build_themealdb_recipes.py`. Each imported recipe keeps the original
-TheMealDB `idMeal` lookup URL in `source_url`, and the image URL is the
-`strMealThumb` returned by that same meal record.
+## 生产数据源
 
-This is the required rule for imported content: **do not pair generated recipes
-with unrelated stock photos**. If a recipe is imported from a third-party source,
-the image must either come from the same source record or be manually verified
-and attributed.
+### 中文营养主库
 
-The previous `ForkFit curated public beta` batch used local Unsplash photos as a
-visual pool and is deprecated because the images were not tied to exact recipe
-records.
+- [台湾食药署食品营养成分资料集](https://data.gov.tw/dataset/8543)
+- 格式：CSV、JSON、XML，并提供 API 说明
+- 授权：政府资料开放授权条款第 1 版，免费，使用时注明来源
+- 用途：中文食材名、俗名、每 100 克营养值和本地常见食材
 
-## Legacy local images
+### 营养覆盖补充
 
-The demo recipe images in `apps/web/public/recipes` are local, resized copies
-of photos published under the Unsplash License. The source pages are retained
-here for provenance and future replacement work. These images should only be
-used for hand-verified posts or legacy content, not for generated bulk imports.
+- [USDA FoodData Central](https://fdc.nal.usda.gov/api-guide/)
+- 格式：REST API、CSV 和 JSON 批量下载
+- 授权：CC0 / public domain
+- 用途：Foundation Foods、FNDDS、营养素定义和台湾资料缺失时的补充
+- 同步：优先批量下载并记录 release；API 只用于后台补录，不在用户请求中实时调用
 
-| Local file | Source |
-| --- | --- |
-| `1459411552884-841db9b3cc2a.jpg` | https://images.unsplash.com/photo-1459411552884-841db9b3cc2a |
-| `1495214783159-3503fd1b572d.jpg` | https://images.unsplash.com/photo-1495214783159-3503fd1b572d |
-| `1498837167922-ddd27525d352.jpg` | https://images.unsplash.com/photo-1498837167922-ddd27525d352 |
-| `1504674900247-0877df9cc836.jpg` | https://images.unsplash.com/photo-1504674900247-0877df9cc836 |
-| `1512621776951-a57141f2eefd.jpg` | https://images.unsplash.com/photo-1512621776951-a57141f2eefd |
-| `1525351484163-7529414344d8.jpg` | https://images.unsplash.com/photo-1525351484163-7529414344d8 |
-| `1525755662778-989d0524087e.jpg` | https://images.unsplash.com/photo-1525755662778-989d0524087e |
-| `1527477396000-e27163b481c2.jpg` | https://images.unsplash.com/photo-1527477396000-e27163b481c2 |
-| `1529042410759-befb1204b468.jpg` | https://images.unsplash.com/photo-1529042410759-befb1204b468 |
-| `1529692236671-f1f6cf9683ba.jpg` | https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba |
-| `1544025162-d76694265947.jpg` | https://images.unsplash.com/photo-1544025162-d76694265947 |
-| `1546069901-ba9599a7e63c.jpg` | https://images.unsplash.com/photo-1546069901-ba9599a7e63c |
-| `1547592166-23ac45744acd.jpg` | https://images.unsplash.com/photo-1547592166-23ac45744acd |
-| `1547592180-85f173990554.jpg` | https://images.unsplash.com/photo-1547592180-85f173990554 |
-| `1565958011703-44f9829ba187.jpg` | https://images.unsplash.com/photo-1565958011703-44f9829ba187 |
-| `1603133872878-684f208fb84b.jpg` | https://images.unsplash.com/photo-1603133872878-684f208fb84b |
-| `1604908176997-125f25cc6f3d.jpg` | https://images.unsplash.com/photo-1604908176997-125f25cc6f3d |
-| `chive-pancake.jpg` | https://unsplash.com/photos/_b7crTKUWJQ |
-| `mapo-tofu.jpg` | https://unsplash.com/photos/hGeGkdSOkCg |
-| `steamed-fish.jpg` | https://unsplash.com/photos/QbWQ7HCjzN4 |
+### 食材概念
+
+- [FoodOn](https://foodon.org/)
+- 用途：规范化食材概念、父子类别和跨数据源映射
+- 注意：FoodOn 负责“这是什么”，不负责判定某个替代一定安全或好吃
+
+### 开放菜谱正文
+
+- [Wikibooks Cookbook](https://en.wikibooks.org/wiki/Cookbook:Table_of_Contents)
+- 授权：CC BY-SA 4.0 / GFDL，翻译或改写必须保留署名、原始页面、修订号和相同许可
+- 获取：MediaWiki API，保存 page id、revision id、抓取时间和翻译/人工审核记录
+- 其他政府公开菜谱只在逐项确认许可后导入
+
+中文菜谱不直接抓取下厨房、豆果、美食杰或其他未提供开放许可的平台。英文开放菜谱可以由 AI 辅助翻译和结构化，但发布前必须由人检查食材、步骤、份量和中文可读性。
+
+### 图片
+
+按以下顺序选择：
+
+1. 菜谱来源记录自带、且许可允许复用的同源图片。
+2. 编辑部或用户自有图片。
+3. Wikimedia Commons 中人工确认与菜名一致的图片。
+
+Commons 图片必须通过 `imageinfo&iiprop=extmetadata` 保存作者、原始文件页、许可、许可 URL 和是否要求署名。机器检索只能产生候选，不能直接发布。若无法证明图文对应，菜谱保持 `draft`，不进入推荐池。
+
+## 不作为生产主源
+
+- TheMealDB 免费 key：只用于开发和个人项目，公开生产应使用付费 supporter key，因此当前脚本仅保留为本地开发工具。
+- Open Food Facts：适合用户扫描包装食品条码；数据由社区提交且官方不保证准确完整，不用于过敏安全裁决。
+- Kaggle、RecipeNLG、来历不明的聚合数据：许可和原文溯源不足，不进入生产库。
+- 随机图库和 AI 生成食物图：不能证明与具体步骤对应，不用于批量菜谱封面。
+
+## 入库门槛
+
+每条发布内容必须保存：
+
+- `source_name`、`source_url`、原始 revision/version
+- 正文许可、图片许可、作者与署名文本
+- 原文语言、翻译方式、人工审核人和审核时间
+- 结构化食材及用量、步骤、份量、耗时
+- 图片与菜谱匹配状态
+
+营养值只有在食材成功映射且用量可换算成克时才计算，并展示数据版本与“估算”标记。过敏和饮食禁忌继续由确定性规则裁决，营养库和 LLM 都不能自行宣称医疗安全。
+
+ForkFit 不保存、估算或展示菜谱价格。采购 Agent 只优化食材复用、备菜节奏和减少浪费。

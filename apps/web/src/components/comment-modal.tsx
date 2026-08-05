@@ -7,6 +7,7 @@ import { Loader2, Send, Trash2, X } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { Link } from "@/i18n/routing";
+import { RemoteImage } from "@/components/remote-image";
 import { listComments, createComment, deleteComment, type Comment } from "@/lib/api";
 
 type Props = {
@@ -87,9 +88,9 @@ export function CommentModal({ postId, onClose, onCommentCountChange }: Props) {
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(32,28,24,.46)] p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,.46)] p-4"
     >
-      <div className="flex w-full max-w-lg flex-col rounded-lg border border-[var(--line)] bg-[var(--surface)] shadow-[0_2px_8px_rgba(32,28,24,.14)]" style={{ maxHeight: "80vh" }}>
+      <div className="flex w-full max-w-lg flex-col rounded-lg border border-[var(--line)] bg-[var(--surface)] shadow-[0_2px_8px_rgba(0,0,0,.14)]" style={{ maxHeight: "80vh" }}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-3">
           <h2 className="text-base font-semibold">{t("title", { count: total })}</h2>
@@ -112,7 +113,7 @@ export function CommentModal({ postId, onClose, onCommentCountChange }: Props) {
                 <div key={c.id} className="flex gap-2.5">
                   <Link href={`/users/${c.user_id}`} onClick={(e) => e.stopPropagation()}>
                     {c.avatar_url ? (
-                      <img src={c.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                      <RemoteImage src={c.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
                     ) : (
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand-soft)] text-[11px] font-medium text-[var(--brand-hover)]">
                         {(c.display_name || c.username || "?")[0].toUpperCase()}
@@ -140,7 +141,7 @@ export function CommentModal({ postId, onClose, onCommentCountChange }: Props) {
         </div>
 
         {error && (
-          <div className="mx-5 mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: "#fef0ef", color: "#7f3525" }}>
+          <div className="mx-5 mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
             {error}
             <button onClick={() => setError(null)} className="ml-2 opacity-70 hover:opacity-100">×</button>
           </div>

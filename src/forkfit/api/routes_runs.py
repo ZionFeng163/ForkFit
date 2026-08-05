@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import copy
-import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from forkfit.api.deps import current_user, get_post_store, get_run_service
@@ -12,6 +11,9 @@ from forkfit.api.schemas import CreateRunRequest, CreateRunResponse, PostRespons
 from forkfit.auth.models import CurrentUser
 from forkfit.services import RunService
 from forkfit.stores.base import RunRecord
+from forkfit.constraints import ConstraintGuard, contains_constraint_term
+from forkfit.models import RecipePatch, RecipePatchOperation, ToolEvidence
+from forkfit.recipe_agent import PatchApplier, PatchValidationError
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -35,7 +37,18 @@ async def list_saved_runs(
 
 
 class ResolveRequest(BaseModel):
-    substitutions: dict  # {unresolved_item_index: chosen_substitute}
+    substitutions: dict[str, str] = Field(default_factory=dict)
+
+
+class ResumeSubstitution(BaseModel):
+    meal_id: str = Field(min_length=1, max_length=120)
+    target: str = Field(min_length=1, max_length=300)
+    replacement: str = Field(min_length=1, max_length=300)
+
+
+class ResumeRequest(BaseModel):
+    request_text: str = Field(default="", max_length=1000)
+    substitutions: list[ResumeSubstitution] = Field(default_factory=list, max_length=16)
 
 
 @router.post("/{run_id}/resolve", response_model=RunStatusResponse)
@@ -51,40 +64,48 @@ async def resolve_run(
     if run.status != "needs_input":
         raise HTTPException(status_code=400, detail="Run is not waiting for input.")
 
-    input_data = run.input_payload
-    meal_pack_dict = copy.deepcopy(input_data["meal_pack"])
-    user_profile_dict = input_data["user_profile"]
-    locale = input_data.get("locale", "en")
+    substitutions = _legacy_substitutions(run, body.substitutions)
+    return await _resume_run(run, ResumeRequest(substitutions=substitutions), service)
 
-    if body.substitutions:
-        for idx_str, substitute in body.substitutions.items():
-            idx = int(idx_str)
-            items = run.unresolved_payload.get("items", []) if run.unresolved_payload else []
-            if idx < len(items):
-                item = items[idx]
-                for meal in meal_pack_dict.get("meals", []):
-                    if meal.get("id") in item.get("affected_items", []):
-                        if item.get("type") in {"allergy", "diet_rule"}:
-                            blocked_terms = list(user_profile_dict.get("allergies", []))
-                            blocked_terms.extend(
-                                rule.removeprefix("no ").strip()
-                                for rule in user_profile_dict.get("diet_rules", [])
-                            )
-                            _replace_blocked_terms(meal, blocked_terms, str(substitute))
-                        elif item.get("type") == "equipment":
-                            meal["equipment"] = [str(substitute)]
 
+@router.post("/{run_id}/resume", response_model=RunStatusResponse)
+async def resume_run(
+    run_id: str,
+    body: ResumeRequest,
+    user: CurrentUser = Depends(current_user),
+    service: RunService = Depends(get_run_service),
+) -> RunStatusResponse:
+    run = service.get_run(run_id)
+    if run is None or run.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Run not found.")
+    if run.status != "needs_input":
+        raise HTTPException(status_code=400, detail="Run is not waiting for input.")
+    if not body.request_text.strip() and not body.substitutions:
+        raise HTTPException(status_code=400, detail="A clarification or substitution is required.")
+    return await _resume_run(run, body, service)
+
+
+@router.post("/{run_id}/retry", response_model=RunStatusResponse)
+async def retry_run(
+    run_id: str,
+    user: CurrentUser = Depends(current_user),
+    service: RunService = Depends(get_run_service),
+) -> RunStatusResponse:
+    run = service.get_run(run_id)
+    if run is None or run.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Run not found.")
+    if run.status != "failed":
+        raise HTTPException(status_code=400, detail="Only failed runs can be retried.")
     from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
-
-    meal_pack = meal_pack_from_dict(meal_pack_dict)
-    user_profile = user_profile_from_dict(user_profile_dict)
+    payload = run.input_payload
     record = await service.requeue_run(
-        run_id=run_id,
-        user_profile=user_profile,
-        meal_pack=meal_pack,
-        locale=locale,
+        run_id=run.id,
+        user_profile=user_profile_from_dict(payload["user_profile"]),
+        meal_pack=meal_pack_from_dict(payload["meal_pack"]),
+        locale=payload.get("locale", "en"),
+        request_text=payload.get("request_text", ""),
     )
-    return _run_response(record)
+    return _run_response(record, service)
 
 
 @router.post("/{run_id}/save", response_model=RunStatusResponse)
@@ -118,6 +139,7 @@ async def unsave_run(
 @router.post("", response_model=CreateRunResponse)
 async def create_run(
     request: CreateRunRequest,
+    idempotency_key: str = Header(default="", alias="Idempotency-Key", max_length=200),
     user: CurrentUser = Depends(current_user),
     service: RunService = Depends(get_run_service),
 ) -> CreateRunResponse:
@@ -133,6 +155,8 @@ async def create_run(
         user_profile=request.user_profile,
         meal_pack=request.meal_pack,
         locale=request.locale,
+        request_text=request.request_text,
+        idempotency_key=idempotency_key,
     )
     queue_position, wait_seconds, user_message = _run_progress_fields(run, service)
     return CreateRunResponse(
@@ -164,17 +188,16 @@ async def submit_run_feedback(
 
 
 class PublishRequest(BaseModel):
-    title: str = ""
-    description: str = ""
-    image_urls: list[str] = Field(default_factory=list)
-    recipe_name: str = ""
-    ingredients: list[str] = Field(default_factory=list)
-    equipment: list[str] = Field(default_factory=list)
-    cook_time_minutes: int = 30
-    estimated_cost: float = 10
-    tags: list[str] = Field(default_factory=list)
-    notes: str = ""
-    steps: list[str] = Field(default_factory=list)
+    title: str = Field(default="", max_length=160)
+    description: str = Field(default="", max_length=4000)
+    image_urls: list[str] = Field(default_factory=list, max_length=8)
+    recipe_name: str = Field(default="", max_length=160)
+    ingredients: list[str] = Field(default_factory=list, max_length=80)
+    equipment: list[str] = Field(default_factory=list, max_length=20)
+    cook_time_minutes: int | None = Field(default=None, ge=1, le=360)
+    tags: list[str] = Field(default_factory=list, max_length=12)
+    notes: str = Field(default="", max_length=2000)
+    steps: list[str] = Field(default_factory=list, max_length=30)
 
 
 @router.post("/{run_id}/publish", response_model=PostResponse)
@@ -215,7 +238,6 @@ async def publish_run(
             ingredients=req.ingredients or meal.ingredients,
             equipment=req.equipment or meal.equipment,
             cook_time_minutes=req.cook_time_minutes if req.cook_time_minutes is not None else meal.cook_time_minutes,
-            estimated_cost=req.estimated_cost if req.estimated_cost is not None else meal.estimated_cost,
             tags=req.tags or meal.tags,
             notes=req.notes or meal.notes,
             steps=req.steps or meal.steps,
@@ -249,11 +271,11 @@ async def get_run(
     run = service.get_run(run_id)
     if run is None or run.user_id != user.id:
         raise HTTPException(status_code=404, detail="Run not found.")
-    return _run_response(run)
+    return _run_response(run, service)
 
 
-def _run_response(run: RunRecord) -> RunStatusResponse:
-    queue_position, wait_seconds, user_message = _run_progress_fields(run)
+def _run_response(run: RunRecord, service: RunService | None = None) -> RunStatusResponse:
+    queue_position, wait_seconds, user_message = _run_progress_fields(run, service)
     return RunStatusResponse(
         run_id=run.id,
         user_id=run.user_id,
@@ -269,6 +291,11 @@ def _run_response(run: RunRecord) -> RunStatusResponse:
         queue_position=queue_position,
         estimated_wait_seconds=wait_seconds,
         user_message=user_message,
+        stage=run.current_stage,
+        progress=_stage_progress(run.current_stage, run.status),
+        retryable=run.status == "failed",
+        workflow_version=run.workflow_version,
+        clarification=run.unresolved_payload if run.status == "needs_input" else None,
     )
 
 
@@ -295,15 +322,83 @@ def _run_progress_fields(run: RunRecord, service: RunService | None = None) -> t
     return None, None, ""
 
 
-def _replace_blocked_terms(meal: dict, terms: list[str], substitute: str) -> None:
-    patterns = [re.compile(re.escape(term), re.IGNORECASE) for term in terms if term]
+def _stage_progress(stage: str, status: str) -> int:
+    if status == "succeeded":
+        return 100
+    if status in {"failed", "needs_input"}:
+        return 100
+    return {
+        "queued": 0, "starting": 5, "normalize": 15, "assess": 30,
+        "retrieve": 45, "draft": 60, "apply_validate": 75,
+        "review": 85, "repair": 75, "finalize": 95,
+    }.get(stage, 10)
 
-    def replace(value: str) -> str:
-        for pattern in patterns:
-            value = pattern.sub(substitute, value)
-        return value
 
-    meal["name"] = replace(meal.get("name", ""))
-    meal["notes"] = replace(meal.get("notes", ""))
-    meal["ingredients"] = [replace(value) for value in meal.get("ingredients", [])]
-    meal["tags"] = [replace(value) for value in meal.get("tags", [])]
+async def _resume_run(run: RunRecord, body: ResumeRequest, service: RunService) -> RunStatusResponse:
+    from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
+    payload = copy.deepcopy(run.input_payload)
+    meal_pack = meal_pack_from_dict(payload["meal_pack"])
+    if body.substitutions:
+        evidence = []
+        operations = []
+        for index, item in enumerate(body.substitutions):
+            evidence_id = f"user-confirmation:{index}"
+            evidence.append(ToolEvidence(
+                id=evidence_id, source="user_confirmation", source_ref=run.id,
+                summary=f"{item.target} -> {item.replacement}", confidence=1.0, approved=True,
+            ))
+            operations.append(RecipePatchOperation(
+                op="replace_ingredient", meal_id=item.meal_id, target=item.target,
+                value=item.replacement, reason="User selected this replacement.",
+                evidence_refs=[evidence_id],
+            ))
+        try:
+            meal_pack, _ = PatchApplier().apply(
+                meal_pack,
+                RecipePatch(operations=operations, summary="User-confirmed substitutions.", evidence=evidence),
+            )
+        except PatchValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    request_text = " ".join(
+        value for value in (payload.get("request_text", ""), body.request_text.strip()) if value
+    )
+    record = await service.requeue_run(
+        run_id=run.id,
+        user_profile=user_profile_from_dict(payload["user_profile"]),
+        meal_pack=meal_pack,
+        locale=payload.get("locale", "en"),
+        request_text=request_text,
+    )
+    return _run_response(record, service)
+
+
+def _legacy_substitutions(run: RunRecord, selected: dict[str, str]) -> list[ResumeSubstitution]:
+    payload = run.input_payload
+    meals = payload.get("meal_pack", {}).get("meals", [])
+    profile = payload.get("user_profile", {})
+    blocked = list(profile.get("allergies", []))
+    for rule in profile.get("diet_rules", []):
+        blocked.extend(ConstraintGuard.blocked_terms_for_rule(rule))
+    unresolved = run.unresolved_payload.get("items", []) if run.unresolved_payload else []
+    result: list[ResumeSubstitution] = []
+    for index_text, replacement in selected.items():
+        try:
+            finding = unresolved[int(index_text)]
+        except (ValueError, IndexError):
+            raise HTTPException(status_code=400, detail="Invalid unresolved item index.")
+        for meal in meals:
+            if meal.get("id") not in finding.get("affected_items", []):
+                continue
+            target = next(
+                (ingredient for ingredient in meal.get("ingredients", []) if any(
+                    contains_constraint_term(ingredient, term) for term in blocked
+                )),
+                None,
+            )
+            if target:
+                result.append(ResumeSubstitution(
+                    meal_id=meal["id"], target=target, replacement=replacement,
+                ))
+    if selected and not result:
+        raise HTTPException(status_code=400, detail="No matching ingredient can be replaced safely.")
+    return result

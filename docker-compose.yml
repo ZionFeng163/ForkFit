@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: forkfit
       POSTGRES_DB: forkfit
     ports:
-      - "5432:5432"
+      - "127.0.0.1:55432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +18,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:56379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -31,7 +31,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8001:8000"
     volumes:
       - ./src:/app/src
       - ./scripts:/app/scripts

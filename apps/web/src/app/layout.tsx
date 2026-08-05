@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/components/auth-provider";
+import { MealPlanProvider } from "@/components/meal-plan-provider";
 import { QueryProvider } from "@/components/query-provider";
 import "./globals.css";
 
@@ -28,7 +29,9 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <MealPlanProvider>{children}</MealPlanProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

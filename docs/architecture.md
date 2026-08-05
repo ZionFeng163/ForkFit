@@ -8,35 +8,37 @@
 - `frontend`: Next.js 服务，监听 `127.0.0.1:3001`
 - `backend`: FastAPI 服务，监听 `127.0.0.1:8000`
 - `postgres`: PostgreSQL 16，本机内网
-- `redis`: 缓存、限流、轻量队列状态，本机内网
-- `inline executor`: 小规模公测默认任务执行器
+- `redis`: 缓存和限流，本机内网
+- `inline executor`: 单菜定制任务执行器
+- `meal plan executor`: 多日计划的 PostgreSQL 租约任务执行器
 
-根目录 `docker-compose.yml` 仅用于本地开发，保持同样的 frontend/backend/postgres/redis 结构。Kafka/worker 不再是默认部署服务，只作为未来扩容方向保留在代码能力里。
+根目录 `docker-compose.yml` 仅用于本地开发，保持同样的 frontend/backend/postgres/redis 结构。Kafka executor、consumer 和相关配置已经删除；未来需要扩容时再基于实际指标重新选型。
 
 ## 数据流
 
-1. FastAPI 创建 `runs` 记录，立即返回 run id。
-2. Inline executor 在后端进程内运行 `ForkFitLangGraphWorkflow`。
-3. 每个 graph 节点完成后更新数据库 trace。
-4. 前端轮询 run 状态，并显示排队位置、预计等待时间和用户可读阶段。
-5. 任务需要人工替代时进入 `needs_input`，用户选择后更新原输入并重新入队。
+1. 单菜定制写入 `runs`，多日计划写入 `meal_plans`，API 都立即返回 id。
+2. 执行器通过 PostgreSQL `FOR UPDATE SKIP LOCKED` 领取任务并续租。
+3. 每个阶段更新数据库中的 stage、progress 或 trace。
+4. 前端轮询状态；进程重启后，过期 lease 会重新排队。
+5. 硬约束无法安全满足时进入 `needs_input`，不会让 LLM 自行保证安全。
 
 ## Agent 流程
 
+单菜定制默认只调用一次 Adaptation Agent，并在前后使用确定性约束解析和校验。只有复杂替换才启用 Culinary Critic 和最多一次修复。
+
+多日计划使用自适应路由：
+
 ```text
-load_input
-  -> user_agent
-  -> reviewer_agents
-  -> adapter_agent
-  -> cooking_steps
-  -> final_validation
+normalize -> complexity router
+  -> guided: one planner -> deterministic validation
+  -> team: three strategy planners in parallel
+       -> nutrition review + pantry review
+       -> menu editor selects one candidate
+       -> deterministic validation
+       -> at most one repair
 ```
 
-- Reviewer 可以并行执行，但每个 reviewer 使用独立 trace，最后按声明顺序合并。
-- Adapter 接收真实 `ConstraintSet`，不再使用硬编码时间上限。
-- Cooking steps 完成后才执行 deterministic constraint guard，确保校验的是最终产物。
-- Adapter 与 CookingStepsAgent 直接按目标 locale 输出，不再在校验后整体翻译。
-- 用户偏好提取同样只调用一次 LLM，不做重复翻译。
+规划 Agent 负责生成差异化候选，审核 Agent 只评分和指出问题，总编辑只选择；它们不会重复改写同一份答案。价格不属于规划输入或评分目标。
 
 ## 数据库
 

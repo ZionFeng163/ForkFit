@@ -21,7 +21,7 @@ export function RemoteImage({
       <div
         role="img"
         aria-label={`${alt}（图片暂不可用）`}
-        className={`flex items-center justify-center bg-[#eeeae2] text-[#9a9388] ${className ?? ""}`}
+        className={`flex items-center justify-center bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className ?? ""}`}
       >
         <ImageOff aria-hidden="true" className="h-6 w-6" strokeWidth={1.6} />
       </div>

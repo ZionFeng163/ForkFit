@@ -3,6 +3,58 @@ from __future__ import annotations
 from forkfit.knowledge.store import SubstitutionStore
 
 
+TRUSTED_ENTRY_IDS = {
+    "dairy_milk",
+    "dairy_butter",
+    "eggs_whole",
+    "eggs_baking",
+    "wheat_flour",
+    "wheat_pasta",
+    "soy_sauce",
+    "peanut_butter",
+    "shellfish_shrimp",
+    "chicken",
+    "beef",
+}
+
+INGREDIENT_LOOKUP_ALIASES = {
+    "牛奶": "milk",
+    "黄油": "butter",
+    "鸡蛋": "egg",
+    "蛋": "egg",
+    "面粉": "wheat flour",
+    "小麦面粉": "wheat flour",
+    "意面": "wheat pasta",
+    "酱油": "soy sauce",
+    "生抽": "soy sauce",
+    "老抽": "soy sauce",
+    "花生": "peanut",
+    "花生酱": "peanut butter",
+    "虾": "shrimp",
+    "虾仁": "shrimp",
+}
+
+ALLERGEN_ALIASES = {
+    "花生": "peanuts",
+    "peanut": "peanuts",
+    "牛奶": "milk",
+    "乳制品": "milk",
+    "鸡蛋": "eggs",
+    "egg": "eggs",
+    "大豆": "soy",
+    "黄豆": "soy",
+    "小麦": "gluten",
+    "麸质": "gluten",
+    "虾": "shellfish",
+    "虾仁": "shellfish",
+}
+
+
+def _canonical_allergen(value: str) -> str:
+    normalized = value.lower().strip()
+    return ALLERGEN_ALIASES.get(normalized, normalized)
+
+
 class SubstitutionTool:
     """Tool for looking up ingredient substitutions from the knowledge base."""
 
@@ -29,21 +81,23 @@ class SubstitutionTool:
         """
         # Check cache first
         if self._cache:
-            cache_key = f"{ingredient}:{','.join(sorted(exclude_allergens or []))}"
+            cache_key = f"v2:{ingredient}:{','.join(sorted(exclude_allergens or []))}"
             cached = self._cache.get("substitution", cache_key)
             if cached is not None:
                 return cached
 
-        exclude = [a.lower() for a in (exclude_allergens or [])]
+        exclude = [_canonical_allergen(a) for a in (exclude_allergens or [])]
+        lookup_ingredient = INGREDIENT_LOOKUP_ALIASES.get(ingredient.lower().strip(), ingredient)
 
         # 1. Try exact match first
-        entry = self._store.get_by_ingredient(ingredient)
+        entry = self._store.get_by_ingredient(lookup_ingredient)
         if entry:
             results = []
             for sub in entry.substitutes:
                 sub_allergens = set(a.lower() for a in sub.get("allergens_free", []))
                 sub_name = sub["name"].lower()
-                is_safe = not any(a.lower() in sub_name for a in exclude)
+                is_safe = all(allergen in sub_allergens for allergen in exclude)
+                is_safe = is_safe and not any(allergen in sub_name for allergen in exclude)
                 if is_safe:
                     results.append({
                         "original": entry.original,
@@ -52,14 +106,16 @@ class SubstitutionTool:
                         "ratio": sub.get("ratio", "1:1"),
                         "taste_profile": sub.get("taste_profile", ""),
                         "category": sub.get("category", ""),
+                        "source_entry": entry.id,
+                        "approved": entry.id in TRUSTED_ENTRY_IDS,
                     })
             if results:
                 if self._cache:
-                    self._cache.set("substitution", f"{ingredient}:{','.join(sorted(exclude))}", results, ttl=86400)
+                    self._cache.set("substitution", f"v2:{ingredient}:{','.join(sorted(exclude))}", results, ttl=86400)
                 return results
 
         # 2. Fall back to RAG semantic search
-        query = ingredient
+        query = lookup_ingredient
         if context:
             query = f"{ingredient} {context}"
 
@@ -68,8 +124,10 @@ class SubstitutionTool:
             exclude_allergens=exclude,
             top_k=5,
         )
+        for result in results:
+            result["approved"] = result.get("source_entry") in TRUSTED_ENTRY_IDS
         if self._cache and results:
-            self._cache.set("substitution", f"{ingredient}:{','.join(sorted(exclude))}", results, ttl=3600)
+            self._cache.set("substitution", f"v2:{ingredient}:{','.join(sorted(exclude))}", results, ttl=3600)
         return results
 
     def get_substitution_context(

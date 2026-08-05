@@ -184,7 +184,6 @@ def to_import_recipe(meal: dict[str, Any], index: int, local_image: str) -> dict
             "ingredients": ingredients,
             "equipment": infer_equipment(category, steps),
             "cook_time_minutes": cook_time,
-            "estimated_cost": infer_cost(category, ingredients),
             "tags": tags,
             "difficulty": "easy" if cook_time <= 20 else "medium",
             "notes": f"Source: TheMealDB meal id {meal_id}. Image and instructions are matched to this exact meal record.",
@@ -222,13 +221,11 @@ def infer_tags(meal: dict[str, Any], steps: list[str]) -> list[str]:
     if category == "Breakfast" or any(word in text for word in ["breakfast", "pancake", "omelette"]):
         tags.append("早餐")
     if category in {"Vegetarian", "Vegan"}:
-        tags.extend(["素食", "低预算"])
+        tags.append("素食")
     if category in {"Chicken", "Seafood", "Vegetarian", "Vegan"}:
         tags.append("减脂")
     if category in {"Pasta", "Starter", "Side"} or len(steps) <= 5:
         tags.append("快手")
-    if category in {"Pasta", "Vegetarian", "Vegan", "Side", "Starter", "Breakfast"}:
-        tags.append("低预算")
     return list(dict.fromkeys(tag for tag in tags if tag))
 
 
@@ -258,22 +255,6 @@ def infer_cook_time(category: str, steps: list[str]) -> int:
     if category == "Dessert":
         return 45
     return 30 if len(steps) <= 6 else 40
-
-
-def infer_cost(category: str, ingredients: list[str]) -> float:
-    base = {
-        "Beef": 24,
-        "Lamb": 26,
-        "Seafood": 24,
-        "Chicken": 18,
-        "Pork": 18,
-        "Vegetarian": 10,
-        "Vegan": 10,
-        "Breakfast": 8,
-        "Pasta": 10,
-        "Dessert": 12,
-    }.get(category, 14)
-    return round(base + min(len(ingredients), 10) * 0.6, 1)
 
 
 def clean_text(value: str) -> str:

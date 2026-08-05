@@ -579,11 +579,6 @@ def _matches_category(record: PostRecord, category: str) -> bool:
     if normalized == "素食":
         terms = {"素食", "素菜", "蔬菜"}
         return bool(terms & tags) or any(term in text for term in terms)
-    if normalized == "低预算":
-        terms = {"低预算", "省钱"}
-        return record.recipe.estimated_cost <= 12 or bool(terms & tags) or any(
-            term in text for term in terms
-        )
     return _matches_tag(record, normalized)
 
 

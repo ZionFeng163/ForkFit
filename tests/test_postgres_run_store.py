@@ -1,7 +1,7 @@
 import unittest
 
 from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
-from forkfit.agents import ConstraintGuard
+from forkfit.constraints import ConstraintGuard
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
 from forkfit.fixtures import demo_meal_pack, demo_user_profile

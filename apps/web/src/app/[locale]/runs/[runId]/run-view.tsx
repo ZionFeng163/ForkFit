@@ -134,7 +134,7 @@ export function RunView({ runId }: { runId: string }) {
     return (
       <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6 flex justify-center py-20">
-          <Loader2 size={24} className="animate-spin" style={{ color: "var(--lp-muted)" }} />
+          <Loader2 size={24} className="animate-spin" style={{ color: "var(--muted)" }} />
         </div>
       </div>
     );
@@ -144,11 +144,11 @@ export function RunView({ runId }: { runId: string }) {
     return (
       <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6">
-          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <div className="py-20 text-center text-sm" style={{ color: "var(--lp-muted)" }}>无法加载任务</div>
+        <div className="py-20 text-center text-sm" style={{ color: "var(--muted)" }}>无法加载任务</div>
       </div>
     );
   }
@@ -165,7 +165,7 @@ export function RunView({ runId }: { runId: string }) {
     return (
       <div className="site-container max-w-[760px] pb-20">
         <div className="pt-6">
-          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
@@ -202,20 +202,20 @@ export function RunView({ runId }: { runId: string }) {
     return (
       <div className="mx-auto max-w-[860px] px-7 pb-20">
         <div className="pt-6">
-          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
         <div className="py-20 text-center">
-          <div className="text-base font-semibold mb-2" style={{ color: "var(--lp-fg)" }}>定制失败</div>
-          <div className="text-sm" style={{ color: "var(--lp-muted)" }}>{run.error?.message || "未知错误"}</div>
-          <div className="mt-3 text-sm" style={{ color: "var(--lp-muted)" }}>
+          <div className="text-base font-semibold mb-2" style={{ color: "var(--text)" }}>定制失败</div>
+          <div className="text-sm" style={{ color: "var(--muted)" }}>{run.error?.message || "未知错误"}</div>
+          <div className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
             {run.user_message || "你可以回到原菜谱重新提交，或者把限制写得更具体一点。"}
           </div>
           <Link
             href="/discover"
             className="mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
-            style={{ background: "var(--lp-accent)" }}
+            style={{ background: "var(--brand)" }}
           >
             换个菜谱重试
           </Link>
@@ -229,16 +229,16 @@ export function RunView({ runId }: { runId: string }) {
     return (
       <div className="mx-auto max-w-[720px] px-7 pb-20">
         <div className="pt-6 pb-8">
-          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--lp-muted)" }}>
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--muted)" }}>
             <ArrowLeft size={18} /> 返回我的定制
           </Link>
         </div>
-        <section className="rounded-lg p-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+        <section className="rounded-lg p-6" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
           <div className="flex items-start gap-3 mb-6">
-            <AlertTriangle size={22} className="mt-0.5 shrink-0" style={{ color: "#a35b21" }} />
+            <AlertTriangle size={22} className="mt-0.5 shrink-0" style={{ color: "var(--warning)" }} />
             <div>
-              <h1 className="text-lg font-bold" style={{ color: "var(--lp-fg)" }}>需要你确认替代方案</h1>
-              <p className="mt-1 text-sm leading-6" style={{ color: "var(--lp-muted)" }}>
+              <h1 className="text-lg font-bold" style={{ color: "var(--text)" }}>需要你确认替代方案</h1>
+              <p className="mt-1 text-sm leading-6" style={{ color: "var(--muted)" }}>
                 {unresolved?.message || "部分限制无法自动处理，请填写你接受的替代食材或厨具。"}
               </p>
             </div>
@@ -246,23 +246,23 @@ export function RunView({ runId }: { runId: string }) {
           <div className="space-y-4">
             {(unresolved?.items || []).map((item, index) => (
               <label key={`${item.type}-${index}`} className="block">
-                <span className="block text-sm font-semibold mb-1.5" style={{ color: "var(--lp-fg)" }}>{item.message}</span>
+                <span className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text)" }}>{item.message}</span>
                 <input
                   value={substitutions[String(index)] || ""}
                   onChange={(event) => setSubstitutions((current) => ({ ...current, [String(index)]: event.target.value }))}
                   placeholder={item.type === "equipment" ? "例如：平底锅" : "例如：芝麻酱"}
                   className="w-full rounded-lg px-3.5 py-2.5 text-sm outline-none"
-                  style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }}
+                  style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }}
                 />
               </label>
             ))}
           </div>
-          {actionError && <p className="mt-4 text-sm" style={{ color: "#a33d2d" }}>{actionError}</p>}
+          {actionError && <p className="mt-4 text-sm" style={{ color: "var(--danger)" }}>{actionError}</p>}
           <button
             onClick={handleResolve}
             disabled={resolving || Object.values(substitutions).every((value) => !value.trim())}
             className="mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-            style={{ background: "var(--lp-accent)" }}
+            style={{ background: "var(--brand)" }}
           >
             {resolving && <Loader2 size={15} className="animate-spin" />}
             重新提交定制
@@ -275,7 +275,7 @@ export function RunView({ runId }: { runId: string }) {
   if (!result || !forkedMeal) {
     return (
       <div className="mx-auto max-w-[860px] px-7 pb-20">
-        <div className="py-20 text-center text-sm" style={{ color: "var(--lp-muted)" }}>无法加载定制结果</div>
+        <div className="py-20 text-center text-sm" style={{ color: "var(--muted)" }}>无法加载定制结果</div>
       </div>
     );
   }
@@ -284,33 +284,33 @@ export function RunView({ runId }: { runId: string }) {
     <div className="mx-auto max-w-[860px] px-7 pb-20">
       {/* Back */}
       <div className="pt-6 pb-4">
-        <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors" style={{ color: "var(--lp-muted)" }}>
+        <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors" style={{ color: "var(--muted)" }}>
           <ArrowLeft size={18} /> 返回我的定制
         </Link>
       </div>
 
       {actionError && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-[13px] flex items-center gap-2" style={{ background: "#fef0ef", color: "#7f3525" }}>
+        <div className="mb-4 px-4 py-3 rounded-lg text-[13px] flex items-center gap-2" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>
           {actionError}
           <button onClick={() => setActionError(null)} className="ml-auto opacity-70 hover:opacity-100">×</button>
         </div>
       )}
 
       {/* Header + editable fields */}
-      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
         <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--lp-fg)" }}>
-            <CheckCircle2 size={20} style={{ color: "var(--lp-green)" }} /> 定制结果
+          <div className="flex items-center gap-2 text-base font-bold" style={{ color: "var(--text)" }}>
+            <CheckCircle2 size={20} style={{ color: "var(--success)" }} /> 定制结果
           </div>
           <div className="flex gap-2">
             <Link href={`/packs/${result.original_meal_pack.id}`}
               className="px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
-              style={{ background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))", border: "1.5px solid var(--lp-border)" }}>
+              style={{ background: "var(--surface)", color: "var(--muted, var(--muted))", border: "1.5px solid var(--separator)" }}>
               查看原版
             </Link>
             <button onClick={handlePublish} disabled={publishing || published}
               className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-all duration-150 disabled:opacity-50"
-              style={{ background: published ? "var(--lp-green)" : "var(--lp-accent)" }}>
+              style={{ background: published ? "var(--success)" : "var(--brand)" }}>
               {publishing ? <Loader2 size={14} className="animate-spin inline" /> : null}
               {published ? "已发布 ✓" : "发布菜谱"}
             </button>
@@ -319,44 +319,44 @@ export function RunView({ runId }: { runId: string }) {
 
         <div className="space-y-4">
           <EditField label="标题">
-            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
           </EditField>
           <EditField label="描述">
-            <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+            <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
           </EditField>
           <EditField label="食材" hint="用逗号分隔">
-            <textarea value={editIngredients} onChange={(e) => setEditIngredients(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+            <textarea value={editIngredients} onChange={(e) => setEditIngredients(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
           </EditField>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <EditField label="厨具">
-              <input value={editEquipment} onChange={(e) => setEditEquipment(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+              <input value={editEquipment} onChange={(e) => setEditEquipment(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
             </EditField>
             <EditField label="烹饪时间（分钟）">
-              <input type="number" min="1" value={editCookTime} onChange={(e) => setEditCookTime(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+              <input type="number" min="1" value={editCookTime} onChange={(e) => setEditCookTime(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
             </EditField>
             <EditField label="标签">
-              <input value={editTags} onChange={(e) => setEditTags(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+              <input value={editTags} onChange={(e) => setEditTags(e.target.value)} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
             </EditField>
           </div>
           <EditField label="备注">
-            <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
+            <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={3} className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none resize-y min-h-[80px] leading-[1.65]" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
           </EditField>
         </div>
       </div>
 
       {/* Editable steps */}
-      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-        <h3 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "var(--lp-fg)" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
+        <h3 className="text-sm font-bold mb-4 flex items-center gap-1.5" style={{ color: "var(--text)" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
           烹饪步骤
         </h3>
         <div className="flex flex-col gap-3">
           {editSteps.map((step, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <div className="w-7 h-7 min-w-7 rounded-full grid place-items-center text-[13px] font-bold text-white mt-2" style={{ background: "var(--lp-accent)" }}>{i + 1}</div>
+              <div className="w-7 h-7 min-w-7 rounded-full grid place-items-center text-[13px] font-bold text-white mt-2" style={{ background: "var(--brand)" }}>{i + 1}</div>
               <input value={step} onChange={(e) => { const s = [...editSteps]; s[i] = e.target.value; setEditSteps(s); }}
-                className="flex-1 px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg)" }} />
-              <button onClick={() => setEditSteps(editSteps.filter((_, j) => j !== i))} className="mt-2 p-1" style={{ color: "var(--lp-muted)" }}>
+                className="flex-1 px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
+              <button onClick={() => setEditSteps(editSteps.filter((_, j) => j !== i))} className="mt-2 p-1" style={{ color: "var(--muted)" }}>
                 <X size={16} />
               </button>
             </div>
@@ -364,37 +364,37 @@ export function RunView({ runId }: { runId: string }) {
         </div>
         <button onClick={() => setEditSteps([...editSteps, ""])}
           className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150"
-          style={{ border: "1.5px dashed var(--lp-border)", color: "var(--lp-muted)", background: "transparent" }}>
+          style={{ border: "1.5px dashed var(--separator)", color: "var(--muted)", background: "transparent" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
           添加步骤
         </button>
       </div>
 
       {/* Image upload */}
-      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-        <h3 className="text-sm font-bold mb-3" style={{ color: "var(--lp-fg)" }}>菜谱图片</h3>
+      <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
+        <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>菜谱图片</h3>
         <ImageUpload images={editImages} onChange={setEditImages} maxImages={4} />
       </div>
 
       {/* Comparison table */}
       {result.change_log.length > 0 && (
-        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-          <h3 className="text-sm font-bold mb-3" style={{ color: "var(--lp-fg)" }}>调整对比</h3>
-          <div className="overflow-hidden rounded-lg" style={{ border: "1px solid var(--lp-border)" }}>
+        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
+          <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>调整对比</h3>
+          <div className="overflow-hidden rounded-lg" style={{ border: "1px solid var(--separator)" }}>
             <table className="w-full text-xs">
               <thead>
-                <tr style={{ background: "var(--lp-warm-100)" }}>
-                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--lp-muted)" }}>项目</th>
-                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--lp-muted)" }}>原版</th>
-                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--lp-muted)" }}>定制版</th>
+                <tr style={{ background: "var(--surface-soft)" }}>
+                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--muted)" }}>项目</th>
+                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--muted)" }}>原版</th>
+                  <th className="px-3 py-2 text-left font-medium" style={{ color: "var(--muted)" }}>定制版</th>
                 </tr>
               </thead>
               <tbody>
                 {result.change_log.slice(0, 8).map((c, i) => (
-                  <tr key={i} className="border-t" style={{ borderColor: "var(--lp-border)", background: "var(--lp-green-light)" }}>
-                    <td className="px-3 py-2 font-medium" style={{ color: "var(--lp-fg)" }}>{c.affected_item}</td>
-                    <td className="px-3 py-2 line-through" style={{ color: "var(--lp-muted)" }}>{c.from_value?.slice(0, 40) || "—"}</td>
-                    <td className="px-3 py-2 font-semibold" style={{ color: "var(--lp-green)" }}>{c.to_value?.slice(0, 40) || "—"}</td>
+                  <tr key={i} className="border-t" style={{ borderColor: "var(--separator)", background: "var(--success-soft)" }}>
+                    <td className="px-3 py-2 font-medium" style={{ color: "var(--text)" }}>{c.affected_item}</td>
+                    <td className="px-3 py-2 line-through" style={{ color: "var(--muted)" }}>{c.from_value?.slice(0, 40) || "—"}</td>
+                    <td className="px-3 py-2 font-semibold" style={{ color: "var(--success)" }}>{c.to_value?.slice(0, 40) || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -403,8 +403,8 @@ export function RunView({ runId }: { runId: string }) {
           <div className="mt-3 space-y-1.5">
             {[...new Set(result.change_log.map((c) => c.reason))].map((reason, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--lp-green)" }} />
-                <span style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>{reason}</span>
+                <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--success)" }} />
+                <span style={{ color: "var(--muted, var(--muted))" }}>{reason}</span>
               </div>
             ))}
           </div>
@@ -413,12 +413,12 @@ export function RunView({ runId }: { runId: string }) {
 
       {/* Final review */}
       {result.final_review && (
-        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
-          <h3 className="text-sm font-bold mb-2" style={{ color: "var(--lp-fg)" }}>AI 评审</h3>
+        <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
+          <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text)" }}>AI 评审</h3>
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
             style={{
-              background: result.final_review.status === "pass" ? "var(--lp-green-light)" : "var(--lp-accent-light)",
-              color: result.final_review.status === "pass" ? "var(--lp-green)" : "var(--lp-accent)",
+              background: result.final_review.status === "pass" ? "var(--success-soft)" : "var(--brand-soft)",
+              color: result.final_review.status === "pass" ? "var(--success)" : "var(--brand)",
             }}>
             {result.final_review.status === "pass" ? "通过" : result.final_review.status === "warn" ? "有建议" : "有问题"}
           </span>
@@ -426,8 +426,8 @@ export function RunView({ runId }: { runId: string }) {
             <div className="mt-3 space-y-1.5">
               {result.final_review.findings.map((f, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--lp-accent)" }} />
-                  <span style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>{f.message}</span>
+                  <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--brand)" }} />
+                  <span style={{ color: "var(--muted, var(--muted))" }}>{f.message}</span>
                 </div>
               ))}
             </div>
@@ -436,45 +436,45 @@ export function RunView({ runId }: { runId: string }) {
       )}
 
       {/* Actions */}
-      <div className="rounded-lg p-6 mb-6" style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border)" }}>
+      <div className="rounded-lg p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
         <div className="flex gap-3 flex-wrap">
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150 disabled:opacity-50"
             style={{
-              border: `1.5px solid ${saveSuccess ? "var(--lp-green)" : "var(--lp-border)"}`,
-              background: saveSuccess ? "var(--lp-green-light)" : "var(--lp-surface)",
-              color: saveSuccess ? "var(--lp-green)" : "var(--lp-fg-secondary, var(--lp-muted))",
+              border: `1.5px solid ${saveSuccess ? "var(--success)" : "var(--separator)"}`,
+              background: saveSuccess ? "var(--success-soft)" : "var(--surface)",
+              color: saveSuccess ? "var(--success)" : "var(--muted, var(--muted))",
             }}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : saveSuccess ? <Check size={14} /> : null}
             {saveSuccess ? "已保存 ✓" : "保存到我的菜谱"}
           </button>
           <Link href={`/packs/${result.original_meal_pack.id}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-150"
-            style={{ border: "1.5px solid var(--lp-border)", background: "var(--lp-surface)", color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
+            style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--muted, var(--muted))" }}>
             查看原版菜谱
           </Link>
         </div>
-        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--lp-border)" }}>
-          <div className="text-[13px] font-semibold mb-2" style={{ color: "var(--lp-fg)" }}>
+        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--separator)" }}>
+          <div className="text-[13px] font-semibold mb-2" style={{ color: "var(--text)" }}>
             这个 AI 结果有帮助吗？
           </div>
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => handleFeedback("helpful")}
               className="px-3.5 py-2 rounded-lg text-[13px] font-semibold"
-              style={{ border: "1px solid var(--lp-border)", color: "var(--lp-green)", background: "var(--lp-green-light)" }}
+              style={{ border: "1px solid var(--separator)", color: "var(--success)", background: "var(--success-soft)" }}
             >
               有用
             </button>
             <button
               onClick={() => handleFeedback("not_helpful")}
               className="px-3.5 py-2 rounded-lg text-[13px] font-semibold"
-              style={{ border: "1px solid var(--lp-border)", color: "var(--lp-muted)", background: "var(--lp-surface)" }}
+              style={{ border: "1px solid var(--separator)", color: "var(--muted)", background: "var(--surface)" }}
             >
               没用
             </button>
-            {feedbackState === "sent" && <span className="self-center text-[13px]" style={{ color: "var(--lp-green)" }}>已收到反馈</span>}
-            {feedbackState === "error" && <span className="self-center text-[13px]" style={{ color: "#9e3a2b" }}>反馈提交失败</span>}
+            {feedbackState === "sent" && <span className="self-center text-[13px]" style={{ color: "var(--success)" }}>已收到反馈</span>}
+            {feedbackState === "error" && <span className="self-center text-[13px]" style={{ color: "var(--danger)" }}>反馈提交失败</span>}
           </div>
         </div>
       </div>
@@ -485,9 +485,9 @@ export function RunView({ runId }: { runId: string }) {
 function EditField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[13px] font-semibold mb-1.5" style={{ color: "var(--lp-fg)" }}>{label}</label>
+      <label className="block text-[13px] font-semibold mb-1.5" style={{ color: "var(--text)" }}>{label}</label>
       {children}
-      {hint && <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>{hint}</div>}
+      {hint && <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{hint}</div>}
     </div>
   );
 }

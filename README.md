@@ -64,10 +64,10 @@ docker compose down -v  # 同时清空 PostgreSQL 数据
 
 公测内容走统一的帖子模型，不再区分“演示数据”和“真实数据”。导入文件必须包含标题、描述、食材、步骤、耗时、标签、封面图和来源记录；默认状态为 `published`。
 
-默认内容源使用 TheMealDB 的同源 meal 记录：菜谱步骤和图片都来自同一个 `idMeal`，避免“AI 写菜谱 + 随机图库配图”的不可信问题。旧的 `ForkFit curated public beta` 批次已经弃用，不再放在 `data/recipes/*.json` 默认导入范围内。
+生产内容只允许来自许可明确的开放资料、编辑部原创和用户投稿。菜谱正文、图片和营养数据分别保存来源、许可和版本；图片必须与菜谱同源或经过人工确认，不能再从图库随机配图。TheMealDB 免费 key 仅用于本地开发数据，不作为公开生产内容源。
 
 ```bash
-# 重新生成 TheMealDB 同源内容 JSON；默认使用远程同源图
+# 可选：生成本地开发数据，不用于生产导入
 python scripts/build_themealdb_recipes.py --limit 120 --image-mode remote
 
 # 只校验，不写库
@@ -84,6 +84,8 @@ PYTHONPATH=src python scripts/hide_posts_by_source.py \
 ```
 
 首页/发现页默认只展示 `published` 且图片、步骤完整的内容。后台可按状态、关键词、标签、缺图、缺步骤筛选，并优先使用“下架/恢复”处理运营问题。
+
+营养和菜谱数据源、许可与同步策略见 [`docs/recipe-image-sources.md`](docs/recipe-image-sources.md)。ForkFit 不采集或估算价格。
 
 ## 项目结构
 
@@ -110,7 +112,7 @@ ForkFit/
 
 **后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + LangGraph + Bailian (Qwen LLM)
 
-**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。Kafka 只保留为未来扩容选项，不是默认依赖；需要时再安装 `confluent-kafka` 并设置 `JOB_EXECUTOR=kafka`。
+**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。
 
 ## 测试
 

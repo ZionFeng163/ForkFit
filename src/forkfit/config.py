@@ -14,14 +14,13 @@ class Settings:
     llm_timeout_seconds: int = 60
     database_url: str = ""
     redis_url: str = "redis://localhost:6379/0"
-    kafka_bootstrap_servers: str = "localhost:9092"
     job_executor: str = "inline"
     rate_limit_enabled: bool = True
     langsmith_tracing: bool = False
     langsmith_api_key: str = ""
     langsmith_project: str = "forkfit"
     langsmith_endpoint: str = ""
-    post_extraction_model: str = "deepseek-v4-flash"
+    post_extraction_model: str = "qwen3.7-max-preview"
     jwt_secret: str = "dev-only-change-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_days: int = 7
@@ -46,14 +45,13 @@ def get_settings() -> Settings:
         llm_timeout_seconds=int(os.getenv("LLM_TIMEOUT_SECONDS", "60")),
         database_url=database_url,
         redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-        kafka_bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
         job_executor=os.getenv("JOB_EXECUTOR", "inline").strip().lower(),
         rate_limit_enabled=parse_bool(os.getenv("RATE_LIMIT_ENABLED", "true")),
         langsmith_tracing=parse_bool(os.getenv("LANGSMITH_TRACING", "false")),
         langsmith_api_key=os.getenv("LANGSMITH_API_KEY", ""),
         langsmith_project=os.getenv("LANGSMITH_PROJECT", "forkfit"),
         langsmith_endpoint=os.getenv("LANGSMITH_ENDPOINT", ""),
-        post_extraction_model=os.getenv("POST_EXTRACTION_MODEL", "deepseek-v4-flash"),
+        post_extraction_model=os.getenv("POST_EXTRACTION_MODEL", "qwen3.7-max-preview"),
         jwt_secret=os.getenv("JWT_SECRET", "dev-only-change-in-production"),
         jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
         jwt_expire_days=int(os.getenv("JWT_EXPIRE_DAYS", "7")),
@@ -77,8 +75,8 @@ def is_production_env(app_env: str) -> bool:
 
 
 def validate_startup_settings(settings: Settings) -> None:
-    if settings.job_executor not in {"inline", "kafka"}:
-        raise RuntimeError("JOB_EXECUTOR must be either 'inline' or 'kafka'.")
+    if settings.job_executor != "inline":
+        raise RuntimeError("JOB_EXECUTOR must be 'inline'.")
 
     if not settings.cors_origins:
         raise RuntimeError("CORS_ORIGINS must include at least one origin.")

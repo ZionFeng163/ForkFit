@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Bookmark, Check, ChevronLeft, ChevronRight, Clock3, Heart, MapPin, Pencil, Send, SlidersHorizontal, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Bookmark, CalendarPlus, Check, ChevronLeft, ChevronRight, Clock3, Heart, MapPin, Pencil, Send, SlidersHorizontal, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { useMealPlanSelection } from "@/components/meal-plan-provider";
 import { PostCard } from "@/components/post-card";
 import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
@@ -46,6 +47,8 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
   const galleryRef = useRef<HTMLDivElement>(null);
   const canEdit = user?.id === post.user_id;
   const isZh = locale === "zh";
+  const mealPlan = useMealPlanSelection();
+  const inMealPlan = mealPlan.isSelected(post.id);
 
   const scrollToImage = useCallback((index: number) => {
     const gallery = galleryRef.current;
@@ -133,7 +136,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
       </Link>
 
       <article className="mt-2 flex flex-col">
-        <div className="relative h-[230px] overflow-hidden rounded-lg bg-[#e9e3da] sm:h-[360px] lg:h-[440px] xl:h-[460px]">
+        <div className="recipe-gallery relative aspect-[16/7] max-h-[440px] min-h-[220px] overflow-hidden rounded-lg bg-[var(--surface-container-high)] sm:min-h-[300px]">
           {post.image_urls.length > 0 ? (
             <div
               ref={galleryRef}
@@ -155,22 +158,22 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
 
           {post.image_urls.length > 1 && (
             <>
-              <button type="button" onClick={() => scrollToImage(activeImage - 1)} disabled={activeImage === 0} className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md bg-[var(--surface)] text-[var(--text)] shadow-[0_2px_8px_rgba(32,28,24,.12)] disabled:opacity-35" aria-label={isZh ? "上一张" : "Previous image"}><ChevronLeft size={20} /></button>
-              <button type="button" onClick={() => scrollToImage(activeImage + 1)} disabled={activeImage === post.image_urls.length - 1} className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md bg-[var(--surface)] text-[var(--text)] shadow-[0_2px_8px_rgba(32,28,24,.12)] disabled:opacity-35" aria-label={isZh ? "下一张" : "Next image"}><ChevronRight size={20} /></button>
-              <span className="absolute bottom-3 right-3 rounded-md bg-[rgba(32,28,24,.76)] px-2.5 py-1 text-xs text-white">{activeImage + 1} / {post.image_urls.length}</span>
+              <button type="button" onClick={() => scrollToImage(activeImage - 1)} disabled={activeImage === 0} className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md bg-[var(--surface)] text-[var(--text)] shadow-[0_2px_8px_rgba(0,0,0,.12)] disabled:opacity-35" aria-label={isZh ? "上一张" : "Previous image"}><ChevronLeft size={20} /></button>
+              <button type="button" onClick={() => scrollToImage(activeImage + 1)} disabled={activeImage === post.image_urls.length - 1} className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-md bg-[var(--surface)] text-[var(--text)] shadow-[0_2px_8px_rgba(0,0,0,.12)] disabled:opacity-35" aria-label={isZh ? "下一张" : "Next image"}><ChevronRight size={20} /></button>
+              <span className="absolute bottom-3 right-3 rounded-md bg-[rgba(0,0,0,.76)] px-2.5 py-1 text-xs text-white">{activeImage + 1} / {post.image_urls.length}</span>
             </>
           )}
         </div>
 
-        <header className="order-first grid gap-6 border-b border-[var(--line)] py-6 lg:grid-cols-[1fr_auto] lg:items-end">
+        <header className="recipe-detail-intro">
           <div className="max-w-3xl">
             <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--muted-text)]">
               {recipe.tags.slice(0, 3).map((tag) => <span key={tag} className="font-semibold text-[var(--brand-hover)]">{tag}</span>)}
               {recipe.cook_time_minutes > 0 && <span className="flex items-center gap-1.5"><Clock3 size={15} />{recipe.cook_time_minutes} {isZh ? "分钟" : "min"}</span>}
               {post.location && post.location !== "unknown" && <span className="flex items-center gap-1.5"><MapPin size={15} />{post.location}</span>}
             </div>
-            <h1 className="page-heading">{post.title}</h1>
-            <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[var(--muted-text)]">{post.description}</p>
+            <h1>{post.title}</h1>
+            <p className="recipe-detail-intro-description">{post.description}</p>
             <div className="mt-5 flex items-center gap-3 text-sm">
               <Link href={`/users/${post.user_id}`} className="font-semibold hover:text-[var(--brand-hover)]">{post.author}</Link>
               {post.created_at && <span className="text-[var(--muted-text)]">{timeAgo(post.created_at, locale)}</span>}
@@ -178,8 +181,17 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/packs/${post.id}/fork`} className="button-primary"><SlidersHorizontal size={17} />{isZh ? "按我的需求定制" : "Adapt to my needs"}</Link>
+          <div className="recipe-detail-actions">
+            <button
+              type="button"
+              className="button-primary"
+              data-active={inMealPlan}
+              onClick={() => mealPlan.toggle(post)}
+              disabled={!inMealPlan && mealPlan.full}
+            >
+              <CalendarPlus size={17} />{isZh ? (inMealPlan ? "已加入我的计划" : "加入我的计划") : (inMealPlan ? "Added to my plan" : "Add to my plan")}
+            </button>
+            <Link href={`/packs/${post.id}/fork`} className="button-secondary"><SlidersHorizontal size={17} />{isZh ? "按我的需求调整" : "Adapt to my needs"}</Link>
             <button type="button" className="button-secondary px-3" data-active={saved} onClick={handleSave} aria-label={isZh ? "收藏" : "Save"}><Bookmark size={17} className={saved ? "fill-current text-[var(--brand)]" : ""} /></button>
             <button type="button" className="button-secondary px-3" data-active={liked} onClick={handleLike} aria-label={isZh ? "点赞" : "Like"}><Heart size={17} className={liked ? "fill-current text-[var(--danger)]" : ""} />{likes}</button>
             {canEdit && <Link href={`/packs/${post.id}/edit`} className="button-secondary px-3" title={isZh ? "编辑" : "Edit"}><Pencil size={16} /></Link>}
@@ -192,16 +204,16 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
           </div>
         )}
 
-        <div className="grid gap-10 py-9 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          <div className="min-w-0">
+        <div className="recipe-detail-body">
+          <div className="recipe-detail-steps min-w-0">
             <section>
-              <h2 className="section-heading">{isZh ? "制作步骤" : "Method"}</h2>
+              <h2>{isZh ? "制作步骤" : "Method"}</h2>
               {recipe.steps.length > 0 ? (
-                <ol className="mt-5 divide-y divide-[var(--line)] border-t border-[var(--line)]">
+                <ol className="mt-5">
                   {recipe.steps.map((step, index) => (
-                    <li key={`${step}-${index}`} className="grid grid-cols-[38px_1fr] gap-4 py-5">
-                      <span className="text-sm font-semibold text-[var(--brand)]">{String(index + 1).padStart(2, "0")}</span>
-                      <p className="leading-7">{step}</p>
+                    <li key={`${step}-${index}`}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <p>{step}</p>
                     </li>
                   ))}
                 </ol>
@@ -216,7 +228,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
             )}
           </div>
 
-          <aside className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-5 lg:sticky lg:top-5">
+          <aside className="recipe-detail-ingredients lg:sticky lg:top-5">
             <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
               <h2 className="section-heading">{isZh ? "食材" : "Ingredients"}</h2>
               <span className="flex items-center gap-1.5 text-xs text-[var(--muted-text)]"><Users size={14} />{isZh ? "按原菜谱份量" : "Original servings"}</span>
@@ -243,7 +255,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
         </div>
       </article>
 
-      <section className="border-t border-[var(--line)] py-9">
+      <section className="recipe-comments border-t border-[var(--line)] py-9">
         <h2 className="section-heading">{isZh ? `评论 ${commentTotal}` : `Comments ${commentTotal}`}</h2>
         {user ? (
           <form onSubmit={submitComment} className="mt-5 flex max-w-3xl items-end gap-3">
@@ -284,8 +296,18 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
         </section>
       )}
 
-      <div className="fixed inset-x-0 bottom-[calc(52px+env(safe-area-inset-bottom))] z-30 border-t border-[var(--line)] bg-[var(--surface)] p-3 sm:hidden">
+      <div className="fixed inset-x-0 bottom-[calc(66px+env(safe-area-inset-bottom))] z-30 grid grid-cols-[1fr_auto] gap-2 border-t border-[var(--line)] bg-[var(--surface)] p-3 sm:hidden">
         <Link href={`/packs/${post.id}/fork`} className="button-primary w-full"><SlidersHorizontal size={17} />{isZh ? "按我的需求定制" : "Adapt to my needs"}</Link>
+        <button
+          type="button"
+          className="button-secondary px-3"
+          data-active={inMealPlan}
+          onClick={() => mealPlan.toggle(post)}
+          disabled={!inMealPlan && mealPlan.full}
+          aria-label={isZh ? (inMealPlan ? "从计划移除" : "加入多日计划") : (inMealPlan ? "Remove from plan" : "Add to meal plan")}
+        >
+          <CalendarPlus size={18} />
+        </button>
       </div>
 
       <ConfirmModal open={Boolean(deleteTarget)} title={isZh ? "删除评论" : "Delete comment"} message={isZh ? "确定要删除这条评论吗？" : "Delete this comment?"} confirmLabel={isZh ? "删除" : "Delete"} danger onConfirm={deleteSelectedComment} onCancel={() => setDeleteTarget(null)} />

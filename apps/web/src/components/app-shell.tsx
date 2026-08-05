@@ -2,16 +2,18 @@
 
 import { FormEvent, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bookmark, FilePlus2, Home, Search, Shield, Sparkles, User } from "lucide-react";
+import { CalendarDays, FilePlus2, Home, Search, Shield, User } from "lucide-react";
 
 import { useAuth } from "@/components/auth-provider";
 import { BrandLogo } from "@/components/brand-logo";
+import { MealPlanBasket } from "@/components/meal-plan-basket";
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 
 const MOBILE_NAV = [
-  { key: "discover", href: "/discover", icon: Home },
+  { key: "home", href: "/", icon: Home },
+  { key: "discover", href: "/discover", icon: Search },
+  { key: "mealPlan", href: "/meal-plans", icon: CalendarDays },
   { key: "newPost", href: "/posts/new", icon: FilePlus2 },
-  { key: "myForks", href: "/my-forks", icon: Sparkles },
   { key: "profile", href: "/profile", icon: User },
 ] as const;
 
@@ -34,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--canvas)] text-[var(--text)]">
+    <div className="min-h-screen bg-[var(--canvas)] text-[var(--on-surface)]">
       <header className="site-header">
         <div className="site-container site-header-inner">
           <BrandLogo />
@@ -45,6 +47,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             <Link href="/discover" className="site-nav-link" data-active={isActive(pathname, "/discover") || isActive(pathname, "/packs")}>
               {t("discover")}
+            </Link>
+            <Link href="/meal-plans" className="site-nav-link" data-active={isActive(pathname, "/meal-plans")}>
+              {locale === "zh" ? "吃饭计划" : "Meal plans"}
             </Link>
             <Link href="/posts/new" className="site-nav-link" data-active={isActive(pathname, "/posts/new")}>
               {t("newPost")}
@@ -61,21 +66,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           </form>
 
-          <div className="header-actions flex items-center gap-1.5">
-            <Link href={pathname} locale={locale === "zh" ? "en" : "zh"} className="button-quiet h-9 min-h-9 px-2.5 text-xs">
+          <div className="header-actions flex items-center gap-1">
+            <Link href={pathname} locale={locale === "zh" ? "en" : "zh"} className="button-quiet min-h-10 px-3 text-xs">
               {locale === "zh" ? "EN" : "中文"}
             </Link>
             {user?.role === "admin" && (
-              <Link href="/admin" className="button-quiet h-9 min-h-9 px-2.5" title={t("admin")}>
+              <Link href="/admin" className="button-quiet min-h-10 px-3" title={t("admin")}>
                 <Shield size={17} />
               </Link>
             )}
             {user ? (
               <>
-                <Link href="/profile" className="button-quiet desktop-only h-9 min-h-9 px-2.5" title={locale === "zh" ? "我的收藏" : "Saved"}>
-                  <Bookmark size={17} />
-                </Link>
-                <Link href="/profile" className="ml-1 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-sm font-bold text-[var(--brand-hover)]" aria-label={locale === "zh" ? "个人中心" : "Profile"}>
+                <Link href="/profile" className="ml-1 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--primary-container)] text-sm font-bold text-[var(--on-primary-container)]" aria-label={locale === "zh" ? "个人中心" : "Profile"}>
                   {user.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -85,11 +87,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Link>
               </>
             ) : loading ? (
-              <span className="h-9 w-20" aria-hidden="true" />
+              <span className="h-10 w-20" aria-hidden="true" />
             ) : (
               <>
-                <Link href="/login" className="button-quiet desktop-only h-9 min-h-9">{t("login")}</Link>
-                <Link href="/register" className="button-primary h-9 min-h-9 px-3.5">{t("register")}</Link>
+                <Link href="/login" className="button-quiet desktop-only">{t("login")}</Link>
+                <Link href="/register" className="button-primary">{t("register")}</Link>
               </>
             )}
           </div>
@@ -97,12 +99,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="app-main">{children}</main>
+      <MealPlanBasket />
 
       <nav className="mobile-bottom-nav" aria-label={locale === "zh" ? "移动导航" : "Mobile navigation"}>
         {MOBILE_NAV.map(({ key, href, icon: Icon }) => (
-          <Link key={key} href={href} data-active={isActive(pathname, href)}>
+          <Link key={key} href={href} data-active={key === "home" ? pathname === "/" : isActive(pathname, href)} aria-current={(key === "home" ? pathname === "/" : isActive(pathname, href)) ? "page" : undefined}>
             <Icon size={18} />
-            {t(key)}
+            {key === "home"
+              ? (locale === "zh" ? "首页" : "Home")
+              : key === "discover"
+                ? t("discover")
+                : key === "mealPlan"
+                  ? (locale === "zh" ? "计划" : "Plan")
+                  : t(key)}
           </Link>
         ))}
       </nav>

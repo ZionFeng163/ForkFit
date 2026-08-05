@@ -35,11 +35,11 @@ function InputField({
 }) {
   return (
     <div className="mb-5">
-      <label className="block text-[13px] font-semibold mb-1.5" style={{ color: "var(--lp-fg-secondary, var(--lp-muted))" }}>
-        {label} {required && <span style={{ color: "var(--lp-accent)" }}>*</span>}
+      <label className="mb-1.5 block text-[13px] font-semibold text-[var(--muted-text)]">
+        {label} {required && <span className="text-[var(--brand)]">*</span>}
       </label>
       <div className="relative">
-        <Icon size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--lp-muted)" }} />
+        <Icon size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-text)]" />
         <input
           type={type}
           required={required}
@@ -50,7 +50,7 @@ function InputField({
         />
         {rightButton}
       </div>
-      {error && <div className="text-[12px] mt-1" style={{ color: "#e53e3e" }}>{error}</div>}
+      {error && <div className="mt-1 text-[12px] text-[var(--danger)]">{error}</div>}
     </div>
   );
 }
@@ -128,11 +128,11 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
 
   return (
     <AuthLayout>
-      <div className="auth-tabs">
-        <button onClick={() => setTab("login")} className={`auth-tab ${tab === "login" ? "active" : ""}`}>
+      <div className="auth-tabs" role="tablist" aria-label="账户操作">
+        <button type="button" role="tab" aria-selected={tab === "login"} onClick={() => setTab("login")} className={`auth-tab ${tab === "login" ? "active" : ""}`}>
           登录
         </button>
-        <button onClick={() => setTab("register")} className={`auth-tab ${tab === "register" ? "active" : ""}`}>
+        <button type="button" role="tab" aria-selected={tab === "register"} onClick={() => setTab("register")} className={`auth-tab ${tab === "register" ? "active" : ""}`}>
           注册
         </button>
       </div>
@@ -145,9 +145,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
       )}
 
       {/* ===== LOGIN ===== */}
-      <div style={{ display: tab === "login" ? "block" : "none" }}>
+      <div hidden={tab !== "login"}>
           <div className="auth-form-header">
-            <h1 style={{ color: "var(--lp-fg)" }}>欢迎回来</h1>
+            <h1>欢迎回来</h1>
             <p>登录后继续收藏、发布和定制菜谱</p>
         </div>
 
@@ -156,22 +156,20 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
           <InputField
             label="密码" icon={Lock} type={showLoginPass ? "text" : "password"}
             value={loginPass} onChange={setLoginPass} placeholder="请输入密码"
-            rightButton={
-              <button type="button" onClick={() => setShowLoginPass(!showLoginPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
+              rightButton={
+              <button type="button" aria-label={showLoginPass ? "隐藏密码" : "显示密码"} onClick={() => setShowLoginPass(!showLoginPass)}
+                className="auth-toggle absolute right-3 top-1/2 -translate-y-1/2 rounded p-1">
                 {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
           />
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--lp-muted)" }}>
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded accent-[var(--lp-accent)]" />
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[var(--muted-text)]">
+              <input type="checkbox" defaultChecked className="h-4 w-4 rounded accent-[var(--brand)]" />
               记住我
             </label>
           </div>
-          <button type="submit" disabled={isPending}
-            className="auth-btn"
-            style={{ background: "var(--lp-accent)", color: "white" }}>
+          <button type="submit" disabled={isPending} className="auth-btn button-primary">
             {loginMutation.isPending || redirecting ? <Loader2 size={16} className="animate-spin" /> : null}
             {redirecting ? "正在进入..." : "登录"}
           </button>
@@ -179,9 +177,9 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
       </div>
 
       {/* ===== REGISTER ===== */}
-      <div style={{ display: tab === "register" ? "block" : "none" }}>
+      <div hidden={tab !== "register"}>
           <div className="auth-form-header">
-            <h1 style={{ color: "var(--lp-fg)" }}>创建账号</h1>
+            <h1>创建账号</h1>
             <p>保存口味偏好，让每份菜谱更适合你</p>
         </div>
 
@@ -194,7 +192,7 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
               value={regPass} onChange={setRegPass} placeholder="至少 6 位"
               rightButton={
                 <button type="button" onClick={() => setShowRegPass(!showRegPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
+                  className="auth-toggle absolute right-3 top-1/2 -translate-y-1/2 rounded p-1">
                   {showRegPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }
@@ -203,11 +201,11 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
               <div className="mt-2">
                 <div className="flex gap-1">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex-1 h-[3px] rounded-full transition-all duration-300"
-                      style={{ background: i <= strength.level ? (strength.level >= 3 ? "var(--lp-green)" : "var(--lp-accent)") : "var(--lp-border)" }} />
+                    <div key={i} className="h-[3px] flex-1 rounded-sm transition-all duration-300"
+                      style={{ background: i <= strength.level ? (strength.level >= 3 ? "var(--success)" : "var(--brand)") : "var(--line)" }} />
                   ))}
                 </div>
-                <div className="text-[11px] mt-1" style={{ color: "var(--lp-muted)" }}>{strength.label}</div>
+                <div className="mt-1 text-[11px] text-[var(--muted-text)]">{strength.label}</div>
               </div>
             )}
           </div>
@@ -217,14 +215,12 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
             error={passwordMismatch ? "两次输入的密码不一致" : undefined}
             rightButton={
               <button type="button" onClick={() => setShowRegConfirm(!showRegConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded" style={{ color: "var(--lp-muted)" }}>
+                className="auth-toggle absolute right-3 top-1/2 -translate-y-1/2 rounded p-1">
                 {showRegConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
           />
-          <button type="submit" disabled={isPending || passwordMismatch}
-            className="auth-btn"
-            style={{ background: "var(--lp-accent)", color: "white" }}>
+          <button type="submit" disabled={isPending || passwordMismatch} className="auth-btn button-primary">
             {registerMutation.isPending || redirecting ? <Loader2 size={16} className="animate-spin" /> : null}
             {redirecting ? "正在进入..." : "创建账号"}
           </button>

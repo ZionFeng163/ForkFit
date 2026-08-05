@@ -1,10 +1,11 @@
 "use client";
 
-import { Clock3, Heart, MessageSquare } from "lucide-react";
+import { CalendarPlus, Clock3, Heart, MessageSquare } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useState } from "react";
 
 import { CommentModal } from "@/components/comment-modal";
+import { useMealPlanSelection } from "@/components/meal-plan-provider";
 import { RemoteImage } from "@/components/remote-image";
 import { useAuth } from "@/components/auth-provider";
 import { Link } from "@/i18n/routing";
@@ -19,6 +20,8 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(post.comment_count ?? 0);
   const [busy, setBusy] = useState(false);
+  const mealPlan = useMealPlanSelection();
+  const planned = mealPlan.isSelected(post.id);
   const primaryTag = post.recipe.tags[0] || post.theme;
 
   function handleLike() {
@@ -53,13 +56,27 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
             <span className="inline-flex items-center gap-1"><Clock3 size={13} />{post.recipe.cook_time_minutes} {locale === "zh" ? "分钟" : "min"}</span>
           )}
           <span className="truncate">{post.author}</span>
-          <div className="recipe-card-actions">
+        </div>
+        <div className="recipe-card-actions mt-2">
+            <button
+              type="button"
+              className="recipe-card-plan-action"
+              data-active={planned}
+              onClick={() => mealPlan.toggle(post)}
+              disabled={!planned && mealPlan.full}
+              aria-pressed={planned}
+              title={!planned && mealPlan.full ? (locale === "zh" ? "最多选择 7 道菜" : "Up to 7 recipes") : undefined}
+            >
+              <CalendarPlus size={14} />
+              <span>{locale === "zh" ? (planned ? "已加入" : "加入计划") : (planned ? "Added" : "Add to plan")}</span>
+            </button>
             <button
               type="button"
               className="recipe-icon-button"
               data-active={likeState.liked}
               onClick={handleLike}
               disabled={busy}
+              aria-pressed={likeState.liked}
               aria-label={locale === "zh" ? "点赞" : "Like"}
             >
               <Heart size={14} className={likeState.liked ? "fill-current" : ""} />{likeState.likes}
@@ -72,7 +89,6 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
             >
               <MessageSquare size={14} />{commentCount}
             </button>
-          </div>
         </div>
       </div>
 

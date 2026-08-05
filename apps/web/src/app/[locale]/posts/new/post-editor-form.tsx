@@ -21,7 +21,6 @@ type PostFormState = {
   ingredients: string[];
   equipment: string[];
   cook_time_minutes: number;
-  estimated_cost: string;
   tags: string[];
   notes: string;
   steps: string[];
@@ -37,7 +36,6 @@ const defaultForm: PostFormState = {
   ingredients: [],
   equipment: [],
   cook_time_minutes: 15,
-  estimated_cost: "10",
   tags: [],
   notes: "",
   steps: ["", "", ""],
@@ -214,7 +212,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             type="button"
             onClick={() => router.back()}
             className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors"
-            style={{ color: "var(--lp-muted)" }}
+            style={{ color: "var(--muted)" }}
           >
             <ArrowLeft size={16} />
             {t("back")}
@@ -223,10 +221,10 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
         {/* Page header */}
         <div className="mt-7 mb-8">
-          <h1 className="text-2xl font-bold tracking-[-0.01em] mb-1.5" style={{ color: "var(--lp-fg)" }}>
+          <h1 className="text-2xl font-bold tracking-[-0.01em] mb-1.5" style={{ color: "var(--text)" }}>
             {isEditing ? t("editTitle") : t("title")}
           </h1>
-          <p className="text-sm leading-[1.6]" style={{ color: "var(--lp-muted)" }}>
+          <p className="text-sm leading-[1.6]" style={{ color: "var(--muted)" }}>
             {t("description")}
           </p>
         </div>
@@ -242,8 +240,8 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   height: "3px",
                   borderRadius: "2px",
                   background: i < 1
-                    ? "var(--lp-accent)"
-                    : "var(--lp-border)",
+                    ? "var(--brand)"
+                    : "var(--separator)",
                 }}
               />
             ))}
@@ -253,7 +251,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               <span
                 key={i}
                 className="text-[11px] font-medium transition-colors"
-                style={{ color: i === 0 ? "var(--lp-accent)" : "var(--lp-muted)" }}
+                style={{ color: i === 0 ? "var(--brand)" : "var(--muted)" }}
               >
                 {label}
               </span>
@@ -267,14 +265,14 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             {/* Section 1: Basic Info */}
             <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                 基本信息
               </h2>
 
               {/* Title */}
               <div className="mb-5">
                 <label className="block text-[13px] font-semibold mb-1.5">
-                  菜谱标题 <span style={{ color: "var(--lp-accent)" }}>*</span>
+                  菜谱标题 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -285,13 +283,13 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   placeholder="例如：外婆红烧肉、五分钟快手早餐"
                   className="fp-input"
                 />
-                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>取一个让人看了就想做的名字</div>
+                <div className="mt-1 flex justify-between gap-3 text-xs text-[var(--muted)]"><span>取一个让人看了就想做的名字</span><span>{form.title.length}/160</span></div>
               </div>
 
               {/* Description */}
               <div className="mb-5">
                 <label className="block text-[13px] font-semibold mb-1.5">
-                  菜谱描述 <span style={{ color: "var(--lp-accent)" }}>*</span>
+                  菜谱描述 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <textarea
                   required
@@ -302,6 +300,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   placeholder="简单描述这道菜的特色、灵感来源、适合什么场景…"
                   className="fp-textarea"
                 />
+                <div className="mt-1 text-right text-xs text-[var(--muted)]">{form.description.length}/1200</div>
               </div>
 
               {/* Images */}
@@ -317,7 +316,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             {/* Section 2: Recipe Details */}
             <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 菜谱详情
               </h2>
 
@@ -332,9 +331,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                       onClick={() => update("cook_time_minutes", min)}
                       className="rounded-md px-4 py-2 text-[13px] font-medium transition-colors duration-150"
                       style={{
-                        border: `1.5px solid ${form.cook_time_minutes === min ? "var(--lp-accent)" : "var(--lp-border)"}`,
-                        background: form.cook_time_minutes === min ? "var(--lp-accent-light)" : "var(--lp-surface)",
-                        color: form.cook_time_minutes === min ? "var(--lp-accent)" : "var(--lp-muted)",
+                        border: `1.5px solid ${form.cook_time_minutes === min ? "var(--brand)" : "var(--separator)"}`,
+                        background: form.cook_time_minutes === min ? "var(--brand-soft)" : "var(--surface)",
+                        color: form.cook_time_minutes === min ? "var(--brand)" : "var(--muted)",
                       }}
                     >
                       {min >= 60 ? "1 小时+" : `${min} 分钟`}
@@ -354,11 +353,11 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                       onClick={() => setDifficulty(d.key)}
                       className="flex-1 py-3 rounded-lg text-center transition-all duration-150"
                       style={{
-                        border: `1.5px solid ${difficulty === d.key ? "var(--lp-accent)" : "var(--lp-border)"}`,
-                        background: difficulty === d.key ? "var(--lp-accent-light)" : "var(--lp-surface)",
+                        border: `1.5px solid ${difficulty === d.key ? "var(--brand)" : "var(--separator)"}`,
+                        background: difficulty === d.key ? "var(--brand-soft)" : "var(--surface)",
                       }}
                     >
-                      <span className="text-[13px] font-semibold" style={{ color: difficulty === d.key ? "var(--lp-accent)" : "var(--lp-fg-secondary, var(--lp-muted))" }}>
+                      <span className="text-[13px] font-semibold" style={{ color: difficulty === d.key ? "var(--brand)" : "var(--muted, var(--muted))" }}>
                         {d.label.zh}
                       </span>
                     </button>
@@ -370,28 +369,28 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               <div className="mb-5">
                 <label className="block text-[13px] font-semibold mb-1.5">食材清单</label>
                 <TagInput tags={form.ingredients} onChange={(t) => update("ingredients", t)} placeholder="输入食材后按回车添加" />
-                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>逐一输入食材名称，按回车分隔</div>
+                <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>逐一输入食材名称，按回车分隔</div>
               </div>
 
               {/* Equipment */}
               <div className="mb-5">
                 <label className="block text-[13px] font-semibold mb-1.5">厨具</label>
                 <TagInput tags={form.equipment} onChange={(t) => update("equipment", t)} placeholder="输入厨具后按回车添加" />
-                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>例如：炒锅、烤箱、空气炸锅</div>
+                <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>例如：炒锅、烤箱、空气炸锅</div>
               </div>
 
               {/* Tags */}
               <div>
                 <label className="block text-[13px] font-semibold mb-1.5">标签</label>
                 <TagInput tags={form.tags} onChange={(t) => update("tags", t)} placeholder="输入标签后按回车添加" />
-                <div className="text-xs mt-1" style={{ color: "var(--lp-muted)" }}>例如：家常菜、快手菜、减脂、早餐</div>
+                <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>例如：家常菜、快手菜、减脂、早餐</div>
               </div>
             </div>
 
             {/* Section 3: Cooking Steps */}
             <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lp-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
                 烹饪步骤
               </h2>
 
@@ -439,7 +438,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               <p>{t("publishHelp")}</p>
 
               {mutation.error || extractMutation.error ? (
-                <div className="mb-4 p-3 rounded-lg text-[13px]" style={{ border: "1px solid #e1b7a9", background: "#fff8f5", color: "#7f3525" }}>
+                <div className="mb-4 p-3 rounded-lg text-[13px]" style={{ border: "1px solid var(--danger)", background: "var(--danger-soft)", color: "var(--danger)" }}>
                   {mutation.error?.message || extractMutation.error?.message || t("failed")}
                 </div>
               ) : null}
@@ -465,7 +464,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                 {draftSaved ? "✓ 已保存" : "存为草稿"}
               </button>
               {draftSavedAt && (
-                <div className="mt-2 text-[12px]" style={{ color: "var(--lp-muted)" }}>
+                <div className="mt-2 text-[12px]" style={{ color: "var(--muted)" }}>
                   草稿保存于 {formatDraftTime(draftSavedAt)}
                 </div>
               )}
@@ -487,11 +486,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               </div>
               <ul className="fp-tips-list">
                 {[
-                  "清晰的成品图能大幅提升收藏率",
-                  "食材写清用量，例如「鸡蛋 2 个」",
-                  "步骤越细越好，新手也能跟着做",
-                  "加上标签更容易被搜索到",
-                  "小贴士写上你的独门秘诀",
+                  "图片清楚，食材写明用量",
+                  "步骤写到别人能照做",
+                  "标签和小贴士按需补充",
                 ].map((tip, i) => (
                   <li key={i}>
                     <span className="fp-tips-num">{i + 1}</span>
@@ -533,7 +530,6 @@ function buildInput(form: PostFormState, difficulty: string): CreatePostInput {
       ingredients: form.ingredients.length ? form.ingredients : [title],
       equipment: form.equipment,
       cook_time_minutes: form.cook_time_minutes || 30,
-      estimated_cost: Number(form.estimated_cost) || 10,
       tags: allTags,
       notes: form.notes.trim(),
       steps,
@@ -556,7 +552,6 @@ function formFromPost(post: RecipePost): PostFormState {
         : [...post.recipe.ingredients],
     equipment: [...post.recipe.equipment],
     cook_time_minutes: post.recipe.cook_time_minutes || 30,
-    estimated_cost: String(post.recipe.estimated_cost || 10),
     tags: post.recipe.tags.filter((t) => !["easy", "medium", "hard"].includes(t)),
     notes: post.recipe.notes,
     steps: post.recipe.steps?.length ? [...post.recipe.steps] : ["", "", ""],

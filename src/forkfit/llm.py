@@ -36,7 +36,7 @@ class BailianLLMClient:
     ) -> None:
         load_env()
         self.api_key = api_key or os.environ.get("BAILIAN_API_KEY")
-        self.model = model or os.environ.get("BAILIAN_MODEL", "qwen3.6-flash")
+        self.model = model or os.environ.get("BAILIAN_MODEL", "qwen3.7-max-preview")
         self.base_url = (
             base_url
             or os.environ.get(
@@ -67,7 +67,7 @@ class BailianLLMClient:
             "temperature": 0,
             "max_tokens": max_tokens or _default_max_tokens(agent),
             "response_format": {"type": "json_object"},
-            "enable_thinking": False,
+            "enable_thinking": _enable_thinking(self.model),
         }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
@@ -132,3 +132,8 @@ def _default_max_tokens(agent: str) -> int:
         "constraint": 700,
         "adapter": 1400,
     }.get(agent, 900)
+
+
+def _enable_thinking(model: str) -> bool:
+    """Preview reasoning models require thinking to be explicitly enabled."""
+    return model.endswith("-preview")

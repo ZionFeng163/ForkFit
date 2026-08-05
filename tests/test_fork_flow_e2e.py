@@ -39,6 +39,10 @@ class FakeLLMClient:
         import json
 
         request = json.loads(user)
+        if agent == "adaptation":
+            return self._recipe_patch_payload(request)
+        if agent == "culinary_critic":
+            return {"status": "pass", "issues": []}
         if agent == "user":
             return self._user_payload(request)
         if agent == "constraint":
@@ -48,6 +52,77 @@ class FakeLLMClient:
         if agent == "cooking_steps":
             return self._cooking_steps_payload(request)
         raise AssertionError(f"unexpected agent: {agent}")
+
+    def _recipe_patch_payload(self, request):
+        operations = []
+        unresolved = []
+        meals = {meal["id"]: meal for meal in request["meal_pack"]["meals"]}
+        constraints = request["constraints"]
+
+        for meal_id, ingredients in request.get("approved_candidates", {}).items():
+            for ingredient, choices in ingredients.items():
+                choice = choices[0]
+                operations.append({
+                    "op": "replace_ingredient", "meal_id": meal_id,
+                    "target": ingredient, "value": choice["substitute"],
+                    "reason": "Remove the conflicting ingredient.",
+                    "evidence_refs": [choice["evidence_id"]],
+                })
+                meal = meals[meal_id]
+                operations.append({
+                    "op": "set_name", "meal_id": meal_id, "target": "name",
+                    "value": meal["name"].replace("Peanut", "Sesame-Lime"),
+                    "reason": "Keep the recipe name accurate.", "evidence_refs": [],
+                })
+
+        for finding in request["findings"]:
+            meal_id = finding["affected_items"][0]
+            meal = meals[meal_id]
+            if finding["type"] == "equipment":
+                available = [
+                    item["value"] for item in constraints.get("items", [])
+                    if item["kind"] == "equipment"
+                ]
+                if not available or "smoker" in meal["equipment"]:
+                    unresolved.append(finding)
+                    continue
+                operations.append({
+                    "op": "replace_equipment", "meal_id": meal_id,
+                    "target": meal["equipment"][0], "value": available[0],
+                    "reason": "Use equipment that is available.", "evidence_refs": [],
+                })
+            elif finding["type"] == "time":
+                operations.append({
+                    "op": "set_cook_time", "meal_id": meal_id,
+                    "target": "cook_time_minutes",
+                    "value": constraints["max_cook_time_minutes"],
+                    "reason": "Fit the requested cooking time.", "evidence_refs": [],
+                })
+            elif finding["type"] == "taste_mismatch":
+                disliked = constraints.get("dislikes", [""])[0]
+                ingredient = next(item for item in meal["ingredients"] if disliked in item)
+                operations.append({
+                    "op": "replace_ingredient", "meal_id": meal_id,
+                    "target": ingredient, "value": "saucy chicken thigh",
+                    "reason": "Use a preferred cut.", "evidence_refs": [],
+                })
+
+        return {
+            "operations": operations,
+            "summary": "Adjusted the recipe to match the request.",
+            "description": "The recipe keeps its main idea while fitting the requested constraints.",
+            "unresolved_items": unresolved,
+        }
+
+
+class FakeSubstitutionTool:
+    def lookup(self, ingredient, exclude_allergens=None):
+        if "peanut" in ingredient.lower():
+            return [{
+                "substitute": "sesame-lime sauce", "ratio": "1:1",
+                "approved": True, "source_entry": "test",
+            }]
+        return []
 
     def _cooking_steps_payload(self, request):
         meals = request.get("meals", [])
@@ -237,22 +312,6 @@ class FakeLLMClient:
             for finding in review["findings"]:
                 if finding["severity"] == "high":
                     continue
-                if finding["type"] == "budget":
-                    m = pack["meals"][0]
-                    before = f"{', '.join(m['ingredients'])} (${m['estimated_cost']:.2f})"
-                    m["ingredients"] = [
-                        "tofu and egg" if i.lower() == "salmon" else i
-                        for i in m["ingredients"]
-                    ]
-                    m["estimated_cost"] = max(3.0, m["estimated_cost"] - 8.0)
-                    change_log.append({
-                        "affected_item": m["id"],
-                        "from_value": before,
-                        "to_value": f"{', '.join(m['ingredients'])} (${m['estimated_cost']:.2f})",
-                        "reason": finding["message"],
-                        "source_agent": "constraint",
-                    })
-                    changed = True
                 if finding["type"] == "time":
                     m = next(
                         (x for x in pack["meals"] if x["id"] == finding["affected_items"][0]), None
@@ -300,9 +359,9 @@ class SyncExecutor:
         with patch("forkfit.workers.runner.ForkFitLangGraphWorkflow") as MockWorkflow:
             from forkfit.workers.runner import _get_workflow
             _get_workflow.cache_clear()
-            MockWorkflow.return_value.run = lambda up, mp, locale="en", on_step_complete=None: ForkFitLangGraphWorkflow(
-                llm_client=self.fake_llm
-            ).run(up, mp, locale)
+            MockWorkflow.return_value.run = lambda up, mp, locale="en", on_step_complete=None, request_text="": ForkFitLangGraphWorkflow(
+                llm_client=self.fake_llm, substitution_tool=FakeSubstitutionTool()
+            ).run(up, mp, locale, request_text=request_text)
             run_forkfit_job(
                 run_id,
                 user_profile_to_dict(user_profile),
@@ -346,7 +405,6 @@ def _make_meal(**overrides):
         "ingredients": ["rice", "tofu", "broccoli"],
         "equipment": ["stovetop"],
         "cook_time_minutes": 25,
-        "estimated_cost": 10,
         "tags": ["rice bowl"],
         "notes": "",
     }
@@ -452,7 +510,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
         self.assertEqual(data["status"], "succeeded")
         self.assertIsNotNone(data["result"])
         self.assertEqual(data["result"]["change_log"], [])
-        self.assertEqual(data["result"]["summary"], "Meal pack already fits.")
+        self.assertEqual(data["result"]["summary"], "Meal pack already satisfies the request.")
 
     # -- 2. Allergy block + replacement -------------------------------------
 
@@ -506,7 +564,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
     def test_unresolvable_block_requests_input(self):
         fake_llm = FakeLLMClient()
         client, store = _build_app(fake_llm)
-        user = _make_user(equipment=[])
+        user = _make_user(equipment=["stovetop"])
         pack = _make_pack(_make_meal(
             id="sun", name="Smoked Brisket", equipment=["smoker"],
         ))
@@ -612,7 +670,7 @@ class ForkFlowEndToEndTests(unittest.TestCase):
     def test_publish_failed_run_returns_400(self):
         fake_llm = FakeLLMClient()
         client, store = _build_app(fake_llm)
-        user = _make_user(equipment=[])
+        user = _make_user(equipment=["stovetop"])
         pack = _make_pack(_make_meal(equipment=["smoker"]))
 
         resp = client.post("/runs", json={
