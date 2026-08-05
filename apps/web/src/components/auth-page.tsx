@@ -46,7 +46,7 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="auth-input w-full pl-[42px] pr-10 outline-none transition-all duration-200"
+          className={`auth-input auth-input-with-icon w-full outline-none transition-all duration-200 ${rightButton ? "auth-input-with-action" : ""}`}
         />
         {rightButton}
       </div>

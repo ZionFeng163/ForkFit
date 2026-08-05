@@ -179,6 +179,8 @@ button:disabled { cursor: not-allowed; }
   transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 .input, .auth-input, .fp-input { height: 48px; padding: 0 14px; }
+.auth-input.auth-input-with-icon { padding-left: 42px; }
+.auth-input.auth-input-with-action { padding-right: 42px; }
 .textarea, .fp-textarea { min-height: 112px; padding: 12px 14px; resize: vertical; line-height: 1.65; }
 .input:focus, .textarea:focus, .fp-input:focus, .fp-textarea:focus, .auth-input:focus {
   border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
