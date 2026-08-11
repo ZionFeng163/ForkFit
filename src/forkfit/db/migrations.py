@@ -86,9 +86,11 @@ MIGRATIONS: tuple[Migration, ...] = (
             "CREATE INDEX IF NOT EXISTS ix_posts_status ON posts (status)",
         ),
     ),
+    # Versions 7-9 existed in an earlier deployment with different meanings.
+    # Keep new schema changes append-only so an upgraded database cannot skip them.
     (
-        7,
-        "durable_agent_runs",
+        10,
+        "durable_agent_runs_v2",
         (
             "ALTER TABLE runs ADD COLUMN IF NOT EXISTS workflow_version varchar(40) NOT NULL DEFAULT 'v2'",
             "ALTER TABLE runs ADD COLUMN IF NOT EXISTS current_stage varchar(80) NOT NULL DEFAULT 'queued'",
@@ -101,8 +103,8 @@ MIGRATIONS: tuple[Migration, ...] = (
         ),
     ),
     (
-        8,
-        "multi_day_meal_plans",
+        11,
+        "multi_day_meal_plans_v2",
         (
             """
             CREATE TABLE IF NOT EXISTS meal_plans (
@@ -129,8 +131,8 @@ MIGRATIONS: tuple[Migration, ...] = (
         ),
     ),
     (
-        9,
-        "meal_plan_conversations_and_versions",
+        12,
+        "meal_plan_conversations_and_versions_v2",
         (
             "ALTER TABLE meal_plans ADD COLUMN IF NOT EXISTS current_version_id varchar(100)",
             "ALTER TABLE meal_plans ADD COLUMN IF NOT EXISTS locked_days json NOT NULL DEFAULT '[]'::json",

@@ -21,7 +21,8 @@ class DatabaseMigrationTests(unittest.TestCase):
                 )
             }
 
-        self.assertEqual({version for version, _, _ in MIGRATIONS}, applied)
+        expected = {version for version, _, _ in MIGRATIONS}
+        self.assertTrue(expected.issubset(applied))
 
 
 if __name__ == "__main__":
