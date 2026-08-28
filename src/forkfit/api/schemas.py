@@ -107,7 +107,7 @@ class CreateMealPlanRequest(BaseModel):
     days: int = Field(default=5, ge=2, le=7)
     people_count: int = Field(default=1, ge=1, le=12)
     request_text: str = Field(default="", max_length=1500)
-    selected_post_ids: list[str] = Field(default_factory=list, max_length=7)
+    selected_post_ids: list[str] = Field(default_factory=list, max_length=14)
     locale: str = Field(default="zh", max_length=10)
     start_date: str | None = Field(default=None, max_length=10)
     user_profile: UserProfile
@@ -115,10 +115,8 @@ class CreateMealPlanRequest(BaseModel):
     @model_validator(mode="after")
     def validate_source(self) -> "CreateMealPlanRequest":
         self.selected_post_ids = list(dict.fromkeys(self.selected_post_ids))
-        if not self.request_text.strip() and not self.selected_post_ids:
-            raise ValueError("请至少选择一道菜，或写下你想吃什么。")
-        if len(self.selected_post_ids) > self.days:
-            raise ValueError("选择的菜不能多于规划天数。")
+        if len(self.selected_post_ids) < self.days:
+            raise ValueError(f"规划 {self.days} 天至少需要选择 {self.days} 道菜。")
         return self
 
 

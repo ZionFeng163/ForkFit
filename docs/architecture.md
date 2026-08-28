@@ -26,19 +26,27 @@
 
 单菜定制默认只调用一次 Adaptation Agent，并在前后使用确定性约束解析和校验。只有复杂替换才启用 Culinary Critic 和最多一次修复。
 
-多日计划使用自适应路由：
+多日菜单规划使用一个父图和两个 LangGraph 子图，共六个 Agent 角色：
 
 ```text
-normalize -> complexity router
-  -> guided: one planner -> deterministic validation
-  -> team: three strategy planners in parallel
-       -> nutrition review + pantry review
-       -> menu editor selects one candidate
-       -> deterministic validation
-       -> at most one repair
+父图
+  -> 单菜调整子图
+       -> 菜谱调整 Agent
+       -> 单菜审核 Agent
+       -> block 时由调整 Agent 修正一次
+  -> 多日规划子图
+       -> 家常均衡、采购复用、时间节奏三个 Agent 并行生成组合
+       -> 综合评审 Agent 选择候选
+       -> block 时由原规划 Agent 重新排列一次
+  -> 装配菜谱正文和采购清单
+  -> 输出结果
 ```
 
-规划 Agent 负责生成差异化候选，审核 Agent 只评分和指出问题，总编辑只选择；它们不会重复改写同一份答案。价格不属于规划输入或评分目标。
+单菜子图批量处理用户从社区选入的已有菜谱，负责局部修改食材、厨具、耗时和步骤，并保留原 `post_id`。如果仍有未解决的硬约束，父图直接返回 `needs_input`。
+
+三个规划 Agent 只能返回候选池中的 `post_id` 和日期组合，不能生成新菜或改写菜谱。每天安排 1 至 3 道，同一道菜最多出现一次；综合评审 Agent 负责比较候选，代码负责来源白名单、日期和重复校验。
+
+创建菜单、查询任务和连续修改 API 路径保持不变。任务仍由 PostgreSQL 租约执行器领取和续租，过期任务的恢复方式不变。当前工作流版本为 `meal-plan-v3`，历史单菜日期会在读取时转换成单元素 `dishes`。
 
 ## 数据库
 

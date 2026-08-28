@@ -112,7 +112,7 @@ ForkFit/
 
 **后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + LangGraph + Bailian (Qwen LLM)
 
-**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。
+**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。文本生成模型通过百炼兼容接口调用 DeepSeek。
 
 ## 测试
 

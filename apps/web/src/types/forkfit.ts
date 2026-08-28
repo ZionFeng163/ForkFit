@@ -131,11 +131,16 @@ export type MealPlanSelectionInput = {
   user_profile: UserProfile;
 };
 
+export type MealPlanDish = {
+  source_post_id: string;
+  meal: Meal;
+  reason: string;
+};
+
 export type MealPlanDay = {
   day_index: number;
   label: string;
-  source_post_id: string | null;
-  meal: Meal;
+  dishes: MealPlanDish[];
   reason: string;
 };
 

@@ -12,7 +12,7 @@ import {
 import type { RecipePost } from "@/types/forkfit";
 
 const STORAGE_KEY = "forkfit.mealPlanSelection.v1";
-const MAX_SELECTED = 7;
+const MAX_SELECTED = 14;
 
 export type MealPlanSelection = {
   id: string;

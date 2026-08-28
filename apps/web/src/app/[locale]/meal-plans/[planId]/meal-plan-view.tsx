@@ -14,6 +14,10 @@ const STAGES: Record<string, { zh: string; en: string }> = {
   queued: { zh: "排队中", en: "In the queue" },
   starting: { zh: "开始整理需求", en: "Getting started" },
   understanding: { zh: "整理你的想法", en: "Understanding your request" },
+  adapting_recipes: { zh: "调整选入的菜谱", en: "Adapting selected recipes" },
+  generating_combinations: { zh: "生成三种组合方案", en: "Building three arrangements" },
+  reviewing_combinations: { zh: "比较菜品搭配", en: "Reviewing the combinations" },
+  revising_combination: { zh: "调整最佳组合", en: "Refining the best arrangement" },
   drafting: { zh: "安排每日菜单", en: "Planning each day" },
   validating_candidates: { zh: "检查时间和限制", en: "Checking time and constraints" },
   reviewing: { zh: "检查搭配和执行", en: "Checking the balance" },
@@ -36,7 +40,7 @@ export function MealPlanView({ planId }: { planId: string }) {
   const retryMutation = useMutation({ mutationFn: () => retryMealPlan(planId), onSuccess: () => query.refetch() });
   const refreshPlan = () => void query.refetch();
   const plan = query.data;
-  const sourcePostIds = plan?.result?.days.map((day) => day.source_post_id).filter((id): id is string => Boolean(id)) ?? [];
+  const sourcePostIds = plan?.result?.days.flatMap((day) => day.dishes.map((dish) => dish.source_post_id)) ?? [];
   const sourcePostKey = sourcePostIds.join("|");
 
   useEffect(() => {
@@ -127,7 +131,7 @@ export function MealPlanView({ planId }: { planId: string }) {
       <div className="plan-day-nav" aria-label={isZh ? "选择日期" : "Choose a day"}>
         {result.days.map((day) => (
           <button key={day.day_index} type="button" className="plan-day-tab" data-active={day.day_index === (selectedDay?.day_index ?? activeDay)} onClick={() => jumpToDay(day.day_index)}>
-            <strong>{day.label}</strong><span>{day.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span>
+            <strong>{day.label}</strong><span>{day.dishes.length} {isZh ? "道" : "dishes"} · {day.dishes.reduce((sum, dish) => sum + dish.meal.cook_time_minutes, 0)} {isZh ? "分钟" : "min"}</span>
           </button>
         ))}
       </div>
@@ -138,19 +142,24 @@ export function MealPlanView({ planId }: { planId: string }) {
           <div className="mt-5">
             {result.days.map((day) => (
               <article key={day.day_index} id={`plan-day-${day.day_index}`} className="plan-day-card scroll-mt-8">
-                <div className={day.source_post_id ? "plan-day-top" : ""}>
-                  {day.source_post_id && <div className="plan-day-image"><RemoteImage src={sourceImages[day.source_post_id] ?? ""} alt={day.meal.name} className="h-full w-full object-cover" /></div>}
-                  <div className="min-w-0">
-                    <div className="plan-day-kicker"><span>{day.label}</span><span className="flex items-center gap-1.5 text-[var(--muted-text)]"><Clock3 size={14} />{day.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span></div>
-                    <div className="flex flex-wrap items-start justify-between gap-3"><h2>{day.meal.name}</h2>{day.source_post_id && <Link href={`/packs/${day.source_post_id}`} className="text-sm font-semibold text-[var(--brand-hover)]">{isZh ? "查看原菜谱" : "Original recipe"}</Link>}</div>
-                    {day.reason && <p className="plan-day-reason">{day.reason}</p>}
-                    <div className="plan-day-columns">
-                      <div><h3>{isZh ? "食材" : "Ingredients"}</h3><ul>{day.meal.ingredients.map((item) => <li key={item}>{item}</li>)}</ul></div>
-                      <div><h3>{isZh ? "步骤" : "Method"}</h3><ol>{day.meal.steps.map((step, index) => <li key={`${step}-${index}`}>{index + 1}. {step}</li>)}</ol></div>
-                    </div>
-                  </div>
+                <div className="plan-day-kicker"><span>{day.label} · {day.dishes.length} {isZh ? "道菜" : "dishes"}</span><span className="flex items-center gap-1.5 text-[var(--muted-text)]"><Clock3 size={14} />{day.dishes.reduce((sum, dish) => sum + dish.meal.cook_time_minutes, 0)} {isZh ? "分钟合计" : "min total"}</span></div>
+                {day.reason && <p className="plan-day-reason">{day.reason}</p>}
+                <div className="plan-dish-stack">
+                  {day.dishes.map((dish) => (
+                    <section key={dish.source_post_id} className="plan-dish-card">
+                      <div className="plan-day-image"><RemoteImage src={sourceImages[dish.source_post_id] ?? ""} alt={dish.meal.name} className="h-full w-full object-cover" /></div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-start justify-between gap-3"><h2>{dish.meal.name}</h2><Link href={`/packs/${dish.source_post_id}`} className="text-sm font-semibold text-[var(--brand-hover)]">{isZh ? "查看原菜谱" : "Original recipe"}</Link></div>
+                        <p className="plan-day-reason">{dish.reason}</p>
+                        <div className="plan-day-columns">
+                          <div><h3>{isZh ? "食材" : "Ingredients"}</h3><ul>{dish.meal.ingredients.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                          <div><h3>{isZh ? "步骤" : "Method"}</h3><ol>{dish.meal.steps.map((step, index) => <li key={`${step}-${index}`}>{index + 1}. {step}</li>)}</ol></div>
+                        </div>
+                        <p className="mt-5 flex flex-wrap items-center gap-3 text-xs text-[var(--muted-text)]"><span className="flex items-center gap-1"><Clock3 size={14} />{dish.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span>{dish.meal.equipment.length > 0 && <span className="flex items-center gap-1"><CookingPot size={14} />{dish.meal.equipment.join("、")}</span>}</p>
+                      </div>
+                    </section>
+                  ))}
                 </div>
-                {day.meal.equipment.length > 0 && <p className="mt-5 flex items-center gap-1.5 text-xs text-[var(--muted-text)]"><CookingPot size={14} />{day.meal.equipment.join("、")}</p>}
               </article>
             ))}
           </div>
@@ -173,6 +182,7 @@ export function MealPlanView({ planId }: { planId: string }) {
           </section>
           {result.prep_notes.length > 0 && <section className="plan-side-section"><h2>{isZh ? "提前做一点" : "Prep ahead"}</h2><ul className="mt-3 space-y-3 text-sm leading-6 text-[var(--muted-text)]">{result.prep_notes.map((note) => <li key={note} className="flex gap-2"><Check size={15} className="mt-1 shrink-0 text-[var(--success)]" />{note}</li>)}</ul></section>}
           <section className="plan-side-section"><div className="flex items-center gap-2"><CalendarDays size={17} className="text-[var(--brand)]" /><h2>{isZh ? "继续调整" : "Keep refining"}</h2></div><p className="mt-3 text-sm leading-6 text-[var(--muted-text)]">{isZh ? "已保存的版本不会被覆盖。" : "Saved versions stay available."}</p></section>
+          {result.agent_reports.length > 0 && <details className="plan-side-section plan-agent-details"><summary>{isZh ? "查看规划过程" : "View planning process"}</summary><ol>{result.agent_reports.map((report) => <li key={report.agent}><strong>{report.role}</strong><span>{report.summary}</span></li>)}</ol></details>}
           <MealPlanConversation planId={planId} currentVersionId={plan.current_version_id} onVersionChanged={refreshPlan} />
         </aside>
       </div>

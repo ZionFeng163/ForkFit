@@ -132,24 +132,15 @@ def _change_preview(before, after) -> list[dict[str, object]]:
         previous = before_by_day.get(day.day_index)
         if previous is None:
             continue
-        changed_fields: list[str] = []
-        if previous.meal.name != day.meal.name:
-            changed_fields.append("菜名")
-        if previous.meal.ingredients != day.meal.ingredients:
-            changed_fields.append("食材")
-        if previous.meal.steps != day.meal.steps:
-            changed_fields.append("步骤")
-        if previous.meal.equipment != day.meal.equipment:
-            changed_fields.append("厨具")
-        if previous.meal.cook_time_minutes != day.meal.cook_time_minutes:
-            changed_fields.append("用时")
-        if changed_fields:
+        before_payload = [item.model_dump(mode="json") for item in previous.dishes]
+        after_payload = [item.model_dump(mode="json") for item in day.dishes]
+        if before_payload != after_payload:
             changes.append(
                 {
                     "day_index": day.day_index,
-                    "before": f"{previous.meal.name}（{previous.meal.cook_time_minutes} 分钟）",
-                    "after": f"{day.meal.name}（{day.meal.cook_time_minutes} 分钟）",
-                    "changed_fields": changed_fields,
+                    "before": "、".join(item.meal.name for item in previous.dishes),
+                    "after": "、".join(item.meal.name for item in day.dishes),
+                    "changed_fields": ["菜品组合"],
                 }
             )
     return changes

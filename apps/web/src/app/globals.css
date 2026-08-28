@@ -308,6 +308,14 @@ button:disabled { cursor: not-allowed; }
 .plan-day-card + .plan-day-card { margin-top: 16px; }
 .plan-day-top { display: grid; gap: 20px; grid-template-columns: 180px minmax(0, 1fr); }
 .plan-day-image { aspect-ratio: 4 / 3; overflow: hidden; border-radius: 14px; background: var(--surface-container-high); }
+.plan-dish-stack { display: grid; gap: 16px; margin-top: 18px; }
+.plan-dish-card { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 20px; border-top: 1px solid var(--outline-variant); padding-top: 18px; }
+.plan-dish-card:first-child { border-top: 0; padding-top: 0; }
+.plan-agent-details summary { cursor: pointer; color: var(--on-surface); font-size: 14px; font-weight: 750; }
+.plan-agent-details ol { margin-top: 12px; }
+.plan-agent-details li { display: block; }
+.plan-agent-details li strong, .plan-agent-details li span { display: block; }
+.plan-agent-details li span { margin-top: 3px; color: var(--on-surface-variant); line-height: 1.5; }
 .plan-day-kicker { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--on-surface-variant); font-size: 13px; }
 .plan-day-card h2 { margin-top: 7px; font-size: 24px; font-weight: 800; letter-spacing: -.035em; }
 .plan-day-reason { margin-top: 8px; color: var(--on-surface-variant); font-size: 13px; }
@@ -429,6 +437,7 @@ button:disabled { cursor: not-allowed; }
   .plan-aside { display: block; }
   .plan-side-section { margin-top: 12px; }
   .plan-day-top { grid-template-columns: 1fr; }
+  .plan-dish-card { grid-template-columns: 1fr; }
   .plan-day-image { max-height: 220px; }
   .plan-day-columns { grid-template-columns: 1fr; gap: 18px; }
   .plan-day-card { padding: 18px; }

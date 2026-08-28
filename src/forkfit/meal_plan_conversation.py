@@ -465,3 +465,9 @@ def _split_ingredient(value: str) -> tuple[str, str]:
     if suffix and suffix.group(1).strip():
         return suffix.group(2).strip(), suffix.group(1).strip()
     return "", value.strip()
+
+
+_LegacyMealPlanConversationWorkflow = MealPlanConversationWorkflow
+from forkfit.meal_plan_conversation_v3 import (  # noqa: E402,F401
+    MealPlanConversationWorkflowV3 as MealPlanConversationWorkflow,
+)

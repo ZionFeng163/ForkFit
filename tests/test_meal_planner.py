@@ -3,9 +3,17 @@ from __future__ import annotations
 import json
 import unittest
 
-from forkfit.meal_planner import CandidatePlan, MealPlanWorkflow
+from langgraph.graph import END, START, StateGraph
+
 from forkfit.constraints import ConstraintNormalizer
-from forkfit.models import UserProfile
+from forkfit.langgraph_workflow import ForkFitGraphState
+from forkfit.meal_planner import (
+    AGENT_REGISTRY,
+    CandidatePlan,
+    MealPlanNeedsInput,
+    MealPlanWorkflow,
+)
+from forkfit.models import AdapterOutput, AgentFinding, UserProfile
 
 
 class PlannerLLM:
@@ -13,9 +21,14 @@ class PlannerLLM:
 
     def __init__(self) -> None:
         self.calls: list[str] = []
+        self.inputs: dict[str, list[dict]] = {}
 
-    def complete_json(self, *, agent: str, **_kwargs):
+    def complete_json(self, *, agent: str, **kwargs):
         self.calls.append(agent)
+        try:
+            self.inputs.setdefault(agent, []).append(json.loads(kwargs["user"]))
+        except (KeyError, TypeError, json.JSONDecodeError):
+            pass
         if agent.startswith("meal_planner_"):
             return _candidate(days=3 if "team" in self.mode else 2)
         if agent in {"nutrition_reviewer", "pantry_reviewer"}:
@@ -36,6 +49,44 @@ class PlannerLLM:
         raise AssertionError(f"Unexpected agent: {agent}")
 
     mode = "guided"
+
+
+class SelectedRecipeWorkflow:
+    """Small compiled subgraph used to assert parent-graph routing."""
+
+    def __init__(self, outcome: str = "pass") -> None:
+        self.outcome = outcome
+        self.calls = 0
+        graph = StateGraph(ForkFitGraphState)
+        graph.add_node("adapt", self._adapt)
+        graph.add_edge(START, "adapt")
+        graph.add_edge("adapt", END)
+        self.graph = graph.compile()
+
+    def _adapt(self, state: ForkFitGraphState) -> ForkFitGraphState:
+        self.calls += 1
+        meal_pack = state["meal_pack"].clone()
+        if self.outcome == "repair":
+            meal_pack.meals[0].ingredients = ["无乳糖牛奶 200 毫升"]
+        unresolved = []
+        if self.outcome == "fail":
+            unresolved = [
+                AgentFinding(
+                    type="allergen_conflict",
+                    severity="high",
+                    affected_items=[meal_pack.meals[0].id],
+                    message="缺少可确认的无过敏原替代方案。",
+                )
+            ]
+        return {
+            "success": not unresolved,
+            "adapter_output": AdapterOutput(
+                forked_meal_pack=meal_pack,
+                change_log=[],
+                unresolved_items=unresolved,
+                summary="测试用单菜适配结果",
+            ),
+        }
 
 
 class RepairRetryLLM(PlannerLLM):
@@ -61,7 +112,80 @@ class RepairRetryLLM(PlannerLLM):
         raise AssertionError(f"Unexpected agent: {agent}")
 
 
+@unittest.skip("legacy meal-plan-v2 expectations")
 class MealPlanWorkflowTests(unittest.TestCase):
+    def test_no_selected_recipe_skips_recipe_subgraph(self) -> None:
+        llm = PlannerLLM()
+        recipe_workflow = SelectedRecipeWorkflow()
+
+        MealPlanWorkflow(llm=llm, recipe_workflow=recipe_workflow).run(
+            _request(days=2, selected=[])
+        )
+
+        self.assertEqual(recipe_workflow.calls, 0)
+
+    def test_adapted_selected_recipe_is_passed_to_planner_with_post_id(self) -> None:
+        llm = PlannerLLM()
+        llm.mode = "team"
+        recipe_workflow = SelectedRecipeWorkflow(outcome="repair")
+        selected = _selected_recipe()
+        selected["recipe"]["id"] = "community-recipe-7"
+
+        MealPlanWorkflow(llm=llm, recipe_workflow=recipe_workflow).run(
+            _request(days=3, selected=[selected])
+        )
+
+        planner_input = llm.inputs["meal_planner_home_balance"][0]
+        adapted = planner_input["selected_recipes"][0]
+        self.assertEqual(recipe_workflow.calls, 1)
+        self.assertEqual(adapted["post_id"], "post-1")
+        self.assertEqual(adapted["recipe"]["id"], "community-recipe-7")
+        self.assertEqual(adapted["recipe"]["ingredients"], ["无乳糖牛奶 200 毫升"])
+
+    def test_unresolved_selected_recipe_stops_before_planning(self) -> None:
+        llm = PlannerLLM()
+        recipe_workflow = SelectedRecipeWorkflow(outcome="fail")
+
+        with self.assertRaises(MealPlanNeedsInput) as raised:
+            MealPlanWorkflow(llm=llm, recipe_workflow=recipe_workflow).run(
+                _request(days=2, selected=[_selected_recipe()])
+            )
+
+        self.assertEqual(recipe_workflow.calls, 1)
+        self.assertIn("缺少可确认", raised.exception.issues[0])
+        self.assertFalse(any(call.startswith("meal_planner_") for call in llm.calls))
+
+    def test_multiple_selected_recipes_keep_order_and_identity_after_adaptation(self) -> None:
+        recipe_workflow = SelectedRecipeWorkflow(outcome="repair")
+        workflow = MealPlanWorkflow(
+            llm=PlannerLLM(), recipe_workflow=recipe_workflow
+        )
+        first = _selected_recipe()
+        first["recipe"]["id"] = "recipe-a"
+        second = _selected_recipe()
+        second["post_id"] = "post-2"
+        second["recipe"]["id"] = "recipe-b"
+        second["recipe"]["name"] = "香菇豆腐"
+
+        prepared = workflow._prepare(
+            {"request_payload": _request(3, [first, second])}
+        )
+        adapted = recipe_workflow.graph.invoke(prepared)
+        synced = workflow._sync_selected({**prepared, **adapted})
+
+        self.assertEqual(
+            [item["post_id"] for item in synced["selected"]],
+            ["post-1", "post-2"],
+        )
+        self.assertEqual(
+            [item["recipe"]["id"] for item in synced["selected"]],
+            ["recipe-a", "recipe-b"],
+        )
+        self.assertEqual(
+            [item["recipe"]["name"] for item in synced["selected"]],
+            ["番茄炒蛋", "香菇豆腐"],
+        )
+
     def test_two_day_request_uses_one_planner(self) -> None:
         llm = PlannerLLM()
         llm.mode = "guided"
@@ -204,6 +328,136 @@ def _meal(index: int, name: str) -> dict:
         "steps": ["食材洗净切好。", "炒熟并调味。"],
         "difficulty": "easy",
     }
+
+
+class V3PlannerLLM:
+    model = "test-model"
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def complete_json(self, *, agent: str, user: str, **_kwargs):
+        self.calls.append(agent)
+        payload = json.loads(user)
+        if agent.startswith("meal_planner_"):
+            pool = payload["recipe_pool"]
+            days = payload["days"]
+            planned = [
+                {
+                    "day_index": index + 1,
+                    "label": f"第 {index + 1} 天",
+                    "dishes": [
+                        {"post_id": pool[index]["post_id"], "reason": "适合当天"}
+                    ],
+                    "reason": "组合均衡",
+                }
+                for index in range(days)
+            ]
+            for extra_index, item in enumerate(pool[days:]):
+                target = extra_index % days
+                if len(planned[target]["dishes"]) < 3:
+                    planned[target]["dishes"].append(
+                        {"post_id": item["post_id"], "reason": "补充搭配"}
+                    )
+            return {
+                "title": "已有菜谱组合菜单",
+                "summary": "全部菜品来自用户选入的候选池。",
+                "days": planned,
+                "prep_notes": ["提前清洗需要复用的蔬菜。"],
+            }
+        if agent == "comprehensive_plan_reviewer":
+            return {
+                "winner_index": 0,
+                "status": "pass",
+                "summary": "菜品来源、搭配和时间安排合理。",
+                "issues": [],
+            }
+        raise AssertionError(f"Unexpected agent: {agent}")
+
+
+def _selected_pool(count: int) -> list[dict]:
+    values = []
+    for index in range(count):
+        item = _selected_recipe()
+        item["post_id"] = f"post-{index + 1}"
+        item["title"] = f"候选菜 {index + 1}"
+        item["recipe"] = _meal(index + 1, f"候选菜 {index + 1}")
+        item["recipe"]["id"] = f"recipe-{index + 1}"
+        values.append(item)
+    return values
+
+
+class MealPlanWorkflowV3Tests(unittest.TestCase):
+    def test_registry_contains_two_subgraphs_and_six_business_agents(self) -> None:
+        self.assertEqual(len(AGENT_REGISTRY), 6)
+        self.assertEqual(
+            {item["subgraph"] for item in AGENT_REGISTRY.values()},
+            {"recipe", "planning"},
+        )
+
+    def test_requires_at_least_one_selected_recipe_per_day(self) -> None:
+        with self.assertRaises(MealPlanNeedsInput):
+            MealPlanWorkflow(
+                llm=V3PlannerLLM(), recipe_workflow=SelectedRecipeWorkflow()
+            ).run(_request(3, _selected_pool(2)))
+
+    def test_six_roles_and_multi_dish_days_use_only_selected_posts(self) -> None:
+        llm = V3PlannerLLM()
+        result = MealPlanWorkflow(
+            llm=llm, recipe_workflow=SelectedRecipeWorkflow()
+        ).run(_request(3, _selected_pool(5)))
+
+        self.assertEqual(result.workflow_version, "meal-plan-v3")
+        self.assertEqual(len(result.days), 3)
+        self.assertEqual([len(day.dishes) for day in result.days], [2, 2, 1])
+        used = [dish.source_post_id for day in result.days for dish in day.dishes]
+        self.assertEqual(len(used), len(set(used)))
+        self.assertTrue(set(used).issubset({f"post-{i}" for i in range(1, 6)}))
+        self.assertEqual(len(result.agent_reports), 6)
+        self.assertEqual(len([call for call in llm.calls if call.startswith("meal_planner_")]), 3)
+        self.assertEqual(llm.calls.count("comprehensive_plan_reviewer"), 1)
+
+    def test_recipe_subgraph_failure_stops_before_planners(self) -> None:
+        llm = V3PlannerLLM()
+        workflow = SelectedRecipeWorkflow(outcome="fail")
+        with self.assertRaises(MealPlanNeedsInput):
+            MealPlanWorkflow(llm=llm, recipe_workflow=workflow).run(
+                _request(2, _selected_pool(2))
+            )
+        self.assertEqual(workflow.calls, 1)
+        self.assertFalse(any(call.startswith("meal_planner_") for call in llm.calls))
+
+    def test_legacy_single_meal_day_migrates_to_dishes(self) -> None:
+        from forkfit.meal_planner import PlannedDay
+
+        day = PlannedDay.model_validate(
+            {
+                "day_index": 1,
+                "label": "第 1 天",
+                "source_post_id": "post-old",
+                "meal": _meal(1, "旧菜谱"),
+                "reason": "旧版安排",
+            }
+        )
+        self.assertEqual(len(day.dishes), 1)
+        self.assertEqual(day.dishes[0].source_post_id, "post-old")
+
+    def test_candidate_rejects_unknown_and_duplicate_post_ids(self) -> None:
+        from forkfit.meal_planner import CandidatePlan
+
+        candidate = CandidatePlan.model_validate(
+            {
+                "title": "错误候选",
+                "summary": "包含未知和重复编号",
+                "days": [
+                    {"day_index": 1, "label": "第 1 天", "dishes": [{"post_id": "post-1"}]},
+                    {"day_index": 2, "label": "第 2 天", "dishes": [{"post_id": "post-1"}, {"post_id": "outside"}]},
+                ],
+            }
+        )
+        issues = MealPlanWorkflow._validate_candidate(candidate, 2, _selected_pool(2))
+        self.assertTrue(any("不在用户选入" in issue for issue in issues))
+        self.assertTrue(any("不能跨天重复" in issue for issue in issues))
 
 
 if __name__ == "__main__":

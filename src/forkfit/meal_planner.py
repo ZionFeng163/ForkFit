@@ -4,17 +4,20 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, TypedDict
 
+from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from forkfit.constraints import ConstraintGuard, ConstraintNormalizer
+from forkfit.langgraph_workflow import ForkFitGraphState, ForkFitLangGraphWorkflow
 from forkfit.llm import BailianLLMClient, LLMClient
-from forkfit.models import Meal, MealPack, UserProfile
-from forkfit.serialization import user_profile_from_dict
+from forkfit.models import Meal, MealPack, RunTrace, UserProfile
+from forkfit.recipe_agent import KNOWLEDGE_VERSION, WORKFLOW_VERSION
+from forkfit.serialization import meal_from_dict, user_profile_from_dict
 
 
-MEAL_PLAN_WORKFLOW_VERSION = "meal-plan-v1"
+MEAL_PLAN_WORKFLOW_VERSION = "meal-plan-v2"
 PlanningMode = Literal["guided", "team"]
 DECLARED_STEP_INGREDIENTS = (
     "生抽",
@@ -101,6 +104,19 @@ class MealPlanNeedsInput(RuntimeError):
 StageCallback = Callable[[str, int], None]
 
 
+class MealPlanGraphState(ForkFitGraphState, total=False):
+    request_payload: dict[str, Any]
+    on_stage: StageCallback | None
+    days: int
+    selected: list[dict[str, Any]]
+    selected_recipe_ids: list[str]
+    profile: UserProfile
+    constraints: Any
+    mode: PlanningMode
+    reports: list[AgentReport]
+    result: MealPlanResult
+
+
 class MealPlanWorkflow:
     """Bounded multi-agent planning for genuinely multi-day requests."""
 
@@ -122,17 +138,49 @@ class MealPlanWorkflow:
         ),
     )
 
-    def __init__(self, llm: LLMClient | None = None) -> None:
+    def __init__(
+        self,
+        llm: LLMClient | None = None,
+        recipe_workflow: ForkFitLangGraphWorkflow | None = None,
+    ) -> None:
         self.llm = llm or BailianLLMClient()
         self.normalizer = ConstraintNormalizer()
         self.guard = ConstraintGuard()
+        self.recipe_workflow = recipe_workflow or ForkFitLangGraphWorkflow(
+            llm_client=self.llm
+        )
+        self.graph = self._build_graph()
 
     def run(
         self,
         request_payload: dict[str, Any],
         on_stage: StageCallback | None = None,
     ) -> MealPlanResult:
-        notify = on_stage or (lambda _stage, _progress: None)
+        state = self.graph.invoke(
+            {"request_payload": request_payload, "on_stage": on_stage}
+        )
+        return state["result"]
+
+    def _build_graph(self) -> Any:
+        graph = StateGraph(MealPlanGraphState)
+        graph.add_node("prepare", self._prepare)
+        graph.add_node("adapt_selected", self.recipe_workflow.graph)
+        graph.add_node("sync_selected", self._sync_selected)
+        graph.add_node("plan", self._plan)
+        graph.add_edge(START, "prepare")
+        graph.add_conditional_edges(
+            "prepare",
+            lambda state: "adapt" if state["selected"] else "plan",
+            {"adapt": "adapt_selected", "plan": "plan"},
+        )
+        graph.add_edge("adapt_selected", "sync_selected")
+        graph.add_edge("sync_selected", "plan")
+        graph.add_edge("plan", END)
+        return graph.compile()
+
+    def _prepare(self, state: MealPlanGraphState) -> MealPlanGraphState:
+        request_payload = state["request_payload"]
+        notify = state.get("on_stage") or (lambda _stage, _progress: None)
         days = int(request_payload["days"])
         request_text = str(request_payload.get("request_text", "")).strip()
         selected = list(request_payload.get("selected_recipes", []))
@@ -162,6 +210,75 @@ class MealPlanWorkflow:
                 ),
             )
         ]
+
+        selected_meals: list[Meal] = []
+        selected_recipe_ids: list[str] = []
+        for index, item in enumerate(selected):
+            meal = meal_from_dict(item["recipe"])
+            selected_recipe_ids.append(meal.id)
+            meal.id = f"selected-{index + 1}"
+            selected_meals.append(meal)
+
+        return {
+            "days": days,
+            "request_text": request_text,
+            "selected": selected,
+            "selected_recipe_ids": selected_recipe_ids,
+            "profile": profile,
+            "user_profile": profile,
+            "locale": locale,
+            "constraints": constraints,
+            "mode": mode,
+            "reports": reports,
+            "meal_pack": MealPack(
+                id="selected-recipes",
+                title="用户选入菜谱",
+                theme="meal-plan-input",
+                meals=selected_meals,
+            ),
+            "repair_count": 0,
+            "trace": RunTrace(
+                workflow_version=WORKFLOW_VERSION,
+                knowledge_version=KNOWLEDGE_VERSION,
+            ),
+        }
+
+    def _sync_selected(self, state: MealPlanGraphState) -> MealPlanGraphState:
+        output = state.get("adapter_output")
+        if not state.get("success") or output is None:
+            unresolved = [] if output is None else output.unresolved_items
+            issues = [item.message for item in unresolved]
+            raise MealPlanNeedsInput(
+                "选入的菜谱无法满足当前限制，请调整要求后重试。",
+                issues[:8],
+            )
+
+        adapted = output.forked_meal_pack.meals
+        selected = state["selected"]
+        original_ids = state["selected_recipe_ids"]
+        if len(adapted) != len(selected) or len(original_ids) != len(selected):
+            raise RuntimeError("单菜子图返回的菜谱数量与输入不一致。")
+
+        updated: list[dict[str, Any]] = []
+        for index, (item, meal) in enumerate(zip(selected, adapted, strict=True)):
+            expected_id = f"selected-{index + 1}"
+            if meal.id != expected_id:
+                raise RuntimeError("单菜子图改变了菜谱顺序或身份。")
+            restored = meal.clone()
+            restored.id = original_ids[index]
+            updated.append({**item, "recipe": asdict(restored)})
+        return {"selected": updated}
+
+    def _plan(self, state: MealPlanGraphState) -> MealPlanGraphState:
+        notify = state.get("on_stage") or (lambda _stage, _progress: None)
+        days = state["days"]
+        request_text = state["request_text"]
+        selected = state["selected"]
+        profile = state["profile"]
+        locale = state["locale"]
+        constraints = state["constraints"]
+        mode = state["mode"]
+        reports = list(state["reports"])
 
         notify("drafting", 20)
         strategies = self._strategies if mode == "team" else (self._strategies[0],)
@@ -232,12 +349,14 @@ class MealPlanWorkflow:
             )
 
         notify("finalizing", 96)
-        return MealPlanResult(
-            **winner.model_dump(),
-            mode=mode,
-            decision_summary=decision_summary,
-            agent_reports=reports,
-        )
+        return {
+            "result": MealPlanResult(
+                **winner.model_dump(),
+                mode=mode,
+                decision_summary=decision_summary,
+                agent_reports=reports,
+            )
+        }
 
     @staticmethod
     def classify_request(
@@ -737,3 +856,21 @@ def validate_candidate_payload(payload: dict[str, Any]) -> CandidatePlan:
         return CandidatePlan.model_validate(payload)
     except ValidationError as exc:
         raise ValueError("Invalid meal plan candidate") from exc
+
+
+# The public planner now points at the v3 two-subgraph implementation. The
+# legacy definitions remain above solely to keep historical code reviewable.
+from forkfit.meal_planner_v3 import (  # noqa: E402,F401
+    AGENT_REGISTRY,
+    AgentReport,
+    CandidateDay,
+    CandidateDish,
+    CandidatePlan,
+    MEAL_PLAN_WORKFLOW_VERSION,
+    MealPlanNeedsInput,
+    MealPlanResult,
+    MealPlanWorkflow,
+    PlannedDay,
+    PlannedDish,
+    ShoppingItem,
+)

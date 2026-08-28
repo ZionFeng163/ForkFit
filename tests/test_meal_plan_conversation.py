@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from forkfit.meal_plan_conversation import MealPlanConversationWorkflow
@@ -40,16 +41,29 @@ class FakePatchLLM:
 
 
 class MealPlanConversationTests(unittest.TestCase):
-    def test_local_replace_recipe_applies_and_revalidates(self) -> None:
+    def test_legacy_plan_requires_new_v3_plan_before_replanning(self) -> None:
         plan = _plan()
         workflow = MealPlanConversationWorkflow(llm=FakePatchLLM())
 
-        outcome = workflow.process(plan, "第二天换一道更快的")
+        with self.assertRaisesRegex(ValueError, "旧版菜单"):
+            workflow.process(plan, "第二天换一道更快的")
 
-        self.assertEqual(outcome.status, "applied")
-        self.assertEqual(outcome.intent.kind, "replace_recipe")
-        self.assertEqual(outcome.result.days[1].meal.name, "香菇鸡肉炒饭")
-        self.assertEqual(outcome.result.days[1].meal.cook_time_minutes, 22)
+    def test_multi_dish_day_requires_recipe_name(self) -> None:
+        plan = _plan()
+        data = plan.result.model_dump(mode="json")
+        data["days"][0]["dishes"].append(data["days"][1]["dishes"][0])
+        plan = replace(
+            plan,
+            workflow_version="meal-plan-v3",
+            result=MealPlanResult.model_validate(data),
+        )
+
+        outcome = MealPlanConversationWorkflow(llm=FakePatchLLM()).process(
+            plan, "第一天少放盐"
+        )
+
+        self.assertEqual(outcome.status, "needs_clarification")
+        self.assertIn("哪一道菜", outcome.message)
 
     def test_ambiguous_request_needs_one_clarification(self) -> None:
         intent = MealPlanConversationWorkflow.parse_intent("感觉不太对", _plan())

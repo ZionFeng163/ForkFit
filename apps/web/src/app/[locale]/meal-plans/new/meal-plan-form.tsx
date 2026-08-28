@@ -25,7 +25,7 @@ export function MealPlanForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mealPlan = useMealPlanSelection();
-  const [days, setDays] = useState(Math.max(3, mealPlan.selected.length));
+  const [days, setDays] = useState(Math.min(7, Math.max(3, mealPlan.selected.length)));
   const [peopleCount, setPeopleCount] = useState(1);
   const [requestText, setRequestText] = useState(() => searchParams.get("request_text") ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -33,12 +33,8 @@ export function MealPlanForm() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!requestText.trim() && mealPlan.selected.length === 0) {
-      setError(isZh ? "请至少选择一道菜，或写下你想吃什么。" : "Pick a recipe or describe what you want.");
-      return;
-    }
-    if (mealPlan.selected.length > days) {
-      setError(isZh ? "规划天数不能少于已选菜数。" : "The plan needs at least one day per selected recipe.");
+    if (mealPlan.selected.length < days) {
+      setError(isZh ? `规划 ${days} 天至少需要选择 ${days} 道菜。` : `Select at least ${days} recipes for ${days} days.`);
       return;
     }
     setSubmitting(true);
@@ -77,7 +73,7 @@ export function MealPlanForm() {
         <div>
           <p className="eyebrow">{isZh ? "吃饭计划" : "Meal plans"}</p>
           <h1 className="page-heading">{isZh ? "安排接下来几天" : "Plan the next few days"}</h1>
-          <p className="page-description">{isZh ? "写一句想吃什么，或先选几道菜。" : "Write what you want, or start with a few recipes."}</p>
+          <p className="page-description">{isZh ? "从你选好的社区菜谱中组合每天的菜单，不会凭空生成新菜。" : "Build each day only from the community recipes you select."}</p>
         </div>
       </header>
 
@@ -87,7 +83,7 @@ export function MealPlanForm() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2>{isZh ? "已选菜谱" : "Selected recipes"}</h2>
-                <p>{isZh ? "剩下的天数交给规划。" : "The plan will fill the remaining days."}</p>
+                <p>{isZh ? `已选 ${mealPlan.selected.length} 道，规划 ${days} 天至少需要 ${days} 道。` : `${mealPlan.selected.length} selected; at least ${days} needed.`}</p>
               </div>
               <Link href="/discover" className="button-secondary h-9 min-h-9 shrink-0"><Plus size={15} />{isZh ? "继续选菜" : "Add recipes"}</Link>
             </div>
@@ -104,7 +100,8 @@ export function MealPlanForm() {
                   </li>
                 ))}
               </ul>
-            ) : <div className="mt-5 border-y border-dashed border-[var(--line)] py-6 text-sm text-[var(--muted-text)]">{isZh ? "还没选菜，写一句想吃什么即可。" : "No recipes selected. A short description is enough."}</div>}
+            ) : <div className="mt-5 border-y border-dashed border-[var(--line)] py-6 text-sm text-[var(--muted-text)]">{isZh ? "还没选菜，请先去发现页加入候选菜谱。" : "No recipes selected. Add recipes from Discover first."}</div>}
+            {mealPlan.selected.length < days && <p className="mt-4 text-sm font-medium text-[var(--danger)]">{isZh ? `还需选择 ${days - mealPlan.selected.length} 道菜` : `Select ${days - mealPlan.selected.length} more`}</p>}
           </section>
 
           <section className="plan-entry-section grid gap-5 sm:grid-cols-2">
@@ -125,7 +122,7 @@ export function MealPlanForm() {
           <section className="plan-entry-section">
             <label htmlFor="meal-plan-request">
               <span className="block text-sm font-semibold">{isZh ? "想吃什么，有什么限制" : "What are you craving?"}</span>
-              <span className="mt-1 block text-sm text-[var(--muted-text)]">{isZh ? "可以说口味、忌口、时间、厨具或已有食材。" : "Add taste, dietary needs, time, equipment, or ingredients on hand."}</span>
+              <span className="mt-1 block text-sm text-[var(--muted-text)]">{isZh ? "可以补充口味、忌口、时间和厨具要求，系统只会调整和组合已选菜谱。" : "Add taste, dietary, time, or equipment constraints; only selected recipes are used."}</span>
             </label>
             <textarea id="meal-plan-request" className="textarea mt-3 min-h-36" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={1500} placeholder={isZh ? "例如：接下来 5 天想吃家常中餐，少盐，周三加班要特别快，冰箱里还有半颗卷心菜……" : "Describe your preferences and constraints…"} />
             <div className="mt-3 flex flex-wrap gap-2">
@@ -135,7 +132,7 @@ export function MealPlanForm() {
 
           <div className="border-t border-[var(--line)] pt-6">
             {error && <p className="mb-4 text-sm text-[var(--danger)]" role="alert">{error}</p>}
-            <button type="submit" className="button-primary min-w-40" disabled={submitting}>
+            <button type="submit" className="button-primary min-w-40" disabled={submitting || mealPlan.selected.length < days}>
               {submitting ? <Loader2 size={17} className="animate-spin" /> : <CalendarDays size={17} />}
               {submitting ? (isZh ? "正在整理菜单" : "Building plan") : (isZh ? "生成多日菜单" : "Build meal plan")}
             </button>
@@ -144,11 +141,11 @@ export function MealPlanForm() {
 
         <aside className="plan-entry-aside">
           <h2>{isZh ? "这份计划会包含" : "Your plan will include"}</h2>
-          <p>{isZh ? "每天的菜、食材、步骤和采购清单。" : "Daily recipes, ingredients, steps, and a shopping list."}</p>
+          <p>{isZh ? "每天组合 1 至 3 道已选菜谱，并生成合并采购清单。" : "One to three selected recipes per day with a combined shopping list."}</p>
           <ul className="mt-5 space-y-3 border-t border-[var(--line)] pt-4 text-sm">
-            <li>01　{isZh ? "按你的天数排菜单" : "A menu for your days"}</li>
-            <li>02　{isZh ? "检查时间和限制" : "Time and constraint checks"}</li>
-            <li>03　{isZh ? "随时继续修改" : "Conversation-based edits"}</li>
+            <li>01　{isZh ? "先调整每道候选菜" : "Adapt each selected recipe"}</li>
+            <li>02　{isZh ? "比较三种组合方案" : "Compare three arrangements"}</li>
+            <li>03　{isZh ? "只在原候选池内修改" : "Edits stay in your recipe pool"}</li>
           </ul>
         </aside>
       </form>
