@@ -156,10 +156,10 @@ export function RunView({ runId }: { runId: string }) {
   // Still running
   if (run.status === "queued" || run.status === "running") {
     const steps = [
-      "理解需求",
-      "检查限制",
-      "生成替代方案",
-      "整理步骤",
+      "看看你的要求",
+      "确认食材和厨具",
+      "调整这道菜的做法",
+      "整理完整菜谱",
     ];
     const activeStep = run.status === "queued" ? 0 : Math.min(3, Math.max(1, run.trace?.steps?.length ?? 1));
     return (
@@ -175,7 +175,7 @@ export function RunView({ runId }: { runId: string }) {
             {run.status === "queued" ? "已加入队列" : "定制中..."}
           </h1>
           <div className="mt-2 text-sm text-[var(--muted-text)]">
-            {run.user_message || "AI 正在为你调整菜谱"}
+            {run.user_message || "正在为你定制这道菜"}
           </div>
           <div className="mt-2 text-xs text-[var(--muted-text)]">
             {run.queue_position ? `队列位置 ${run.queue_position}` : "正在处理"}
@@ -237,7 +237,7 @@ export function RunView({ runId }: { runId: string }) {
           <div className="flex items-start gap-3 mb-6">
             <AlertTriangle size={22} className="mt-0.5 shrink-0" style={{ color: "var(--warning)" }} />
             <div>
-              <h1 className="text-lg font-bold" style={{ color: "var(--text)" }}>需要你确认替代方案</h1>
+              <h1 className="text-lg font-bold" style={{ color: "var(--text)" }}>需要你选一下</h1>
               <p className="mt-1 text-sm leading-6" style={{ color: "var(--muted)" }}>
                 {unresolved?.message || "部分限制无法自动处理，请填写你接受的替代食材或厨具。"}
               </p>
@@ -411,27 +411,17 @@ export function RunView({ runId }: { runId: string }) {
         </div>
       )}
 
-      {/* Final review */}
-      {result.final_review && (
+      {result.final_review?.findings.length > 0 && (
         <div className="rounded-lg p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--separator)" }}>
-          <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text)" }}>AI 评审</h3>
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
-            style={{
-              background: result.final_review.status === "pass" ? "var(--success-soft)" : "var(--brand-soft)",
-              color: result.final_review.status === "pass" ? "var(--success)" : "var(--brand)",
-            }}>
-            {result.final_review.status === "pass" ? "通过" : result.final_review.status === "warn" ? "有建议" : "有问题"}
-          </span>
-          {result.final_review.findings.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {result.final_review.findings.map((f, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--brand)" }} />
-                  <span style={{ color: "var(--muted, var(--muted))" }}>{f.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>做之前请留意</h3>
+          <div className="space-y-1.5">
+            {result.final_review.findings.map((f, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--brand)" }} />
+                <span style={{ color: "var(--muted, var(--muted))" }}>{f.message}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -456,7 +446,7 @@ export function RunView({ runId }: { runId: string }) {
         </div>
         <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--separator)" }}>
           <div className="text-[13px] font-semibold mb-2" style={{ color: "var(--text)" }}>
-            这个 AI 结果有帮助吗？
+            这份定制有帮助吗？
           </div>
           <div className="flex gap-2 flex-wrap">
             <button

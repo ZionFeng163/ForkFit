@@ -52,7 +52,7 @@ export default async function Home({ params }: HomeProps) {
           <div className="home-section-heading">
             <div>
               <h2 className="section-heading">{isZh ? "先看看一份三日菜单" : "Preview a three-day menu"}</h2>
-              <p className="mt-1 text-sm text-[var(--muted-text)]">{isZh ? "你可以从现成菜谱开始，也可以直接说想吃什么。" : "Start with recipes or describe what you feel like eating."}</p>
+              <p className="mt-1 text-sm text-[var(--muted-text)]">{isZh ? "先挑几道想吃的菜，我们帮你安排到每一天。" : "Pick a few recipes you like and we’ll arrange them across your days."}</p>
             </div>
             <span className="meta-text">{isZh ? "示例" : "Example"}</span>
           </div>

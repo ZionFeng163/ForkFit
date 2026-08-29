@@ -14,10 +14,10 @@ const STAGES: Record<string, { zh: string; en: string }> = {
   queued: { zh: "排队中", en: "In the queue" },
   starting: { zh: "开始整理需求", en: "Getting started" },
   understanding: { zh: "整理你的想法", en: "Understanding your request" },
-  adapting_recipes: { zh: "调整选入的菜谱", en: "Adapting selected recipes" },
-  generating_combinations: { zh: "生成三种组合方案", en: "Building three arrangements" },
-  reviewing_combinations: { zh: "比较菜品搭配", en: "Reviewing the combinations" },
-  revising_combination: { zh: "调整最佳组合", en: "Refining the best arrangement" },
+  adapting_recipes: { zh: "看看每道菜是否合适", en: "Checking your recipes" },
+  generating_combinations: { zh: "搭配每天的菜单", en: "Putting together each day" },
+  reviewing_combinations: { zh: "看看这几天是否均衡", en: "Balancing the week" },
+  revising_combination: { zh: "再调整一下安排", en: "Making a few final changes" },
   drafting: { zh: "安排每日菜单", en: "Planning each day" },
   validating_candidates: { zh: "检查时间和限制", en: "Checking time and constraints" },
   reviewing: { zh: "检查搭配和执行", en: "Checking the balance" },
@@ -77,7 +77,7 @@ export function MealPlanView({ planId }: { planId: string }) {
           <Link href="/meal-plans" className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-text)]"><ArrowLeft size={16} />{isZh ? "返回计划列表" : "Back to plans"}</Link>
           <section className="plan-progress">
             <p className="eyebrow">{isZh ? "正在准备你的菜单" : "Preparing your menu"}</p>
-            <div className="mt-3 flex items-center gap-3 text-[var(--brand)]"><Loader2 size={23} className="animate-spin" /><span className="text-sm font-semibold">{isZh ? "这份菜单会保留你的原始选择" : "Your original choices are saved"}</span></div>
+            <div className="mt-3 flex items-center gap-3 text-[var(--brand)]"><Loader2 size={23} className="animate-spin" /><span className="text-sm font-semibold">{isZh ? "正在为你安排" : "Planning for you"}</span></div>
             <h1 className="mt-6 text-3xl font-bold tracking-[-0.045em] md:text-5xl">{isZh ? stage.zh : stage.en}</h1>
             <p className="mt-4 max-w-xl leading-7 text-[var(--muted-text)]">{isZh ? "你的选择会保留，完成后还能继续调整。" : "Your choices are saved, and you can refine the menu later."}</p>
             <div className="mt-9 h-1.5 overflow-hidden rounded-sm bg-[var(--line)]"><div className="h-full bg-[var(--brand)] transition-[width] duration-300" style={{ width: `${Math.max(3, plan.progress)}%` }} /></div>
@@ -181,8 +181,6 @@ export function MealPlanView({ planId }: { planId: string }) {
             })}</ul>
           </section>
           {result.prep_notes.length > 0 && <section className="plan-side-section"><h2>{isZh ? "提前做一点" : "Prep ahead"}</h2><ul className="mt-3 space-y-3 text-sm leading-6 text-[var(--muted-text)]">{result.prep_notes.map((note) => <li key={note} className="flex gap-2"><Check size={15} className="mt-1 shrink-0 text-[var(--success)]" />{note}</li>)}</ul></section>}
-          <section className="plan-side-section"><div className="flex items-center gap-2"><CalendarDays size={17} className="text-[var(--brand)]" /><h2>{isZh ? "继续调整" : "Keep refining"}</h2></div><p className="mt-3 text-sm leading-6 text-[var(--muted-text)]">{isZh ? "已保存的版本不会被覆盖。" : "Saved versions stay available."}</p></section>
-          {result.agent_reports.length > 0 && <details className="plan-side-section plan-agent-details"><summary>{isZh ? "查看规划过程" : "View planning process"}</summary><ol>{result.agent_reports.map((report) => <li key={report.agent}><strong>{report.role}</strong><span>{report.summary}</span></li>)}</ol></details>}
           <MealPlanConversation planId={planId} currentVersionId={plan.current_version_id} onVersionChanged={refreshPlan} />
         </aside>
       </div>
