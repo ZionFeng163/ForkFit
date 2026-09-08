@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: forkfit
+      POSTGRES_PASSWORD: forkfit_e2e
+      POSTGRES_DB: forkfit_e2e
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forkfit -d forkfit_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    image: forkfit-backend:local
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./evals:/app/evals:ro
+    environment:
+      APP_ENV: test
+      DATABASE_URL: postgresql+psycopg://forkfit:forkfit_e2e@postgres:5432/forkfit_e2e
+      REDIS_URL: redis://redis:6379/0
+      JOB_EXECUTOR: inline
+      RATE_LIMIT_ENABLED: "false"
+      JWT_SECRET: e2e-only-secret-never-use-in-production
+      ADMIN_PASSWORD: ForkFit_E2E_Admin_2026!
+      BAILIAN_API_KEY: e2e-no-network
+      CORS_ORIGINS: http://127.0.0.1:33001
+      UPLOAD_DIR: /tmp/forkfit-e2e-uploads
+      PYTHONPATH: /app/src
+    ports:
+      - "127.0.0.1:38001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: forkfit-frontend:latest
+    volumes:
+      - ./apps/web:/app:ro
+      - /app/node_modules
+      - /app/.next
+    environment:
+      FORKFIT_API_BASE_URL: http://backend:8000
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:33001:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    command: ["npm", "run", "dev:docker"]

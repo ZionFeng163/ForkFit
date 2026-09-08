@@ -35,6 +35,8 @@ services:
     volumes:
       - ./src:/app/src
       - ./scripts:/app/scripts
+      - ./evals:/app/evals:ro
+      - ./tests:/app/tests:ro
       - ./.env:/app/.env:ro
     environment:
       DATABASE_URL: postgresql+psycopg://forkfit:forkfit@postgres:5432/forkfit

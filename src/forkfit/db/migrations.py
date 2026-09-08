@@ -176,6 +176,11 @@ MIGRATIONS: tuple[Migration, ...] = (
             "ALTER TABLE meal_plan_messages ADD COLUMN IF NOT EXISTS confirmed boolean NOT NULL DEFAULT false",
         ),
     ),
+    (
+        13,
+        "meal_plan_version_state",
+        ("ALTER TABLE meal_plan_versions ADD COLUMN IF NOT EXISTS state_snapshot json",),
+    ),
 )
 
 

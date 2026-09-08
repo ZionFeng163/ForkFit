@@ -407,7 +407,7 @@ class MealPlanWorkflowV3Tests(unittest.TestCase):
             llm=llm, recipe_workflow=SelectedRecipeWorkflow()
         ).run(_request(3, _selected_pool(5)))
 
-        self.assertEqual(result.workflow_version, "meal-plan-v3")
+        self.assertEqual(result.workflow_version, "meal-plan-v4")
         self.assertEqual(len(result.days), 3)
         self.assertEqual([len(day.dishes) for day in result.days], [2, 2, 1])
         used = [dish.source_post_id for day in result.days for dish in day.dishes]

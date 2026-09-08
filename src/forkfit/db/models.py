@@ -99,6 +99,7 @@ class MealPlanVersionRow(Base):
     patch_payload: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     result_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
     quality_report: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    state_snapshot: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     created_by: Mapped[str] = mapped_column(String(120), nullable=False)
     is_current: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

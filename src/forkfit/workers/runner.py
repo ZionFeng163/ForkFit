@@ -9,7 +9,7 @@ from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
 logger = logging.getLogger(__name__)
 from forkfit.config import get_settings
 from forkfit.db.session import make_session_factory
-from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
+from forkfit.langgraph_workflow_v3 import ForkFitLangGraphWorkflow
 from forkfit.observability import LangSmithRunExporter
 from forkfit.serialization import meal_pack_from_dict, user_profile_from_dict
 from forkfit.stores import PostgresRunStore
@@ -42,6 +42,13 @@ def _build_failure_message(result, locale: str = "zh") -> str:
         if f.type in seen:
             continue
         seen.add(f.type)
+        if f.type == "invalid_patch":
+            message = "这次没有生成可用的调整结果。" if is_zh else "A usable adjustment could not be generated this time."
+            action = "请把要求写得更具体一点，或稍后重试。" if is_zh else "Make the request more specific or try again later."
+            messages.append(message)
+            if action not in actions:
+                actions.append(action)
+            continue
         if f.message:
             messages.append(f.message)
         if f.required_action and f.required_action not in actions:

@@ -13,6 +13,7 @@ import {
   createRun, getRun, getPost, publishRun, saveRun, extractMyPreferences,
 } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { recipeRunMessage } from "@/lib/user-facing";
 import type { RecipePost, RunResultPayload } from "@/types/forkfit";
 
 export function ForkContent({ post }: { post: RecipePost }) {
@@ -51,6 +52,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
   useEffect(() => {
     if (!runId || runStatus === "succeeded" || runStatus === "failed" || runStatus === "needs_input") return;
     let pollCount = 0;
+    let consecutiveFailures = 0;
     const MAX_POLLS = 120;
     const interval = setInterval(async () => {
       pollCount++;
@@ -61,6 +63,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       }
       try {
         const run = await getRun(runId);
+        consecutiveFailures = 0;
         setRunStatus(run.status);
         if (run.status === "succeeded" && run.result) {
           setRunResult(run.result);
@@ -80,11 +83,18 @@ export function ForkContent({ post }: { post: RecipePost }) {
             }).catch(() => {});
           }
         } else if (run.status === "failed") {
-          setRunError(run.error?.message || "定制失败");
+          setRunError(recipeRunMessage(run.error?.message, "定制失败"));
         } else if (run.status === "needs_input") {
-          setRunError(run.unresolved_payload?.message || "这个要求还需要你确认一下，再继续定制。");
+          setRunError(recipeRunMessage(run.unresolved_payload?.message, "这个要求还需要你确认一下，再继续定制。"));
         }
-      } catch {}
+      } catch {
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= 3) {
+          clearInterval(interval);
+          setRunStatus("failed");
+          setRunError("暂时无法获取定制进度，请检查网络后重试。你的需求仍然保留在页面上。");
+        }
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [runId, runStatus, post.id]);

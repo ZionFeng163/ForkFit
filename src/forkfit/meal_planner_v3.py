@@ -10,15 +10,14 @@ from typing import Any, Callable, Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from forkfit.constraints import ConstraintNormalizer
-from forkfit.langgraph_workflow import ForkFitGraphState, ForkFitLangGraphWorkflow
+from forkfit.langgraph_workflow_v3 import ForkFitGraphState, ForkFitLangGraphWorkflow
 from forkfit.llm import BailianLLMClient, LLMClient
 from forkfit.models import Meal, MealPack, RunTrace, UserProfile
-from forkfit.recipe_agent import KNOWLEDGE_VERSION, WORKFLOW_VERSION
+from forkfit.recipe_agent_v3 import KNOWLEDGE_VERSION, WORKFLOW_VERSION
 from forkfit.serialization import meal_from_dict, user_profile_from_dict
 
 
-MEAL_PLAN_WORKFLOW_VERSION = "meal-plan-v3"
+MEAL_PLAN_WORKFLOW_VERSION = "meal-plan-v4"
 PlanningMode = Literal["guided", "team"]
 
 AGENT_REGISTRY = {
@@ -170,7 +169,6 @@ class MealPlanWorkflow:
         recipe_workflow: ForkFitLangGraphWorkflow | None = None,
     ) -> None:
         self.llm = llm or BailianLLMClient()
-        self.normalizer = ConstraintNormalizer()
         self.recipe_workflow = recipe_workflow or ForkFitLangGraphWorkflow(
             llm_client=self.llm
         )
@@ -233,12 +231,6 @@ class MealPlanWorkflow:
         profile = user_profile_from_dict(payload["user_profile"])
         locale = str(payload.get("locale", "zh"))
         notify("adapting_recipes", 8)
-        constraints = self.normalizer.normalize(profile, request_text)
-        if constraints.clarification:
-            raise MealPlanNeedsInput(
-                constraints.clarification.question,
-                [constraints.clarification.code],
-            )
         meals: list[Meal] = []
         original_ids: list[str] = []
         for index, item in enumerate(selected):
@@ -254,7 +246,6 @@ class MealPlanWorkflow:
             "profile": profile,
             "user_profile": profile,
             "locale": locale,
-            "constraints": constraints,
             "reports": [],
             "meal_pack": MealPack(
                 id="selected-recipes", title="用户选入菜谱", theme="meal-plan-input", meals=meals

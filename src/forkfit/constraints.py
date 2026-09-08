@@ -214,10 +214,11 @@ class ConstraintGuard:
             text = _composition_text(meal)
             for allergy in constraints.allergies:
                 if _contains_term(text, allergy):
+                    affected = [item for item in meal.ingredients if _contains_term(item, allergy)]
                     findings.append(AgentFinding(
                         type="allergy", severity="high", affected_items=[meal.id],
                         message=f"含有过敏源「{allergy}」" if zh else f"Contains allergen: {allergy}",
-                        required_action="replace ingredient",
+                        required_action="replace ingredient", affected_ingredients=affected,
                     ))
         return findings
 
@@ -228,10 +229,11 @@ class ConstraintGuard:
             for rule in constraints.diet_rules:
                 blocked = self.blocked_terms_for_rule(rule)
                 if any(_contains_term(text, term) for term in blocked):
+                    affected = [item for item in meal.ingredients if any(_contains_term(item, term) for term in blocked)]
                     findings.append(AgentFinding(
                         type="diet_rule", severity="high", affected_items=[meal.id],
                         message=f"不符合饮食要求：{rule}" if zh else f"Conflicts with diet rule: {rule}",
-                        required_action="replace ingredient",
+                        required_action="replace ingredient", affected_ingredients=affected,
                     ))
         return findings
 

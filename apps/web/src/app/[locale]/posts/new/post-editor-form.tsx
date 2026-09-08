@@ -141,6 +141,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
     return "easy";
   });
   const [draftSaved, setDraftSaved] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState(() => {
     try {
       return localStorage.getItem("forkfit.draft.saved_at") || "";
@@ -189,6 +190,23 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    const missing: string[] = [];
+    if (!form.title.trim()) missing.push("菜谱标题");
+    if (!form.description.trim()) missing.push("菜谱描述");
+    if (!form.ingredients.some((item) => item.trim())) missing.push("至少一种食材");
+    if (!form.steps.some((step) => step.trim())) missing.push("至少一个烹饪步骤");
+    if (missing.length) {
+      setFormError(`还需要填写：${missing.join("、")}`);
+      const target = !form.title.trim()
+        ? document.getElementById("post-title")
+        : !form.description.trim()
+          ? document.getElementById("post-description")
+          : document.getElementById("post-recipe-details");
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.focus();
+      return;
+    }
+    setFormError(null);
     localStorage.removeItem("forkfit.draft");
     localStorage.removeItem("forkfit.draft.saved_at");
     mutation.mutate(buildInput(form, difficulty));
@@ -204,7 +222,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
   const isPending = mutation.isPending || extractMutation.isPending;
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} noValidate>
       <div className="site-container max-w-[980px] pb-20">
         {/* Back */}
         <div className="pt-6">
@@ -275,6 +293,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   菜谱标题 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <input
+                  id="post-title"
                   type="text"
                   required
                   maxLength={160}
@@ -292,6 +311,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   菜谱描述 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <textarea
+                  id="post-description"
                   required
                   rows={4}
                   maxLength={1200}
@@ -314,7 +334,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             </div>
 
             {/* Section 2: Recipe Details */}
-            <div className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7">
+            <div id="post-recipe-details" className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-7" tabIndex={-1}>
               <h2 className="text-[15px] font-bold mb-5 flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                 菜谱详情
@@ -437,9 +457,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
             <div className="fp-publish-card">
               <p>{t("publishHelp")}</p>
 
-              {mutation.error || extractMutation.error ? (
+              {formError || mutation.error || extractMutation.error ? (
                 <div className="mb-4 p-3 rounded-lg text-[13px]" style={{ border: "1px solid var(--danger)", background: "var(--danger-soft)", color: "var(--danger)" }}>
-                  {mutation.error?.message || extractMutation.error?.message || t("failed")}
+                  {formError || mutation.error?.message || extractMutation.error?.message || t("failed")}
                 </div>
               ) : null}
 

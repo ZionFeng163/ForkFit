@@ -12,6 +12,7 @@ from .models import (
     PreferenceReview,
     RunTrace,
     StepTrace,
+    ToolCallTrace,
     UserAgentOutput,
     UserProfile,
 )
@@ -157,6 +158,16 @@ def run_trace_from_dict(data: dict | None) -> RunTrace | None:
             )
             for item in data.get("llm_calls", [])
         ],
+        tool_calls=[
+            ToolCallTrace(
+                agent=item["agent"], tool=item["tool"],
+                duration_ms=float(item["duration_ms"]), status=item["status"],
+                result_count=int(item.get("result_count", 0)),
+                arguments=dict(item.get("arguments", {})),
+                error=item.get("error", ""),
+            )
+            for item in data.get("tool_calls", [])
+        ],
         workflow_version=data.get("workflow_version", "v1"),
         knowledge_version=data.get("knowledge_version", ""),
         repair_count=int(data.get("repair_count", 0)),
@@ -179,4 +190,5 @@ def finding_from_dict(data: dict) -> AgentFinding:
         message=data["message"],
         suggested_action=data.get("suggested_action", ""),
         required_action=data.get("required_action", ""),
+        affected_ingredients=list(data.get("affected_ingredients", [])),
     )

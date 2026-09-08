@@ -18,7 +18,7 @@ from .models import (
     UserAgentOutput,
     UserProfile,
 )
-from .langgraph_workflow import ForkFitLangGraphWorkflow
+from .langgraph_workflow_v3 import ForkFitLangGraphWorkflow
 
 __all__ = [
     "AdapterOutput",

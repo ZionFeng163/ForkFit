@@ -137,7 +137,7 @@ export function MealPlanView({ planId }: { planId: string }) {
       </div>
 
       <div className="plan-result-layout">
-        <main>
+        <div className="min-w-0">
           <div className="flex items-center justify-between gap-4"><h2 className="section-heading">{isZh ? "每天怎么吃" : "Daily plan"}</h2><span className="meta-text">{result.days.length} {isZh ? "天" : "days"}</span></div>
           <div className="mt-5">
             {result.days.map((day) => (
@@ -153,7 +153,7 @@ export function MealPlanView({ planId }: { planId: string }) {
                         <p className="plan-day-reason">{dish.reason}</p>
                         <div className="plan-day-columns">
                           <div><h3>{isZh ? "食材" : "Ingredients"}</h3><ul>{dish.meal.ingredients.map((item) => <li key={item}>{item}</li>)}</ul></div>
-                          <div><h3>{isZh ? "步骤" : "Method"}</h3><ol>{dish.meal.steps.map((step, index) => <li key={`${step}-${index}`}>{index + 1}. {step}</li>)}</ol></div>
+                          <div><h3>{isZh ? "步骤" : "Method"}</h3><ol>{dish.meal.steps.map((step, index) => <li key={`${step}-${index}`}>{index + 1}. {cleanStepPrefix(step)}</li>)}</ol></div>
                         </div>
                         <p className="mt-5 flex flex-wrap items-center gap-3 text-xs text-[var(--muted-text)]"><span className="flex items-center gap-1"><Clock3 size={14} />{dish.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span>{dish.meal.equipment.length > 0 && <span className="flex items-center gap-1"><CookingPot size={14} />{dish.meal.equipment.join("、")}</span>}</p>
                       </div>
@@ -163,7 +163,7 @@ export function MealPlanView({ planId }: { planId: string }) {
               </article>
             ))}
           </div>
-        </main>
+        </div>
 
         <aside className="plan-aside">
           <section className="plan-side-section">
@@ -186,4 +186,7 @@ export function MealPlanView({ planId }: { planId: string }) {
       </div>
     </div>
   );
+}
+function cleanStepPrefix(step: string) {
+  return step.replace(/^\s*(?:步骤\s*)?\d+\s*[.)、：:]\s*/, "").trim();
 }

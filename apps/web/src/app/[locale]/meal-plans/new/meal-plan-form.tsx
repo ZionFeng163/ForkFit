@@ -132,7 +132,7 @@ export function MealPlanForm() {
 
           <div className="border-t border-[var(--line)] pt-6">
             {error && <p className="mb-4 text-sm text-[var(--danger)]" role="alert">{error}</p>}
-            <button type="submit" className="button-primary min-w-40" disabled={submitting || mealPlan.selected.length < days}>
+            <button type="submit" className="button-primary min-w-40" disabled={submitting}>
               {submitting ? <Loader2 size={17} className="animate-spin" /> : <CalendarDays size={17} />}
               {submitting ? (isZh ? "正在安排" : "Planning") : (isZh ? "生成菜单" : "Create my plan")}
             </button>

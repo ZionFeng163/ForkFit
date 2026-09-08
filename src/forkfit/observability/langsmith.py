@@ -75,12 +75,17 @@ def _metrics(run: RunRecord) -> dict:
         return {
             "total_duration_ms": 0,
             "llm_call_count": 0,
+            "tool_call_count": 0,
+            "repair_count": 0,
             "step_durations_ms": {},
             "llm_calls": [],
+            "tool_calls": [],
         }
     return {
         "total_duration_ms": trace.total_duration_ms,
         "llm_call_count": trace.llm_call_count,
+        "tool_call_count": len(trace.tool_calls),
+        "repair_count": trace.repair_count,
         "step_durations_ms": {
             step.node: step.duration_ms for step in trace.steps
         },
@@ -94,5 +99,15 @@ def _metrics(run: RunRecord) -> dict:
                 "status": call.status,
             }
             for call in trace.llm_calls
+        ],
+        "tool_calls": [
+            {
+                "agent": call.agent,
+                "tool": call.tool,
+                "duration_ms": call.duration_ms,
+                "status": call.status,
+                "result_count": call.result_count,
+            }
+            for call in trace.tool_calls
         ],
     }

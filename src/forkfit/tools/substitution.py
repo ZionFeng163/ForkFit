@@ -3,20 +3,6 @@ from __future__ import annotations
 from forkfit.knowledge.store import SubstitutionStore
 
 
-TRUSTED_ENTRY_IDS = {
-    "dairy_milk",
-    "dairy_butter",
-    "eggs_whole",
-    "eggs_baking",
-    "wheat_flour",
-    "wheat_pasta",
-    "soy_sauce",
-    "peanut_butter",
-    "shellfish_shrimp",
-    "chicken",
-    "beef",
-}
-
 INGREDIENT_LOOKUP_ALIASES = {
     "牛奶": "milk",
     "黄油": "butter",
@@ -66,6 +52,10 @@ class SubstitutionTool:
         self,
         ingredient: str,
         exclude_allergens: list[str] | None = None,
+        desired_taste: str = "",
+        desired_texture: str = "",
+        cooking_use: str = "",
+        top_k: int = 5,
         context: str = "",
     ) -> list[dict]:
         """
@@ -79,55 +69,40 @@ class SubstitutionTool:
         Returns:
             List of substitute suggestions with name, reason, ratio, etc.
         """
-        # Check cache first
+        if not isinstance(ingredient, str) or not ingredient.strip() or len(ingredient.strip()) > 120:
+            raise ValueError("ingredient is required")
+        ingredient = ingredient.strip()
+        top_k = int(top_k)
+        if not 1 <= top_k <= 5:
+            raise ValueError("top_k must be between 1 and 5")
+        if not isinstance(exclude_allergens or [], list) or len(exclude_allergens or []) > 12:
+            raise ValueError("excluded_allergens must contain at most 12 items")
+        for value in (desired_taste, desired_texture, cooking_use):
+            if not isinstance(value, str) or len(value) > 80:
+                raise ValueError("taste, texture and cooking use must be strings up to 80 characters")
+        exclude = [_canonical_allergen(str(a)) for a in (exclude_allergens or [])]
+        lookup_ingredient = INGREDIENT_LOOKUP_ALIASES.get(ingredient.lower(), ingredient)
+        query_parts = [lookup_ingredient, desired_taste, desired_texture, cooking_use, context]
+        query = " ".join(part.strip() for part in query_parts if part and part.strip())[:500]
+        cache_key = ":".join([
+            "v3", lookup_ingredient, ",".join(sorted(exclude)), desired_taste.strip(),
+            desired_texture.strip(), cooking_use.strip(), str(top_k),
+        ])
         if self._cache:
-            cache_key = f"v2:{ingredient}:{','.join(sorted(exclude_allergens or []))}"
             cached = self._cache.get("substitution", cache_key)
             if cached is not None:
                 return cached
-
-        exclude = [_canonical_allergen(a) for a in (exclude_allergens or [])]
-        lookup_ingredient = INGREDIENT_LOOKUP_ALIASES.get(ingredient.lower().strip(), ingredient)
-
-        # 1. Try exact match first
-        entry = self._store.get_by_ingredient(lookup_ingredient)
-        if entry:
-            results = []
-            for sub in entry.substitutes:
-                sub_allergens = set(a.lower() for a in sub.get("allergens_free", []))
-                sub_name = sub["name"].lower()
-                is_safe = all(allergen in sub_allergens for allergen in exclude)
-                is_safe = is_safe and not any(allergen in sub_name for allergen in exclude)
-                if is_safe:
-                    results.append({
-                        "original": entry.original,
-                        "substitute": sub["name"],
-                        "reason": sub.get("reason", ""),
-                        "ratio": sub.get("ratio", "1:1"),
-                        "taste_profile": sub.get("taste_profile", ""),
-                        "category": sub.get("category", ""),
-                        "source_entry": entry.id,
-                        "approved": entry.id in TRUSTED_ENTRY_IDS,
-                    })
-            if results:
-                if self._cache:
-                    self._cache.set("substitution", f"v2:{ingredient}:{','.join(sorted(exclude))}", results, ttl=86400)
-                return results
-
-        # 2. Fall back to RAG semantic search
-        query = lookup_ingredient
-        if context:
-            query = f"{ingredient} {context}"
-
         results = self._store.search(
             query=query,
             exclude_allergens=exclude,
-            top_k=5,
+            ingredient=lookup_ingredient,
+            desired_taste=desired_taste,
+            desired_texture=desired_texture,
+            cooking_use=cooking_use,
+            top_k=top_k,
         )
-        for result in results:
-            result["approved"] = result.get("source_entry") in TRUSTED_ENTRY_IDS
         if self._cache and results:
-            self._cache.set("substitution", f"v2:{ingredient}:{','.join(sorted(exclude))}", results, ttl=3600)
+            self._cache.set("substitution", cache_key, results, ttl=3600)
         return results
 
     def get_substitution_context(

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
-from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
+from forkfit.langgraph_workflow_v3 import ForkFitLangGraphWorkflow
 from forkfit.meal_planner import MealPlanResult, MealPlanWorkflow
 from forkfit.models import MealPack
 from forkfit.serialization import meal_from_dict, user_profile_from_dict
 from forkfit.stores.meal_plans import MealPlanRecord
+from forkfit.plan_requirements import scoped_request, prepare_requirement_update
 
 
 class MealPlanConversationWorkflowV3:
@@ -26,14 +27,30 @@ class MealPlanConversationWorkflowV3:
         return _LegacyMealPlanConversationWorkflow.parse_intent(text, plan)
 
     def process(self, plan: MealPlanRecord, text: str, *, confirmed: bool = False):
+        intent = self.parse_intent(text, plan)
+        if intent.kind in {"clarification", "explain", "lock_day", "unlock_day", "undo"} or (intent.requires_confirmation and not confirmed):
+            return self._process(plan, text, confirmed=confirmed)
+        if plan.result is None or not plan.workflow_version.startswith(("meal-plan-v3", "meal-plan-v4")):
+            return self._process(plan, text, confirmed=confirmed)
+        if intent.day_index is not None:
+            day = next((day for day in plan.result.days if day.day_index == intent.day_index), None)
+            if day is None or self._target_dish(day.dishes, text) is None:
+                return self._process(plan, text, confirmed=confirmed)
+        state, relax_only = prepare_requirement_update(self.llm or self.legacy.llm, plan.request_payload, text, intent.day_index)
+        prepared = replace(plan, request_payload={**plan.request_payload, "effective_requirements": state})
+        previous = plan.request_payload.get("effective_requirements") or {"global": str(plan.request_payload.get("request_text", "")), "days": {}}
+        outcome = self._process(prepared, text, confirmed=confirmed, requirements_changed=relax_only and state != previous)
+        return replace(outcome, effective_requirements=state) if outcome.status == "applied" else outcome
+
+    def _process(self, plan: MealPlanRecord, text: str, *, confirmed: bool = False, requirements_changed: bool = False):
         from forkfit.meal_plan_conversation import ConversationResult
 
         if plan.result is None:
             raise ValueError("这份菜单还没有生成完成。")
         intent = self.parse_intent(text, plan)
-        if intent.kind in {"clarification", "explain", "lock_day", "undo"}:
+        if intent.kind in {"clarification", "explain", "lock_day", "unlock_day", "undo"}:
             return self.legacy.process(plan, text, confirmed=confirmed)
-        if not plan.workflow_version.startswith("meal-plan-v3"):
+        if not plan.workflow_version.startswith(("meal-plan-v3", "meal-plan-v4")):
             raise ValueError("旧版菜单可以查看和撤销；如需重新规划，请重新选择菜谱创建新版菜单。")
         if intent.requires_confirmation and not confirmed:
             return self.legacy.process(plan, text, confirmed=confirmed)
@@ -87,7 +104,7 @@ class MealPlanConversationWorkflowV3:
             }
             if replacement["post_id"] in used:
                 raise ValueError("这道候选菜已经安排在其他日期，不能重复使用。")
-            adapted = self._adapt_recipe(plan, replacement, text)
+            adapted = self._adapt_recipe(plan, replacement, text, day.day_index)
             day_data["dishes"][position] = {
                 "source_post_id": replacement["post_id"],
                 "meal": asdict(adapted),
@@ -99,10 +116,23 @@ class MealPlanConversationWorkflowV3:
                 for item in plan.request_payload["selected_recipes"]
                 if item["post_id"] == target.source_post_id
             )
-            adapted = self._adapt_meal(plan, target.meal, text)
+            adapted = self._adapt_meal(plan, target.meal, text, day.day_index, require_change=not requirements_changed)
             day_data["dishes"][position]["meal"] = asdict(adapted)
             day_data["dishes"][position]["source_post_id"] = selected["post_id"]
 
+        updated = day_data["dishes"][position]
+        if updated["source_post_id"] == target.source_post_id and updated["meal"] == asdict(target.meal):
+            if requirements_changed:
+                return ConversationResult(
+                    status="applied", intent=intent, result=plan.result,
+                    message="已更新你的要求，当前菜谱未作修改；后续调整会使用新的要求。",
+                    summary="已更新要求，菜谱保持不变。",
+                )
+            return ConversationResult(
+                status="needs_clarification", intent=intent,
+                message="这次没有产生实际修改，原菜单保持不变。你希望具体改变食材、用量还是做法？",
+                summary="未产生修改，需要确认调整目标。",
+            )
         result = MealPlanResult.model_validate(data)
         result.shopping_list = MealPlanWorkflow._shopping_list(result.days)
         self._validate_sources(plan, result)
@@ -115,10 +145,17 @@ class MealPlanConversationWorkflowV3:
         )
 
     def _replan(self, plan: MealPlanRecord, text: str) -> MealPlanResult:
+        if plan.result is not None:
+            for day in plan.result.days:
+                if day.day_index not in plan.locked_days:
+                    continue
+                for dish in day.dishes:
+                    try:
+                        self._validate_locked_meal(plan, dish.meal, day.day_index)
+                    except ValueError as exc:
+                        raise ValueError(f"第 {day.day_index} 天已锁定，无法确认它满足新要求。请先解锁该日期或缩小修改范围。") from exc
         payload = deepcopy(plan.request_payload)
-        payload["request_text"] = (
-            f"{payload.get('request_text', '')}\n本轮追加要求：{text}"
-        ).strip()
+        payload["request_text"] = scoped_request(payload)
         result = MealPlanWorkflow(llm=self.llm).run(payload)
         if plan.locked_days and plan.result is not None:
             data = result.model_dump(mode="json")
@@ -132,6 +169,15 @@ class MealPlanConversationWorkflowV3:
             result = MealPlanResult.model_validate(data)
             result.shopping_list = MealPlanWorkflow._shopping_list(result.days)
             self._validate_sources(plan, result)
+        state = plan.request_payload.get("effective_requirements", {})
+        data = result.model_dump(mode="json")
+        for day in data["days"]:
+            if day["day_index"] in plan.locked_days or not state.get("days", {}).get(str(day["day_index"])):
+                continue
+            for dish in day["dishes"]:
+                dish["meal"] = asdict(self._adapt_meal(plan, meal_from_dict(dish["meal"]), "", day["day_index"], require_change=False))
+        result = MealPlanResult.model_validate(data)
+        result.shopping_list = MealPlanWorkflow._shopping_list(result.days)
         return result
 
     @staticmethod
@@ -141,6 +187,20 @@ class MealPlanConversationWorkflowV3:
         matches = [dish for dish in dishes if dish.meal.name in text]
         return matches[0] if len(matches) == 1 else None
 
+    def _validate_locked_meal(self, plan, meal, day_index):
+        workflow = ForkFitLangGraphWorkflow(llm_client=self.llm) if self.llm else ForkFitLangGraphWorkflow()
+        profile = user_profile_from_dict(plan.request_payload["user_profile"])
+        pack = MealPack("locked-dish", meal.name, "review", [meal.clone()])
+        request = scoped_request(plan.request_payload, day_index)
+        locale = str(plan.request_payload.get("locale", "zh"))
+        spec, _ = workflow.reviewer.understand_and_review(profile, request, pack, locale=locale)
+        if spec.clarification:
+            raise ValueError(spec.clarification.question)
+        report = workflow.reviewer.review_adjusted(pack, pack, spec, locale=locale, request_text=request)
+        safety = workflow.safety_guard.review(pack, spec, locale)
+        if report.status == "block" or any(f.severity == "high" for f in safety.findings):
+            raise ValueError("锁定菜谱与新要求存在冲突。")
+
     @staticmethod
     def _replacement_from_pool(plan: MealPlanRecord, text: str):
         for item in plan.request_payload.get("selected_recipes", []):
@@ -149,17 +209,18 @@ class MealPlanConversationWorkflowV3:
                 return item
         return None
 
-    def _adapt_recipe(self, plan: MealPlanRecord, item: dict, text: str):
-        return self._adapt_meal(plan, meal_from_dict(item["recipe"]), text)
+    def _adapt_recipe(self, plan: MealPlanRecord, item: dict, text: str, day_index: int):
+        return self._adapt_meal(plan, meal_from_dict(item["recipe"]), text, day_index)
 
-    def _adapt_meal(self, plan: MealPlanRecord, meal, text: str):
+    def _adapt_meal(self, plan: MealPlanRecord, meal, text: str, day_index: int | None = None, *, require_change: bool = True):
         profile = user_profile_from_dict(plan.request_payload["user_profile"])
         workflow = ForkFitLangGraphWorkflow(llm_client=self.llm) if self.llm else ForkFitLangGraphWorkflow()
         result = workflow.run(
             profile,
             MealPack(id="conversation-dish", title=meal.name, theme="edit", meals=[meal]),
             locale=str(plan.request_payload.get("locale", "zh")),
-            request_text=text,
+            request_text="\n".join(filter(None, [scoped_request(plan.request_payload, day_index), text])),
+            require_change=require_change,
         )
         if not result.success:
             message = result.adapter_output.unresolved_items[0].message if result.adapter_output.unresolved_items else "这道菜无法按当前要求安全调整。"

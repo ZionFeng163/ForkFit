@@ -37,8 +37,8 @@ export function MealPlanList() {
           <h1 className="page-heading">{isZh ? "这几天吃什么" : "What to eat this week"}</h1>
           <p className="mt-3 max-w-2xl text-[var(--muted-text)]">
             {isZh
-              ? "从喜欢的菜开始排，也可以只说一句最近想吃什么。之后还可以继续调整，不满意就恢复上一版。"
-              : "Start with recipes you like, or describe what you feel like eating."}
+              ? "挑好想吃的菜，把它们安排到接下来几天。生成后还能继续调整，也可以恢复上一版。"
+              : "Choose recipes you like and arrange them across the next few days. You can refine or restore the plan later."}
           </p>
         </div>
         <Link href="/meal-plans/new" className="button-primary">

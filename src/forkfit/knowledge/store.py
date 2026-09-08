@@ -38,6 +38,7 @@ class SubstitutionStore:
         self._entries: list[SubstitutionEntry] = []
         self._embeddings: np.ndarray | None = None
         self._texts: list[str] = []
+        self._candidates: list[dict] = []
         self._client: EmbeddingClient | None = None
         self._loaded = False
 
@@ -62,10 +63,31 @@ class SubstitutionStore:
                 substitutes=item.get("substitutes", []),
             )
             self._entries.append(entry)
-            self._texts.append(entry.searchable_text())
+            for substitute in entry.substitutes:
+                candidate = {
+                    "original": entry.original,
+                    "aliases": list(entry.aliases),
+                    "tags": list(entry.tags),
+                    "common_allergens": list(entry.common_allergens),
+                    "substitute": substitute.get("name", ""),
+                    "reason": substitute.get("reason", ""),
+                    "ratio": substitute.get("ratio", "1:1"),
+                    "taste_profile": substitute.get("taste_profile", ""),
+                    "category": substitute.get("category", ""),
+                    "allergens_free": list(substitute.get("allergens_free", [])),
+                    "source_entry": entry.id,
+                }
+                text = " ".join([
+                    entry.original, *entry.aliases, *entry.tags,
+                    candidate["substitute"], candidate["reason"],
+                    candidate["taste_profile"], candidate["category"],
+                ]).lower()
+                candidate["searchable_text"] = text
+                self._candidates.append(candidate)
+                self._texts.append(text)
 
         # Check cache
-        kb_hash = hashlib.md5(json.dumps(raw, sort_keys=True).encode()).hexdigest()
+        kb_hash = hashlib.md5(("candidate-v2:" + json.dumps(raw, sort_keys=True)).encode()).hexdigest()
         cache_file = _CACHE_DIR / f"embeddings_{kb_hash}.npy"
 
         if cache_file.exists():
@@ -92,47 +114,58 @@ class SubstitutionStore:
         self,
         query: str,
         exclude_allergens: list[str] | None = None,
+        ingredient: str = "",
+        desired_taste: str = "",
+        desired_texture: str = "",
+        cooking_use: str = "",
         top_k: int = 5,
     ) -> list[dict]:
-        """Semantic search + allergen filtering. Returns ranked substitutes."""
+        """Candidate-level keyword/vector retrieval with RRF and allergen filtering."""
         if not self._loaded:
             self.load()
-
-        # Embed the query
+        top_k = max(1, min(5, int(top_k)))
         query_vec = np.array(self._client.embed_single(query))
-
-        # Compute similarities
-        scores = [
+        vector_scores = [
             (i, cosine_similarity(query_vec, self._embeddings[i]))
-            for i in range(len(self._entries))
+            for i in range(len(self._candidates))
         ]
-        scores.sort(key=lambda x: x[1], reverse=True)
-
+        vector_scores.sort(key=lambda x: x[1], reverse=True)
+        terms = [value.lower().strip() for value in (
+            ingredient, desired_taste, desired_texture, cooking_use
+        ) if value.strip()]
+        keyword_scores: list[tuple[int, float]] = []
+        for index, candidate in enumerate(self._candidates):
+            text = candidate["searchable_text"]
+            aliases = {alias.lower() for alias in candidate["aliases"]}
+            score = sum(3.0 if term == candidate["original"].lower() or term in aliases else 1.0
+                        for term in terms if term and term in text)
+            if score > 0:
+                keyword_scores.append((index, score))
+        keyword_scores.sort(key=lambda item: item[1], reverse=True)
+        vector_rank = {index: rank for rank, (index, _score) in enumerate(vector_scores, 1)}
+        keyword_rank = {index: rank for rank, (index, _score) in enumerate(keyword_scores, 1)}
+        fused = []
+        for index in range(len(self._candidates)):
+            score = 1 / (60 + vector_rank[index])
+            if index in keyword_rank:
+                score += 1 / (60 + keyword_rank[index])
+            fused.append((index, score))
+        fused.sort(key=lambda item: item[1], reverse=True)
         exclude = set(a.lower() for a in (exclude_allergens or []))
         results = []
-
-        for idx, score in scores[:top_k * 3]:  # fetch extra for filtering
-            entry = self._entries[idx]
-            for sub in entry.substitutes:
-                sub_allergens = set(a.lower() for a in sub.get("allergens_free", []))
-                # The field lists allergens the candidate is known to be free of.
-                is_safe = exclude.issubset(sub_allergens)
-                # Also check if the substitute itself doesn't contain excluded allergens
-                sub_name_lower = sub["name"].lower()
-                is_not_excluded = not any(a.lower() in sub_name_lower for a in exclude)
-
-                if is_safe and is_not_excluded:
-                    results.append({
-                        "original": entry.original,
-                        "substitute": sub["name"],
-                        "reason": sub.get("reason", ""),
-                        "ratio": sub.get("ratio", "1:1"),
-                        "taste_profile": sub.get("taste_profile", ""),
-                        "category": sub.get("category", ""),
-                        "score": round(score, 3),
-                        "source_entry": entry.id,
-                    })
-                    if len(results) >= top_k:
-                        return results
-
+        for index, score in fused:
+            candidate = self._candidates[index]
+            free_of = {a.lower() for a in candidate["allergens_free"]}
+            if not exclude.issubset(free_of):
+                continue
+            if any(allergen in candidate["substitute"].lower() for allergen in exclude):
+                continue
+            results.append({
+                key: candidate[key] for key in (
+                    "original", "substitute", "reason", "ratio",
+                    "taste_profile", "category", "source_entry"
+                )
+            } | {"score": round(score, 5)})
+            if len(results) >= top_k:
+                break
         return results

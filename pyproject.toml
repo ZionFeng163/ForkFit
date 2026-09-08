@@ -10,6 +10,7 @@ dependencies = [
     "langgraph>=0.2",
     "langsmith>=0.8",
     "numpy>=2.0",
+    "pydantic>=2.8",
     "psycopg[binary]>=3.2",
     "python-multipart>=0.0.6",
     "PyJWT>=2.8",
@@ -17,6 +18,9 @@ dependencies = [
     "sqlalchemy>=2.0",
     "uvicorn>=0.30",
 ]
+
+[project.scripts]
+forkfit-eval = "forkfit.evals.runner:main"
 
 [build-system]
 requires = ["setuptools>=68"]

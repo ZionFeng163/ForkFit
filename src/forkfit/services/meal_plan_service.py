@@ -152,3 +152,5 @@ class MealPlanService:
             return self.store.restore_version(plan_id, user_id, version_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Meal plan version not found.") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc

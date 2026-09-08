@@ -106,6 +106,7 @@ def run_meal_plan_message_job(
             created_by=plan.user_id,
             create_version=outcome.intent.kind != "explain",
             locked_days=outcome.locked_days,
+            effective_requirements=outcome.effective_requirements,
         )
     except urllib.error.HTTPError as exc:
         logger.exception("Meal plan message %s failed with an LLM HTTP error", message_id)

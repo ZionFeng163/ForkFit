@@ -110,19 +110,42 @@ ForkFit/
 
 **前端:** Next.js 16 + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui + next-intl (i18n)
 
-**后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + LangGraph + Bailian (Qwen LLM)
+**后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + LangGraph + Bailian (DeepSeek LLM)
 
-**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。文本生成模型通过百炼兼容接口调用 DeepSeek。
+**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。文本生成模型通过百炼兼容接口调用 `deepseek-v4-flash-0731`。
 
 ## 测试
 
 ```bash
+# 从全新隔离数据库运行后端、构建和三档浏览器验收，结束后自动清理
+./scripts/run_acceptance.sh
+
+# 真实模型联调：使用 .env 的百炼密钥和模型，消耗额度；数据库仍然隔离
+./scripts/run_acceptance.sh --real
+
 # Python 后端测试
 PYTHONPATH=src python3 -m unittest discover -s tests
 
+# Agent 双子图 Fake LLM 全量回归
+PYTHONPATH=src python3 -m forkfit.evals.runner --mode fake --split all
+
 # 前端类型检查
 cd apps/web && npx tsc --noEmit
+
+# 部署后只读公网 smoke，不创建任何生产数据
+cd apps/web && npm run test:e2e:production
 ```
+
+失败时的截图、视频和 trace 保存在 `apps/web/test-results/`；运行 `cd apps/web && npm run test:e2e:report` 查看报告。设置 `KEEP_E2E_STACK=1` 可在失败后保留隔离服务用于排查。
+
+验收范围与边界：
+
+- 本地写入测试只允许连接独立的 `http://127.0.0.1:33001`；脚本固定目标，避免继承环境变量后误测线上。运行前需有 Docker、Node 和本项目的 backend/frontend 本地镜像。
+- 公网模式在配置层只加载 `public.spec.ts`，不能通过遗漏 `--grep` 意外执行注册、发帖等写入测试。
+- 注册、登录、收藏、评论、发布和创建计划使用隔离数据库。分页边界、AI UI、菜单对话和撤销使用受控 API 响应，不代表真实模型成功率或版本数据库事务已通过验收。
+- 后端测试的 `skipped` 必须单独报告，不能计入通过数。真实模型、多轮硬约束、进程恢复仍需独立集成验收。
+- 当前布局检查检测横向溢出，不保证发现所有遮挡和对齐问题；截图、视频与 trace 用于失败定位，不等同于完整视觉基线。
+- `--real` 单独运行 `e2e-real`，不拦截模型或任务响应，等待真实规划及对话任务完成，检查禁用食材、锁定日期、局部修改、澄清和撤销。真实测试不自动重试整个用例；任何失败必须排查。
 
 ## 环境变量
 
@@ -132,6 +155,9 @@ cd apps/web && npx tsc --noEmit
 - `BAILIAN_MODEL` — 模型名称
 - `BAILIAN_BASE_URL` — API 地址
 - `LANGSMITH_TRACING` — LangSmith 追踪（可选）
+- `EVAL_JUDGE_MODEL` — Agent 评测裁判模型（可选）
+
+Agent 评测数据结构、指标和发布门槛见 [Agent 评测说明](docs/agent-evaluation.md)。
 
 ## 健康检查与运维
 

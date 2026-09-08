@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -192,6 +193,7 @@ class PostgresMealPlanStore:
                         plan_id=plan_id,
                         request_text=str(row.request_payload.get("request_text", "")),
                         result_payload=result.model_dump(mode="json"),
+                        state_snapshot=_snapshot(row.request_payload, row.locked_days),
                         created_by=row.user_id,
                         is_current=True,
                     )
@@ -333,6 +335,7 @@ class PostgresMealPlanStore:
                         plan_id=plan_id,
                         request_text=str(plan.request_payload.get("request_text", "")),
                         result_payload=plan.result_payload,
+                        state_snapshot=_snapshot(plan.request_payload, plan.locked_days),
                         created_by=user_id,
                         is_current=True,
                     )
@@ -409,14 +412,30 @@ class PostgresMealPlanStore:
         created_by: str,
         create_version: bool = True,
         locked_days: list[int] | None = None,
+        effective_requirements: dict | None = None,
     ) -> MealPlanMessageRecord:
         with self.session_factory() as session:
             message = session.get(MealPlanMessageRow, message_id)
             if message is None:
                 raise KeyError("Unknown conversation message.")
-            plan = session.get(MealPlanRow, message.plan_id)
+            plan = session.query(MealPlanRow).filter(MealPlanRow.id == message.plan_id).with_for_update().first()
             if plan is None or plan.current_version_id != message.base_version_id:
                 raise ValueError("这份菜单已经更新，请刷新后再修改。")
+            if message.status == "applied":
+                raise ValueError("这条修改已经应用，不能重复提交。")
+            request_payload = deepcopy(plan.request_payload or {})
+            if effective_requirements is not None:
+                request_payload["effective_requirements"] = deepcopy(effective_requirements)
+            next_locked = list(plan.locked_days or []) if locked_days is None else sorted(set(locked_days))
+            if intent == "undo":
+                target = session.get(MealPlanVersionRow, (patch or {}).get("restore_version_id"))
+                if target is None or target.plan_id != plan.id:
+                    raise ValueError("找不到要恢复的版本。")
+                request_payload, next_locked = _restore_snapshot(target.state_snapshot)
+                result = MealPlanResult.model_validate(target.result_payload)
+            elif create_version and request_text.strip():
+                context = str(request_payload.get("conversation_context", "")).strip()
+                request_payload["conversation_context"] = f"{context}\n{request_text.strip()}".strip()[-6000:]
             version_id = plan.current_version_id
             if create_version:
                 version_id = f"version_{uuid4().hex}"
@@ -432,22 +451,15 @@ class PostgresMealPlanStore:
                         request_text=request_text,
                         patch_payload=patch,
                         result_payload=result.model_dump(mode="json"),
+                        state_snapshot=_snapshot(request_payload, next_locked),
                         created_by=created_by,
                         is_current=True,
                     )
                 )
                 plan.current_version_id = version_id
                 plan.result_payload = result.model_dump(mode="json")
-            if locked_days is not None:
-                plan.locked_days = sorted(set(locked_days))
-            request_payload = dict(plan.request_payload or {})
-            context = str(request_payload.get("conversation_context", "")).strip()
-            entry = request_text.strip()
-            if entry:
-                request_payload["conversation_context"] = (
-                    f"{context}\n{entry}".strip()[-6000:]
-                )
-                plan.request_payload = request_payload
+            plan.locked_days = next_locked
+            plan.request_payload = request_payload
             plan.last_change_summary = str(response.get("summary", "菜单已更新"))[:300]
             plan.current_stage = "completed"
             plan.progress = 100
@@ -597,22 +609,42 @@ class PostgresMealPlanStore:
 
     def restore_version(self, plan_id: str, user_id: str, version_id: str) -> MealPlanRecord:
         with self.session_factory() as session:
-            plan = session.get(MealPlanRow, plan_id)
+            plan = session.query(MealPlanRow).filter(MealPlanRow.id == plan_id).with_for_update().first()
             version = session.get(MealPlanVersionRow, version_id)
             if plan is None or plan.user_id != user_id or version is None or version.plan_id != plan_id:
                 raise KeyError("Meal plan version not found.")
+            if session.query(MealPlanMessageRow.id).filter(
+                MealPlanMessageRow.plan_id == plan_id,
+                MealPlanMessageRow.status.in_(["queued", "processing"]),
+            ).first():
+                raise ValueError("菜单正在修改，请等待完成后再恢复版本。")
+            request_payload, locked_days = _restore_snapshot(version.state_snapshot)
             session.query(MealPlanVersionRow).filter(
                 MealPlanVersionRow.plan_id == plan_id
             ).update({MealPlanVersionRow.is_current: False})
             version.is_current = True
             plan.current_version_id = version_id
             plan.result_payload = version.result_payload
+            plan.request_payload = request_payload
+            plan.locked_days = locked_days
             plan.last_change_summary = "已恢复之前的菜单版本。"
             session.commit()
         record = self.get_plan(plan_id)
         if record is None:
             raise RuntimeError("Meal plan disappeared after restore.")
         return record
+
+
+def _snapshot(request_payload: dict, locked_days: list[int] | None) -> dict:
+    return {"version": 1, "request_payload": deepcopy(request_payload), "locked_days": list(locked_days or [])}
+
+
+def _restore_snapshot(snapshot: dict | None) -> tuple[dict, list[int]]:
+    if not isinstance(snapshot, dict) or snapshot.get("version") != 1 or not isinstance(snapshot.get("request_payload"), dict) or not isinstance(snapshot.get("locked_days"), list):
+        raise ValueError("这个旧版本没有完整的约束和锁定记录，无法安全恢复。请保留当前菜单或重新创建计划。")
+    if any(type(day) is not int or day < 1 for day in snapshot["locked_days"]):
+        raise ValueError("版本的锁定记录无效，当前菜单保持不变。")
+    return deepcopy(snapshot["request_payload"]), list(snapshot["locked_days"])
 
 
 def _record_from_row(row: MealPlanRow) -> MealPlanRecord:

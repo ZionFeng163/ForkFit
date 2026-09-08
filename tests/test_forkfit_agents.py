@@ -1,7 +1,8 @@
 import json
 import unittest
 
-from forkfit import ForkFitLangGraphWorkflow, Meal, MealPack, UserProfile
+from forkfit import Meal, MealPack, UserProfile
+from forkfit.langgraph_workflow import ForkFitLangGraphWorkflow
 from forkfit.constraints import ConstraintGuard, ConstraintNormalizer
 from forkfit.models import ConstraintEvidence, ConstraintSpec, RecipePatch, RecipePatchOperation, ToolEvidence
 from forkfit.recipe_agent import PatchApplier, PatchValidationError, recipe_patch_from_dict

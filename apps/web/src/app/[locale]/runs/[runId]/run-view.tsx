@@ -10,6 +10,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
 import { getRun, getPost, publishRun, resolveRun, saveRun, sendRunFeedback } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { isInternalRecipeError, recipeRunMessage } from "@/lib/user-facing";
 
 export function RunView({ runId }: { runId: string }) {
   const router = useRouter();
@@ -208,7 +209,7 @@ export function RunView({ runId }: { runId: string }) {
         </div>
         <div className="py-20 text-center">
           <div className="text-base font-semibold mb-2" style={{ color: "var(--text)" }}>定制失败</div>
-          <div className="text-sm" style={{ color: "var(--muted)" }}>{run.error?.message || "未知错误"}</div>
+          <div className="text-sm" style={{ color: "var(--muted)" }}>{recipeRunMessage(run.error?.message, "未知错误")}</div>
           <div className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
             {run.user_message || "你可以回到原菜谱重新提交，或者把限制写得更具体一点。"}
           </div>
@@ -220,6 +221,28 @@ export function RunView({ runId }: { runId: string }) {
             换个菜谱重试
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (run.status === "needs_input" && isInternalRecipeError(run.unresolved_payload?.message)) {
+    return (
+      <div className="mx-auto max-w-[720px] px-7 pb-20">
+        <div className="pt-6 pb-8">
+          <Link href="/my-forks" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--muted)]">
+            <ArrowLeft size={18} /> 返回我的定制
+          </Link>
+        </div>
+        <section className="rounded-lg border border-[var(--separator)] bg-[var(--surface)] p-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-[var(--warning)]" />
+            <div>
+              <h1 className="text-lg font-bold">这次没调整成功</h1>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{recipeRunMessage(run.unresolved_payload?.message, "请稍后重试。")}</p>
+              <Link href={`/packs/${run.unresolved_payload?.partial_result?.original_meal_pack?.id ?? ""}/fork`} className="button-primary mt-5">重新填写要求</Link>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -239,14 +262,14 @@ export function RunView({ runId }: { runId: string }) {
             <div>
               <h1 className="text-lg font-bold" style={{ color: "var(--text)" }}>需要你选一下</h1>
               <p className="mt-1 text-sm leading-6" style={{ color: "var(--muted)" }}>
-                {unresolved?.message || "部分限制无法自动处理，请填写你接受的替代食材或厨具。"}
+                {recipeRunMessage(unresolved?.message, "部分限制无法自动处理，请填写你接受的替代食材或厨具。")}
               </p>
             </div>
           </div>
           <div className="space-y-4">
             {(unresolved?.items || []).map((item, index) => (
               <label key={`${item.type}-${index}`} className="block">
-                <span className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text)" }}>{item.message}</span>
+                <span className="block text-sm font-semibold mb-1.5" style={{ color: "var(--text)" }}>{recipeRunMessage(item.message, "请补充你能接受的替代方案。")}</span>
                 <input
                   value={substitutions[String(index)] || ""}
                   onChange={(event) => setSubstitutions((current) => ({ ...current, [String(index)]: event.target.value }))}

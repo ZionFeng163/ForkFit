@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 from forkfit.config import Settings
 from forkfit.fixtures import demo_meal_pack
-from forkfit.models import LLMCallTrace, RunTrace, StepTrace
+from forkfit.models import LLMCallTrace, RunTrace, StepTrace, ToolCallTrace
 from forkfit.observability import LangSmithRunExporter
 from forkfit.stores.base import RunRecord
 
@@ -45,6 +45,9 @@ class LangSmithRunExporterTests(unittest.TestCase):
             kwargs["extra"]["metadata"]["llm_calls"][0]["agent"],
             "user",
         )
+        self.assertEqual(kwargs["extra"]["metadata"]["tool_call_count"], 1)
+        self.assertEqual(kwargs["extra"]["metadata"]["tool_calls"][0]["tool"], "search_substitutions")
+        self.assertNotIn("arguments", kwargs["extra"]["metadata"]["tool_calls"][0])
 
     def test_upload_failure_does_not_raise(self):
         client = Mock()
@@ -84,6 +87,11 @@ class LangSmithRunExporterTests(unittest.TestCase):
                         status="success",
                     )
                 ],
+                tool_calls=[ToolCallTrace(
+                    agent="recipe_adapter", tool="search_substitutions",
+                    duration_ms=2.0, status="success", result_count=3,
+                    arguments={"ingredient": "花生酱", "top_k": 3},
+                )],
             ),
             created_at=now,
             started_at=now,

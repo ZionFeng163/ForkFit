@@ -1,0 +1,7 @@
+services:
+  backend:
+    environment:
+      BAILIAN_API_KEY: ${BAILIAN_API_KEY:?Real acceptance requires BAILIAN_API_KEY}
+      BAILIAN_MODEL: ${BAILIAN_MODEL:?Real acceptance requires BAILIAN_MODEL}
+      BAILIAN_BASE_URL: ${BAILIAN_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      POST_EXTRACTION_MODEL: ${BAILIAN_MODEL:?Real acceptance requires BAILIAN_MODEL}

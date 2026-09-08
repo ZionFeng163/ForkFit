@@ -1,4 +1,7 @@
-import { getPost } from "@/lib/api";
+import "server-only";
+
+import { headers } from "next/headers";
+
 import type { RecipePost } from "@/types/forkfit";
 
 function serverApiUrl(path: string) {
@@ -16,9 +19,15 @@ export async function loadPosts(): Promise<{ posts: RecipePost[]; total: number 
 }
 
 export async function loadPost(postId: string): Promise<RecipePost | null> {
-  try {
-    return await getPost(postId);
-  } catch {
-    return null;
-  }
+  const requestHeaders = await headers();
+  const cookie = requestHeaders.get("cookie");
+  const response = await fetch(serverApiUrl(`/posts/${encodeURIComponent(postId)}`), {
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+  });
+  if (!response.ok) return null;
+  return response.json() as Promise<RecipePost>;
 }

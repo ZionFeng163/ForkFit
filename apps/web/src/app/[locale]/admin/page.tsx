@@ -32,6 +32,15 @@ import type {
   ActivityItem,
 } from "@/types/forkfit";
 
+function localizeActivity(text: string) {
+  return text
+    .replace("needs_input", "等待用户确认")
+    .replace("succeeded", "完成")
+    .replace("failed", "失败")
+    .replace("running", "进行中")
+    .replace("queued", "排队中");
+}
+
 // ── Icons (inline SVG to match design) ──────────────────────────
 const Icons = {
   dashboard: (
@@ -373,7 +382,7 @@ function DashboardTab({ refreshKey }: { refreshKey: number }) {
               />
               <div>
                 <div className="text-[13px] leading-relaxed text-[var(--text)]">
-                  {a.text}
+                  {localizeActivity(a.text)}
                 </div>
                 <div className="mt-0.5 text-[11px] text-[var(--muted)]">{a.time}</div>
               </div>

@@ -26,6 +26,7 @@ ConversationIntentKind = Literal[
     "explain",
     "undo",
     "lock_day",
+    "unlock_day",
     "clarification",
 ]
 
@@ -75,6 +76,7 @@ class ConversationResult:
     result: MealPlanResult | None = None
     patch: ConversationPatch | None = None
     locked_days: list[int] | None = None
+    effective_requirements: dict | None = None
 
 
 class MealPlanConversationWorkflow:
@@ -117,15 +119,19 @@ class MealPlanConversationWorkflow:
                 summary="已解释当前安排。",
                 result=plan.result,
             )
-        if intent.kind == "lock_day":
+        if intent.kind in {"lock_day", "unlock_day"}:
             if intent.day_index is None:
-                raise ValueError("请说明要锁定哪一天。")
-            locked = sorted(set(plan.locked_days) | {intent.day_index})
+                raise ValueError("请说明要锁定或解锁哪一天。")
+            if not any(day.day_index == intent.day_index for day in plan.result.days):
+                raise ValueError("这份菜单没有该日期。")
+            unlocking = intent.kind == "unlock_day"
+            locked = sorted(set(plan.locked_days) - {intent.day_index} if unlocking else set(plan.locked_days) | {intent.day_index})
+            summary = f"已{'解锁' if unlocking else '锁定'}第 {intent.day_index} 天。"
             return ConversationResult(
                 status="applied",
                 intent=intent,
-                message=f"已锁定第 {intent.day_index} 天，后续整体调整不会修改这一天。",
-                summary=f"已锁定第 {intent.day_index} 天。",
+                message=summary + ("后续整体调整可以修改这一天。" if unlocking else "后续整体调整不会修改这一天。"),
+                summary=summary,
                 result=plan.result,
                 locked_days=locked,
             )
@@ -169,6 +175,8 @@ class MealPlanConversationWorkflow:
                 kind="explain", day_index=cls._day_index(value), raw_text=value
             )
         day_index = cls._day_index(value)
+        if re.search(r"解锁|(?:取消|解除|不再|不要).*锁定", value):
+            return ConversationIntent(kind="unlock_day", day_index=day_index, raw_text=value)
         if re.search(r"锁定|固定下来", value):
             return ConversationIntent(
                 kind="lock_day", day_index=day_index, raw_text=value
@@ -206,6 +214,12 @@ class MealPlanConversationWorkflow:
                     kind="change_constraint",
                     raw_text=value,
                     requires_confirmation=True,
+                )
+            if day_index is None:
+                return ConversationIntent(
+                    kind="clarification",
+                    raw_text=value,
+                    question="你想修改第几天，还是整份菜单？",
                 )
             return ConversationIntent(
                 kind="change_ingredient",

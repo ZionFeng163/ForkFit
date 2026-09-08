@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
-import { Calendar, Edit, Loader2, MapPin, Plus, Star, Users } from "lucide-react";
+import { Calendar, Edit, Loader2, LogOut, MapPin, Plus, Star, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { AuthGuard } from "@/components/auth-guard";
@@ -36,7 +36,7 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const locale = useLocale();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [tab, setTab] = useState<Tab>("recipes");
   const [profile, setProfile] = useState<{ post_count: number; bio: string; location: string; created_at?: string } | null>(null);
   const [stats, setStats] = useState({ followers: 0, following: 0 });
@@ -216,14 +216,20 @@ function ProfileContent() {
               </button>
             </>
           ) : (
-            <button
-              onClick={startEdit}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150"
-              style={{ border: "1px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }}
-            >
-              <Edit size={14} />
-              编辑资料
-            </button>
+            <>
+              <button type="button" onClick={startEdit} className="button-secondary h-10 min-h-10">
+                <Edit size={14} />
+                编辑资料
+              </button>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="button-secondary h-10 min-h-10 text-[var(--danger)]"
+              >
+                <LogOut size={14} />
+                退出登录
+              </button>
+            </>
           )}
         </div>
       </div>

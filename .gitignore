@@ -22,6 +22,8 @@ fork_*.png
 final_*.png
 test_browser.mjs
 test_layout.mjs
+apps/web/playwright-report/
+apps/web/test-results/
 
 # Embedding cache
 src/forkfit/knowledge/.cache/

@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageOff } from "lucide-react";
+import { CookingPot } from "lucide-react";
 import { useState } from "react";
 
 export function RemoteImage({
@@ -21,9 +21,11 @@ export function RemoteImage({
       <div
         role="img"
         aria-label={`${alt}（图片暂不可用）`}
-        className={`flex items-center justify-center bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className ?? ""}`}
+        className={`flex items-center justify-center bg-[radial-gradient(circle_at_35%_30%,var(--surface-container-lowest),var(--surface-container-high))] text-[var(--on-surface-variant)] ${className ?? ""}`}
       >
-        <ImageOff aria-hidden="true" className="h-6 w-6" strokeWidth={1.6} />
+        <span className="grid h-12 w-12 place-items-center rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] shadow-sm">
+          <CookingPot aria-hidden="true" className="h-5 w-5 opacity-70" strokeWidth={1.6} />
+        </span>
       </div>
     );
   }

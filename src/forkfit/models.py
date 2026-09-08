@@ -119,6 +119,7 @@ class AgentFinding:
     message: str
     suggested_action: str = ""
     required_action: str = ""
+    affected_ingredients: list[str] = field(default_factory=list)
 
     def action(self) -> str:
         return self.required_action or self.suggested_action
@@ -193,6 +194,17 @@ class ToolEvidence:
     summary: str
     confidence: float
     approved: bool = False
+
+
+@dataclass(slots=True)
+class ToolCallTrace:
+    agent: str
+    tool: str
+    duration_ms: float
+    status: Literal["success", "error"]
+    result_count: int = 0
+    arguments: dict[str, Any] = field(default_factory=dict)
+    error: str = ""
 
 
 @dataclass(slots=True)
@@ -302,6 +314,7 @@ class RunTrace:
     workflow_version: str = "v2"
     knowledge_version: str = ""
     repair_count: int = 0
+    tool_calls: list[ToolCallTrace] = field(default_factory=list)
 
     @property
     def llm_call_count(self) -> int:
