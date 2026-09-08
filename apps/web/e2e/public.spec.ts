@@ -5,7 +5,7 @@ import { expectMainVisible, watchPage } from "./support/diagnostics";
 test.describe("公共浏览", () => {
   test("@smoke 首页说明产品并可进入规划", async ({ page }, testInfo) => {
     const finish = watchPage(page, testInfo);
-    await page.goto("/zh");
+    await page.goto("/zh", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1 })).toContainText("吃什么");
     await expect(page.getByRole("button", { name: "开始规划" })).toBeVisible();
     await expect(page.getByRole("link", { name: /先逛菜谱/ })).toBeVisible();
@@ -15,7 +15,7 @@ test.describe("公共浏览", () => {
 
   test("@smoke 发现页可筛选和搜索", async ({ page }, testInfo) => {
     const finish = watchPage(page, testInfo);
-    await page.goto("/zh/discover");
+    await page.goto("/zh/discover", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "发现菜谱" })).toBeVisible();
     const cards = page.locator("article").filter({ has: page.getByRole("button", { name: /加入计划|已加入/ }) });
     await expect(cards.first()).toBeVisible();
@@ -35,7 +35,7 @@ test.describe("公共浏览", () => {
 
   test("@smoke 菜谱详情具备做菜信息和登录回跳", async ({ page }, testInfo) => {
     const finish = watchPage(page, testInfo);
-    await page.goto("/zh/discover");
+    await page.goto("/zh/discover", { waitUntil: "domcontentloaded" });
     const recipe = page.locator("article a[href*='/packs/']").first();
     await recipe.click();
     await expect(page).toHaveURL(/\/zh\/packs\//);

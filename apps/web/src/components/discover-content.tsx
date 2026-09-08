@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Clock3, Search, SlidersHorizontal, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -12,6 +12,9 @@ import { getFrontendAdapter } from "@/lib/frontend-adapter";
 import type { RecipePost } from "@/types/forkfit";
 
 const PAGE_SIZE = 18;
+const subscribeToHydration = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 const frontendAdapter = getFrontendAdapter();
 const CATEGORIES = [
   { key: "推荐", zh: "推荐", en: "Recommended" },
@@ -42,6 +45,8 @@ export function DiscoverContent({
 }: DiscoverContentProps) {
   const t = useTranslations("Home");
   const locale = useLocale();
+  // Server-rendered controls must not accept edits before handlers are attached.
+  const interactive = useSyncExternalStore(subscribeToHydration, clientReady, serverReady);
   const [posts, setPosts] = useState(initialPosts);
   const [total, setTotal] = useState(totalCount);
   const [nextOffset, setNextOffset] = useState(initialOffset);
@@ -127,12 +132,13 @@ export function DiscoverContent({
           <input
             className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] pl-10 pr-10 text-sm outline-none focus:border-[var(--focus)]"
             value={search}
+            disabled={!interactive}
             onChange={(event) => changeSearch(event.target.value)}
             placeholder={t("searchPlaceholder")}
             aria-label={t("searchPlaceholder")}
           />
           {(search || category !== "推荐") && (
-            <button type="button" className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-[var(--muted-text)] hover:bg-[var(--surface-container)] hover:text-[var(--text)]" onClick={resetFilters} aria-label={locale === "zh" ? "清除筛选" : "Clear filters"}>
+            <button type="button" disabled={!interactive} className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-[var(--muted-text)] hover:bg-[var(--surface-container)] hover:text-[var(--text)]" onClick={resetFilters} aria-label={locale === "zh" ? "清除筛选" : "Clear filters"}>
               <X size={15} />
             </button>
           )}
@@ -141,7 +147,7 @@ export function DiscoverContent({
 
       <div className="category-tabs" aria-label={locale === "zh" ? "菜谱分类" : "Recipe categories"}>
         {CATEGORIES.map((item) => (
-          <button key={item.key} type="button" className="category-tab" data-active={category === item.key} onClick={() => changeCategory(item.key)}>
+          <button key={item.key} type="button" disabled={!interactive} className="category-tab" data-active={category === item.key} onClick={() => changeCategory(item.key)}>
             {locale === "zh" ? item.zh : item.en}
           </button>
         ))}
@@ -191,7 +197,7 @@ export function DiscoverContent({
 
         {hasMore && (
           <div className="flex justify-center pt-10">
-            <button type="button" className="button-secondary min-w-32" disabled={loading} onClick={() => void fetchPosts(search, category, nextOffset)}>
+            <button type="button" className="button-secondary min-w-32" disabled={!interactive || loading} onClick={() => void fetchPosts(search, category, nextOffset)}>
               {loading ? t("loading") : t("loadMore")}
             </button>
           </div>
