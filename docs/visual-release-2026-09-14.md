@@ -15,6 +15,8 @@ Scope: frontend only. Keep the Material 3 palette, backend contracts, content an
 
 - ESLint with zero warnings, application TypeScript, E2E TypeScript and production build.
 - `playwright test visual-layout public hydration pagination --project=desktop`: 7 passed.
+- Tablet/mobile public and pagination regression: 8 passed.
+- Initial production smoke exposed a premature Save click on the detail page before hydration. Save, Like and Add to plan now wait for the existing authentication-ready state; a blocked-script regression covers the first click and login return URL.
 - Visual suite captures 1440x900, 1024x768, 768x1024, 390x844 and homepage 899/901px breakpoint checks.
 - Existing isolated admin account only. Conversation edits, failure and undo use browser-intercepted fixtures; no real menus created and no user content changed.
 - Long recipe names, 24-item shopping list, eight-message history, image fallback, keyboard disclosure and preserved failed input covered. CSS 200% zoom is a reflow check, not a claim of full browser/screen-reader accessibility certification.

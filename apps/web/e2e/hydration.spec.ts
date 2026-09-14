@@ -25,3 +25,26 @@ test("发现页脚本未就绪时不能丢失筛选操作", async ({ page }) => 
     await page.unrouteAll({ behavior: "wait" });
   }
 });
+
+test("详情页收藏等待脚本和登录状态就绪后再接受点击", async ({ page }) => {
+  let releaseScripts!: () => void;
+  const scriptsReady = new Promise<void>((resolve) => { releaseScripts = resolve; });
+  await page.route("**/_next/**/*.js", async (route) => {
+    await scriptsReady;
+    await route.continue();
+  });
+  try {
+    await page.goto("/zh/packs/budget-family-hotpot", { waitUntil: "commit" });
+    const save = page.getByRole("button", { name: "收藏", exact: true });
+    await expect(save).toBeVisible();
+    await expect(save).toBeDisabled();
+    await expect(page.getByRole("button", { name: "加入我的计划", exact: true })).toBeDisabled();
+    releaseScripts();
+    await expect(save).toBeEnabled();
+    await save.click();
+    await expect(page).toHaveURL(/\/zh\/login\?returnTo=/);
+  } finally {
+    releaseScripts();
+    await page.unrouteAll({ behavior: "wait" });
+  }
+});

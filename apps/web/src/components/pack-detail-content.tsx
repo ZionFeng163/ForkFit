@@ -27,7 +27,7 @@ function timeAgo(value: string, locale: string) {
 
 export function PackDetailContent({ post, locale }: { post: RecipePost; locale: string }) {
   const tc = useTranslations("Comments");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const recipe = post.recipe;
   const ingredients = recipe.ingredients.filter((item) => item.trim().toLowerCase() !== post.title.trim().toLowerCase());
   const [liked, setLiked] = useState(post.liked ?? false);
@@ -182,13 +182,13 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
               className="button-primary"
               data-active={inMealPlan}
               onClick={() => mealPlan.toggle(post)}
-              disabled={!inMealPlan && mealPlan.full}
+              disabled={authLoading || (!inMealPlan && mealPlan.full)}
             >
               <CalendarPlus size={17} />{isZh ? (inMealPlan ? "已加入我的计划" : "加入我的计划") : (inMealPlan ? "Added to my plan" : "Add to my plan")}
             </button>
             <Link href={`/packs/${post.id}/fork`} className="button-secondary"><SlidersHorizontal size={17} />{isZh ? "按我的需求调整" : "Adapt to my needs"}</Link>
-            <button type="button" className="button-secondary px-3" data-active={saved} onClick={handleSave} aria-label={isZh ? "收藏" : "Save"}><Bookmark size={17} className={saved ? "fill-current text-[var(--brand)]" : ""} /></button>
-            <button type="button" className="button-secondary px-3" data-active={liked} onClick={handleLike} aria-label={isZh ? "点赞" : "Like"}><Heart size={17} className={liked ? "fill-current text-[var(--danger)]" : ""} />{likes}</button>
+            <button type="button" disabled={authLoading} className="button-secondary px-3" data-active={saved} onClick={handleSave} aria-label={isZh ? "收藏" : "Save"}><Bookmark size={17} className={saved ? "fill-current text-[var(--brand)]" : ""} /></button>
+            <button type="button" disabled={authLoading} className="button-secondary px-3" data-active={liked} onClick={handleLike} aria-label={isZh ? "点赞" : "Like"}><Heart size={17} className={liked ? "fill-current text-[var(--danger)]" : ""} />{likes}</button>
             {canEdit && <Link href={`/packs/${post.id}/edit`} className="button-secondary px-3" title={isZh ? "编辑" : "Edit"}><Pencil size={16} /></Link>}
           </div>
         </header>
