@@ -13,12 +13,6 @@ import { errorMessage } from "@/lib/errors";
 import type { MealPlanDraft } from "@/lib/frontend-adapter";
 import { loadUserProfileForm, profileFormToUserProfile } from "@/lib/user-profile";
 
-const EXAMPLES = [
-  "清淡一点，工作日 30 分钟内",
-  "三天高蛋白，不吃香菜",
-  "两天家常菜，多一点蔬菜",
-];
-
 export function MealPlanForm() {
   const locale = useLocale();
   const isZh = locale === "zh";
@@ -71,9 +65,7 @@ export function MealPlanForm() {
       </Link>
       <header className="page-header">
         <div>
-          <p className="eyebrow">{isZh ? "吃饭计划" : "Meal plans"}</p>
           <h1 className="page-heading">{isZh ? "安排接下来几天" : "Plan the next few days"}</h1>
-          <p className="page-description">{isZh ? "选好想吃的菜，剩下的安排交给我们。" : "Choose what sounds good and we’ll plan the rest."}</p>
         </div>
       </header>
 
@@ -100,8 +92,8 @@ export function MealPlanForm() {
                   </li>
                 ))}
               </ul>
-            ) : <div className="mt-5 border-y border-dashed border-[var(--line)] py-6 text-sm text-[var(--muted-text)]">{isZh ? "还没有选菜，先去发现页挑几道想吃的吧。" : "Nothing here yet. Pick a few recipes from Discover."}</div>}
-            {mealPlan.selected.length < days && <p className="mt-4 text-sm font-medium text-[var(--danger)]">{isZh ? `再选 ${days - mealPlan.selected.length} 道，就能安排这 ${days} 天` : `Choose ${days - mealPlan.selected.length} more to plan all ${days} days`}</p>}
+            ) : null}
+            {mealPlan.selected.length < days && <p className="mt-4 text-sm text-[var(--muted-text)]">{isZh ? `还需选择 ${days - mealPlan.selected.length} 道菜` : `Choose ${days - mealPlan.selected.length} more recipes`}</p>}
           </section>
 
           <section className="plan-entry-section grid gap-5 sm:grid-cols-2">
@@ -121,16 +113,12 @@ export function MealPlanForm() {
 
           <section className="plan-entry-section">
             <label htmlFor="meal-plan-request">
-              <span className="block text-sm font-semibold">{isZh ? "这几天有什么讲究" : "Anything we should know?"}</span>
-              <span className="mt-1 block text-sm text-[var(--muted-text)]">{isZh ? "告诉我们口味、忌口和下厨时间，也可以留空。" : "Add any tastes, dietary needs, or time limits—or leave this blank."}</span>
+              <span className="block text-sm font-semibold">{isZh ? "口味与限制（选填）" : "Preferences and limits (optional)"}</span>
             </label>
-            <textarea id="meal-plan-request" className="textarea mt-3 min-h-36" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={1500} placeholder={isZh ? "例如：接下来 5 天想吃家常中餐，少盐，周三加班要特别快，冰箱里还有半颗卷心菜……" : "Describe your preferences and constraints…"} />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {EXAMPLES.map((example) => <button key={example} type="button" className="meal-plan-example" onClick={() => setRequestText(example)}>{example}</button>)}
-            </div>
+            <textarea id="meal-plan-request" className="textarea mt-3" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={1500} placeholder={isZh ? "例如：少盐，不吃香菜，30 分钟内" : "For example: less salt, no cilantro, under 30 minutes"} />
           </section>
 
-          <div className="border-t border-[var(--line)] pt-6">
+          <div className="pt-6">
             {error && <p className="mb-4 text-sm text-[var(--danger)]" role="alert">{error}</p>}
             <button type="submit" className="button-primary min-w-40" disabled={submitting}>
               {submitting ? <Loader2 size={17} className="animate-spin" /> : <CalendarDays size={17} />}
@@ -139,15 +127,6 @@ export function MealPlanForm() {
           </div>
         </div>
 
-        <aside className="plan-entry-aside">
-          <h2>{isZh ? "安排好以后" : "What you’ll get"}</h2>
-          <p>{isZh ? "每天吃什么、要买什么，一次整理清楚。" : "A clear daily menu and everything you need to shop for."}</p>
-          <ul className="mt-5 space-y-3 border-t border-[var(--line)] pt-4 text-sm">
-            <li>01　{isZh ? "每天的菜和下厨时间" : "Meals and cooking time for each day"}</li>
-            <li>02　{isZh ? "按天合并的采购清单" : "One combined shopping list"}</li>
-            <li>03　{isZh ? "做好以后还能继续调整" : "Easy changes whenever you need them"}</li>
-          </ul>
-        </aside>
       </form>
     </div>
   );

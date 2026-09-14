@@ -116,7 +116,7 @@ function ProfileContent() {
 
         <div className="flex-1 min-w-0">
           <div className="mb-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-            <h1 className="min-w-0 break-words text-[21px] font-bold tracking-[-0.01em] sm:text-[22px]" style={{ color: "var(--text)" }}>
+            <h1 className="page-heading min-w-0 break-words">
               {editing ? editDisplayName || user.display_name : (user.display_name || user.username)}
             </h1>
             {profile && profile.post_count > 0 && (
@@ -408,8 +408,7 @@ function Empty({ message, actionHref, actionLabel }: { message: string; actionHr
       {actionHref && actionLabel && (
         <Link
           href={actionHref}
-          className="inline-flex items-center gap-1.5 mt-3 px-5 py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all duration-150"
-          style={{ background: "var(--brand)" }}
+          className="button-primary mt-3"
         >
           <Plus size={14} />
           {actionLabel}

@@ -1,13 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Clock3, Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PostCard } from "@/components/post-card";
 import { EmptyState, ErrorState, LoadingState } from "@/components/recipe-ui";
-import { RemoteImage } from "@/components/remote-image";
-import { Link } from "@/i18n/routing";
 import { getFrontendAdapter } from "@/lib/frontend-adapter";
 import type { RecipePost } from "@/types/forkfit";
 
@@ -30,7 +28,6 @@ type DiscoverContentProps = {
   initialPosts: RecipePost[];
   totalCount: number;
   initialOffset: number;
-  featuredPost: RecipePost | null;
   initialQuery: string;
   initialCategory: string;
 };
@@ -39,7 +36,6 @@ export function DiscoverContent({
   initialPosts,
   totalCount,
   initialOffset,
-  featuredPost,
   initialQuery,
   initialCategory,
 }: DiscoverContentProps) {
@@ -72,11 +68,10 @@ export function DiscoverContent({
     return frontendAdapter.listRecipes({ limit: PAGE_SIZE, offset, query: q, category: nextCategory })
       .then(({ posts: fresh, total: freshTotal }) => {
         if (requestId !== requestRef.current) return;
-        const filtered = fresh.filter((post) => post.id !== featuredPost?.id);
         setPosts((current) => {
-          if (offset === 0) return filtered;
+          if (offset === 0) return fresh;
           const seen = new Set(current.map((post) => post.id));
-          return [...current, ...filtered.filter((post) => !seen.has(post.id))];
+          return [...current, ...fresh.filter((post) => !seen.has(post.id))];
         });
         setNextOffset(offset + fresh.length);
         setTotal(freshTotal);
@@ -87,7 +82,7 @@ export function DiscoverContent({
       .finally(() => {
         if (requestId === requestRef.current) setLoading(false);
       });
-  }, [featuredPost?.id]);
+  }, []);
 
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -117,15 +112,13 @@ export function DiscoverContent({
     void fetchPosts("", "推荐", 0);
   }
 
-  const showFeatured = Boolean(featuredPost && !search && category === "推荐");
   const hasMore = nextOffset < total;
 
   return (
-    <div className="pb-16 pt-8 md:pt-10">
-      <div className="page-header md:grid-cols-[1fr_360px]">
+    <div className="pb-16">
+      <div className="page-header discover-header">
         <div>
           <h1 className="page-heading">{locale === "zh" ? "发现菜谱" : "Discover recipes"}</h1>
-          <p className="mt-2 text-[15px] text-[var(--muted-text)]">{t("discoverSubtitle")}</p>
         </div>
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-text)]" />
@@ -153,34 +146,8 @@ export function DiscoverContent({
         ))}
       </div>
 
-      {showFeatured && featuredPost && (
-        <section className="py-7">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="section-heading">{locale === "zh" ? "编辑推荐" : "Editor’s pick"}</h2>
-            <span className="meta-text">{featuredPost.author}</span>
-          </div>
-          <article className="grid overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--surface)] md:h-[300px] md:grid-cols-[1.2fr_0.8fr]">
-            <Link href={`/packs/${featuredPost.id}`} className="h-[200px] overflow-hidden md:h-full">
-              <RemoteImage src={featuredPost.image_urls[0] ?? ""} alt={featuredPost.title} className="h-full w-full object-cover" priority />
-            </Link>
-            <div className="flex flex-col justify-center p-5 md:p-8">
-              <span className="recipe-label">{featuredPost.recipe.tags[0] || (locale === "zh" ? "今日推荐" : "Recommended")}</span>
-              <h3 className="mt-3 text-2xl font-bold leading-tight tracking-[-0.03em] md:text-3xl">
-                <Link href={`/packs/${featuredPost.id}`} className="hover:text-[var(--brand-hover)]">{featuredPost.title}</Link>
-              </h3>
-              <p className="mt-4 hidden line-clamp-3 leading-7 text-[var(--muted-text)] sm:block">{featuredPost.description}</p>
-              <div className="mt-6 flex items-center gap-4 border-t border-[var(--line)] pt-4 text-sm text-[var(--muted-text)]">
-                <span className="flex items-center gap-1.5"><Clock3 size={15} />{featuredPost.recipe.cook_time_minutes} {locale === "zh" ? "分钟" : "min"}</span>
-                <span>{featuredPost.forks} {locale === "zh" ? "次定制" : "forks"}</span>
-              </div>
-              <Link href={`/packs/${featuredPost.id}/fork`} className="button-primary mt-5 w-fit"><SlidersHorizontal size={16} />{locale === "zh" ? "按我的需求调整" : "Adapt this recipe"}</Link>
-            </div>
-          </article>
-        </section>
-      )}
-
-      <section className={showFeatured ? "pt-2" : "pt-8"}>
-        <div className="mb-5 flex items-center justify-between border-b border-[var(--line)] pb-4">
+      <section className="pt-6">
+        <div className="mb-5 flex items-center justify-between">
           <h2 className="section-heading">{search ? (locale === "zh" ? `“${search}”的搜索结果` : `Results for “${search}”`) : CATEGORIES.find((item) => item.key === category)?.[locale === "zh" ? "zh" : "en"]}</h2>
           <span className="meta-text">{total} {locale === "zh" ? "道" : "recipes"}</span>
         </div>

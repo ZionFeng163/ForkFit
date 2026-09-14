@@ -15,7 +15,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-[420px] items-start px-5 pb-12 pt-12 md:pt-16">
-        <div className="w-full rounded-xl border border-[var(--separator)] bg-[var(--surface)] p-6 sm:p-8">
+        <div className="w-full rounded-xl bg-[var(--surface)] p-6 sm:p-8">
           {children}
         </div>
       </main>

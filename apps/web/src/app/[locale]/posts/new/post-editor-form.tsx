@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Info, Loader2, Plus, Send, X } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Send, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FormEvent, useRef, useState } from "react";
 
@@ -239,12 +239,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
         {/* Page header */}
         <div className="mt-7 mb-8">
-          <h1 className="text-2xl font-bold tracking-[-0.01em] mb-1.5" style={{ color: "var(--text)" }}>
+          <h1 className="page-heading">
             {isEditing ? t("editTitle") : t("title")}
           </h1>
-          <p className="text-sm leading-[1.6]" style={{ color: "var(--muted)" }}>
-            {t("description")}
-          </p>
         </div>
 
         {/* Progress bar */}
@@ -498,25 +495,6 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
               )}
             </div>
 
-            {/* Tips card */}
-            <div className="fp-tips">
-              <div className="fp-tips-title">
-                <Info size={15} />
-                发布小贴士
-              </div>
-              <ul className="fp-tips-list">
-                {[
-                  "图片清楚，食材写明用量",
-                  "步骤写到别人能照做",
-                  "标签和小贴士按需补充",
-                ].map((tip, i) => (
-                  <li key={i}>
-                    <span className="fp-tips-num">{i + 1}</span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
       </div>

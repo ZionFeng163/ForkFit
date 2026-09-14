@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, Clock3, CookingPot, Loader2, LockKeyhole, ShoppingBasket } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Clock3, CookingPot, Loader2, LockKeyhole, ShoppingBasket } from "lucide-react";
 import { useLocale } from "next-intl";
 
 import { MealPlanConversation } from "@/components/meal-plan-conversation";
@@ -117,16 +117,15 @@ export function MealPlanView({ planId }: { planId: string }) {
       <Link href="/meal-plans" className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-text)] hover:text-[var(--text)]"><ArrowLeft size={16} />{isZh ? "返回计划列表" : "Back to plans"}</Link>
       <header className="plan-result-header mt-5">
         <div>
-          <p className="eyebrow flex items-center gap-2"><CalendarDays size={14} />{isZh ? "你的吃饭计划" : "Your meal plan"}</p>
           <h1 className="page-heading">{result.title}</h1>
-          <p className="page-description">{result.summary}</p>
           <div className="plan-version-strip">
             <span><strong>{isZh ? "当前版本" : "Current version"}</strong> {versionLabel}</span>
             {plan.locked_days?.length ? <span className="flex items-center gap-1"><LockKeyhole size={13} />{isZh ? `已锁定第 ${plan.locked_days.join("、")} 天` : `Days ${plan.locked_days.join(", ")} locked`}</span> : null}
           </div>
         </div>
-        <p className="plan-result-header-note">{plan.last_change_summary || result.decision_summary}</p>
+        {plan.last_change_summary && <p className="plan-result-header-note">{plan.last_change_summary}</p>}
       </header>
+      {(result.summary || result.decision_summary) && <details className="plan-explanation mt-4"><summary>{isZh ? "查看安排说明" : "Why this plan"}</summary><p className="mt-3 leading-7">{result.summary}</p><p className="mt-2 leading-7">{result.decision_summary}</p></details>}
 
       <div className="plan-day-nav" aria-label={isZh ? "选择日期" : "Choose a day"}>
         {result.days.map((day) => (
@@ -137,26 +136,26 @@ export function MealPlanView({ planId }: { planId: string }) {
       </div>
 
       <div className="plan-result-layout">
-        <div className="min-w-0">
+        <div className="plan-conversation-slot"><MealPlanConversation planId={planId} currentVersionId={plan.current_version_id} onVersionChanged={refreshPlan} /></div>
+        <div className="plan-days min-w-0">
           <div className="flex items-center justify-between gap-4"><h2 className="section-heading">{isZh ? "每天怎么吃" : "Daily plan"}</h2><span className="meta-text">{result.days.length} {isZh ? "天" : "days"}</span></div>
           <div className="mt-5">
             {result.days.map((day) => (
               <article key={day.day_index} id={`plan-day-${day.day_index}`} className="plan-day-card scroll-mt-8">
                 <div className="plan-day-kicker"><span>{day.label} · {day.dishes.length} {isZh ? "道菜" : "dishes"}</span><span className="flex items-center gap-1.5 text-[var(--muted-text)]"><Clock3 size={14} />{day.dishes.reduce((sum, dish) => sum + dish.meal.cook_time_minutes, 0)} {isZh ? "分钟合计" : "min total"}</span></div>
-                {day.reason && <p className="plan-day-reason">{day.reason}</p>}
+                {(day.reason || day.dishes.some((dish) => dish.reason)) && <details className="plan-explanation mt-2"><summary>{isZh ? "查看安排说明" : "Why this day"}</summary>{day.reason && <p className="plan-day-reason">{day.reason}</p>}{day.dishes.filter((dish) => dish.reason).map((dish) => <p key={dish.source_post_id} className="plan-day-reason">{dish.meal.name}：{dish.reason}</p>)}</details>}
                 <div className="plan-dish-stack">
                   {day.dishes.map((dish) => (
                     <section key={dish.source_post_id} className="plan-dish-card">
                       <div className="plan-day-image"><RemoteImage src={sourceImages[dish.source_post_id] ?? ""} alt={dish.meal.name} className="h-full w-full object-cover" /></div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-start justify-between gap-3"><h2>{dish.meal.name}</h2><Link href={`/packs/${dish.source_post_id}`} className="text-sm font-semibold text-[var(--brand-hover)]">{isZh ? "查看原菜谱" : "Original recipe"}</Link></div>
-                        <p className="plan-day-reason">{dish.reason}</p>
+                        <p className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[var(--muted-text)]"><span className="flex items-center gap-1"><Clock3 size={14} />{dish.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span>{dish.meal.equipment.length > 0 && <span className="flex items-center gap-1"><CookingPot size={14} />{dish.meal.equipment.join("、")}</span>}</p>
+                      </div>
                         <div className="plan-day-columns">
                           <div><h3>{isZh ? "食材" : "Ingredients"}</h3><ul>{dish.meal.ingredients.map((item) => <li key={item}>{item}</li>)}</ul></div>
                           <div><h3>{isZh ? "步骤" : "Method"}</h3><ol>{dish.meal.steps.map((step, index) => <li key={`${step}-${index}`}>{index + 1}. {cleanStepPrefix(step)}</li>)}</ol></div>
                         </div>
-                        <p className="mt-5 flex flex-wrap items-center gap-3 text-xs text-[var(--muted-text)]"><span className="flex items-center gap-1"><Clock3 size={14} />{dish.meal.cook_time_minutes} {isZh ? "分钟" : "min"}</span>{dish.meal.equipment.length > 0 && <span className="flex items-center gap-1"><CookingPot size={14} />{dish.meal.equipment.join("、")}</span>}</p>
-                      </div>
                     </section>
                   ))}
                 </div>
@@ -181,7 +180,6 @@ export function MealPlanView({ planId }: { planId: string }) {
             })}</ul>
           </section>
           {result.prep_notes.length > 0 && <section className="plan-side-section"><h2>{isZh ? "提前做一点" : "Prep ahead"}</h2><ul className="mt-3 space-y-3 text-sm leading-6 text-[var(--muted-text)]">{result.prep_notes.map((note) => <li key={note} className="flex gap-2"><Check size={15} className="mt-1 shrink-0 text-[var(--success)]" />{note}</li>)}</ul></section>}
-          <MealPlanConversation planId={planId} currentVersionId={plan.current_version_id} onVersionChanged={refreshPlan} />
         </aside>
       </div>
     </div>

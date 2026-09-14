@@ -172,7 +172,7 @@ export function RunView({ runId }: { runId: string }) {
         </div>
         <div className="py-12 md:py-16">
           <Loader2 size={28} className="mb-4 animate-spin text-[var(--brand)]" />
-          <h1 className="text-2xl font-bold tracking-[-0.03em]">
+          <h1 className="page-heading">
             {run.status === "queued" ? "已加入队列" : "定制中..."}
           </h1>
           <div className="mt-2 text-sm text-[var(--muted-text)]">

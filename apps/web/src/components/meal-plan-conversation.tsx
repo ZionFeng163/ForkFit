@@ -80,23 +80,21 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
   }
 
   return (
-    <section className="plan-conversation-panel mt-10 border-t border-[var(--line)] pt-8" aria-label={isZh ? "继续调整菜单" : "Continue adjusting"}>
+    <section className="plan-conversation-panel" aria-label={isZh ? "继续调整菜单" : "Continue adjusting"}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <MessageCircle size={18} className="text-[var(--brand)]" />
             <h2 className="section-heading">{isZh ? "继续调整" : "Keep refining"}</h2>
           </div>
-          <p className="mt-2 text-sm text-[var(--muted-text)]">
-            {isZh ? "不满意的地方直接告诉我，当前菜单会保留在历史版本里。" : "Tell us what feels off and keep this plan as your starting point."}
-          </p>
         </div>
         {conversation.isFetching && <Loader2 size={16} className="mt-1 animate-spin text-[var(--muted-text)]" />}
       </div>
 
       {messages.length > 0 && (
-        <div className="conversation-messages mt-5 space-y-3">
-          {messages.map((message) => (
+        <div className="mt-4 space-y-3">
+          {[messages.slice(0, -2), messages.slice(-2)].map((group, groupIndex) => {
+            const content = group.map((message) => (
             <div key={message.message_id} className={message.role === "user" ? "ml-auto max-w-[88%] rounded-lg bg-[var(--brand-soft)] px-4 py-3 text-sm" : "max-w-[88%] rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm"}>
               <p className="leading-6">
                 {message.role === "assistant" ? (message.response?.message || message.content) : message.content}
@@ -118,7 +116,9 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
                 <span className="mt-2 block text-xs text-[var(--danger)]">{message.error?.message || (isZh ? "这次修改没有应用。" : "This change was not applied.")}</span>
               )}
             </div>
-          ))}
+            ));
+            return groupIndex === 0 ? (group.length > 0 && <details key="history" className="conversation-history"><summary>{isZh ? "历史对话" : "Conversation history"}</summary><div className="conversation-messages mt-3 space-y-3">{content}</div></details>) : <div key="recent" className="space-y-3">{content}</div>;
+          })}
         </div>
       )}
 
@@ -143,7 +143,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           value={text}
           maxLength={1500}
           onChange={(event) => setText(event.target.value)}
-          placeholder={isZh ? "例如：第二天不要鱼，换成一道 30 分钟内的鸡肉菜……" : "For example: replace day two with a chicken dish under 30 minutes…"}
+          placeholder={isZh ? "想调整哪里？" : "What would you change?"}
           aria-label={isZh ? "输入菜单修改" : "Describe a menu change"}
         />
         <button type="submit" className="button-primary h-12 min-h-12 w-12 px-0" disabled={!text.trim() || send.isPending || Boolean(isWaitingForMessage)} aria-label={isZh ? "发送修改" : "Send change"}>

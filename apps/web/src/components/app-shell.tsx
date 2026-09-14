@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </nav>
 
-          <form className="header-search" onSubmit={submitSearch} role="search">
+          {pathname !== "/discover" && <form className="header-search" onSubmit={submitSearch} role="search">
             <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-text)]" />
             <input
               value={search}
@@ -64,9 +64,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               placeholder={locale === "zh" ? "搜索菜谱" : "Search recipes"}
               aria-label={locale === "zh" ? "搜索菜谱" : "Search recipes"}
             />
-          </form>
+          </form>}
 
-          <div className="header-actions flex items-center gap-1">
+          <div className="header-actions ml-auto flex items-center gap-1">
             <Link href={pathname} locale={locale === "zh" ? "en" : "zh"} className="button-quiet min-h-10 px-3 text-xs">
               {locale === "zh" ? "EN" : "中文"}
             </Link>

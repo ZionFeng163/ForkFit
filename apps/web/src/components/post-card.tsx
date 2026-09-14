@@ -22,7 +22,6 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
   const [busy, setBusy] = useState(false);
   const mealPlan = useMealPlanSelection();
   const planned = mealPlan.isSelected(post.id);
-  const primaryTag = post.recipe.tags[0] || post.theme;
 
   function handleLike() {
     if (!user) {
@@ -46,16 +45,15 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
 
       <div className="recipe-card-body flex min-w-0 flex-col">
         <div className="min-w-0">
-          {primaryTag && primaryTag !== "community recipe" && <span className="recipe-label">{primaryTag}</span>}
           <h3 className="recipe-card-title">
-            <Link href={`/packs/${post.id}`}>{post.title}</Link>
+            <Link href={`/packs/${post.id}`} title={post.title}>{post.title}</Link>
           </h3>
         </div>
         <div className="recipe-card-meta mt-auto">
           {post.recipe.cook_time_minutes > 0 && (
             <span className="inline-flex items-center gap-1"><Clock3 size={13} />{post.recipe.cook_time_minutes} {locale === "zh" ? "分钟" : "min"}</span>
           )}
-          <span className="truncate">{post.author}</span>
+          {post.author !== "ForkFit 编辑部" && <span className="truncate">{post.author}</span>}
         </div>
         <div className="recipe-card-actions mt-2">
             <button

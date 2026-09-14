@@ -136,7 +136,8 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
       </Link>
 
       <article className="mt-2 flex flex-col">
-        <div className="recipe-gallery relative aspect-[16/7] max-h-[440px] min-h-[220px] overflow-hidden rounded-lg bg-[var(--surface-container-high)] sm:min-h-[300px]">
+        <div className="recipe-detail-top">
+        <div className="recipe-gallery relative overflow-hidden rounded-lg bg-[var(--surface-container-high)]">
           {post.image_urls.length > 0 ? (
             <div
               ref={galleryRef}
@@ -173,12 +174,6 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
               {post.location && post.location !== "unknown" && <span className="flex items-center gap-1.5"><MapPin size={15} />{post.location}</span>}
             </div>
             <h1>{post.title}</h1>
-            <p className="recipe-detail-intro-description">{post.description}</p>
-            <div className="mt-5 flex items-center gap-3 text-sm">
-              <Link href={`/users/${post.user_id}`} className="font-semibold hover:text-[var(--brand-hover)]">{post.author}</Link>
-              {post.created_at && <span className="text-[var(--muted-text)]">{timeAgo(post.created_at, locale)}</span>}
-              {post.source_url && <a href={post.source_url} target="_blank" rel="noreferrer" className="text-[var(--muted-text)] underline decoration-[var(--line)] underline-offset-4">{isZh ? "来源" : "Source"}</a>}
-            </div>
           </div>
 
           <div className="recipe-detail-actions">
@@ -197,6 +192,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
             {canEdit && <Link href={`/packs/${post.id}/edit`} className="button-secondary px-3" title={isZh ? "编辑" : "Edit"}><Pencil size={16} /></Link>}
           </div>
         </header>
+        </div>
 
         {actionError && (
           <div className="mt-5 flex items-center gap-3 rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger)]">
@@ -228,7 +224,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
             )}
           </div>
 
-          <aside className="recipe-detail-ingredients lg:sticky lg:top-5">
+          <aside className="recipe-detail-ingredients self-start">
             <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
               <h2 className="section-heading">{isZh ? "食材" : "Ingredients"}</h2>
               <span className="flex items-center gap-1.5 text-xs text-[var(--muted-text)]"><Users size={14} />{isZh ? "按原菜谱份量" : "Original servings"}</span>
@@ -253,6 +249,15 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
             )}
           </aside>
         </div>
+        <details className="recipe-source pb-8 text-sm">
+          <summary>{isZh ? "菜谱介绍与来源" : "About this recipe"}</summary>
+          <p className="mt-3 max-w-3xl leading-7">{post.description}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-[var(--muted-text)]">
+            <Link href={`/users/${post.user_id}`}>{post.author}</Link>
+            {post.created_at && <span>{timeAgo(post.created_at, locale)}</span>}
+            {post.source_url && <a href={post.source_url} target="_blank" rel="noreferrer" className="underline">{isZh ? "来源" : "Source"}</a>}
+          </div>
+        </details>
       </article>
 
       <section className="recipe-comments border-t border-[var(--line)] py-9">

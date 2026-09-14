@@ -20,19 +20,14 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   if (!response.ok) throw new Error("Failed to load recipes");
   const fetched = await response.json() as RecipePost[];
   const total = Number.parseInt(response.headers.get("X-Total-Count") ?? String(fetched.length), 10);
-  const featured = !q && category === "推荐"
-    ? fetched.reduce<RecipePost | null>((best, post) => post.forks > (best?.forks ?? -1) ? post : best, null)
-    : null;
-  const posts = featured ? fetched.filter((post) => post.id !== featured.id) : fetched;
 
   return (
     <AppShell>
       <div className="site-container">
         <DiscoverContent
-          initialPosts={posts}
+          initialPosts={fetched}
           totalCount={total}
           initialOffset={fetched.length}
-          featuredPost={featured}
           initialQuery={q}
           initialCategory={category}
         />

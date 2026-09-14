@@ -215,8 +215,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
           <p className="mb-3 text-sm font-semibold text-[var(--brand-hover)]">
             {runResult ? "原版菜谱" : isRunning ? "正在定制" : runStatus === "needs_input" ? "需要你确认" : "准备定制"}
           </p>
-          <h1 className="text-2xl font-bold tracking-[-0.03em] mb-2" style={{ color: "var(--text)" }}>{post.title}</h1>
-          <p className="line-clamp-2 max-w-[560px] text-[15px] leading-[1.6]" style={{ color: "var(--muted)" }}>{post.description}</p>
+          <h1 className="page-heading mb-2">{post.title}</h1>
           <div className="mt-4 flex gap-4 border-t border-[var(--line)] pt-3 text-sm text-[var(--muted-text)]"><span>{firstMeal.cook_time_minutes} 分钟</span><span>{firstMeal.ingredients.length} 种食材</span></div>
         </div>
       </div>
@@ -224,8 +223,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       {/* Requirement input */}
       {!runResult && (
         <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6">
-          <h2 className="section-heading">你的定制需求</h2>
-          <p className="mb-4 mt-2 text-[13px] text-[var(--muted-text)]">写下时间、人数、忌口或口味要求。</p>
+          <h2 className="section-heading mb-4">你的定制需求</h2>
           <textarea
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}

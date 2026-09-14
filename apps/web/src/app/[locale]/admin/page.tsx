@@ -208,7 +208,7 @@ function AdminLayout() {
         {/* Header */}
         <header className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-[var(--outline-variant)] bg-[var(--surface)] px-4 py-3 sm:px-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-base font-bold text-[var(--text)]">{currentTab.label}</h1>
+            <h1 className="section-heading">{currentTab.label}</h1>
           </div>
           <button
             onClick={() => setRefreshKey((value) => value + 1)}
