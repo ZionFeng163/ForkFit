@@ -43,6 +43,19 @@ class PlanVersionStateTests(unittest.TestCase):
         self.assertEqual(restored.request_payload, self.original.request_payload)
         self.assertEqual(restored.locked_days, [])
 
+    def test_clarification_is_a_chat_reply_and_keeps_context_without_new_version(self):
+        first = self.store.create_message(plan_id="p", user_id="u", content="第二天不要烤箱", base_version_id=self.original.current_version_id, locale="zh")
+        self.store.mark_message_needs_clarification(first.id, intent="modify_day", response={"message": "你可以使用哪些厨具？"})
+        messages = self.store.list_messages("p", "u")
+        self.assertEqual(messages[-1].role, "assistant")
+        self.assertEqual(messages[-1].content, "你可以使用哪些厨具？")
+        self.assertEqual(self.store.get_plan("p").pending_message_id, first.id)
+        second = self.store.create_message(plan_id="p", user_id="u", content="只有炒锅", base_version_id=self.original.current_version_id, locale="zh")
+        self.assertEqual(second.patch_payload["clarification_context"], "第二天不要烤箱")
+        self.store.mark_message_needs_clarification(second.id, intent="modify_day", response={"message": "需要换做法，能接受清炒吗？"})
+        self.assertEqual(self.store.get_message(second.id).patch_payload, second.patch_payload)
+        self.assertEqual(self.store.get_plan("p").current_version_id, self.original.current_version_id)
+
     def test_requirement_only_version_is_persisted_and_undoable(self):
         old_state = {"global": "少盐", "days": {"2": "不要鱼"}}
         before = self.edit("禁鱼", requirements=old_state)

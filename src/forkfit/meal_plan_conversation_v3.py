@@ -4,7 +4,8 @@ from copy import deepcopy
 from dataclasses import asdict, replace
 
 from forkfit.langgraph_workflow_v3 import ForkFitLangGraphWorkflow
-from forkfit.meal_planner import MealPlanResult, MealPlanWorkflow
+from forkfit.meal_planner import MealPlanResult, MealPlanWorkflow, MealPlanNeedsInput
+from forkfit.clarification import recipe_question
 from forkfit.models import MealPack
 from forkfit.serialization import meal_from_dict, user_profile_from_dict
 from forkfit.stores.meal_plans import MealPlanRecord
@@ -27,6 +28,16 @@ class MealPlanConversationWorkflowV3:
         return _LegacyMealPlanConversationWorkflow.parse_intent(text, plan)
 
     def process(self, plan: MealPlanRecord, text: str, *, confirmed: bool = False):
+        from forkfit.meal_plan_conversation import ConversationResult
+        try:
+            return self._process_request(plan, text, confirmed=confirmed)
+        except MealPlanNeedsInput as exc:
+            return ConversationResult(
+                status="needs_clarification", intent=self.parse_intent(text, plan),
+                message=exc.message, summary="需要你确认，当前菜单保持不变。",
+            )
+
+    def _process_request(self, plan: MealPlanRecord, text: str, *, confirmed: bool = False):
         intent = self.parse_intent(text, plan)
         if intent.kind in {"clarification", "explain", "lock_day", "unlock_day", "undo"} or (intent.requires_confirmation and not confirmed):
             return self._process(plan, text, confirmed=confirmed)
@@ -223,8 +234,7 @@ class MealPlanConversationWorkflowV3:
             require_change=require_change,
         )
         if not result.success:
-            message = result.adapter_output.unresolved_items[0].message if result.adapter_output.unresolved_items else "这道菜无法按当前要求安全调整。"
-            raise ValueError(message)
+            raise MealPlanNeedsInput(recipe_question(result.adapter_output.unresolved_items, str(plan.request_payload.get("locale", "zh"))))
         return result.adapter_output.forked_meal_pack.meals[0]
 
     @staticmethod

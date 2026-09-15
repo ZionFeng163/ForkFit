@@ -359,9 +359,9 @@ async def _resume_run(run: RunRecord, body: ResumeRequest, service: RunService) 
             )
         except PatchValidationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-    request_text = " ".join(
-        value for value in (payload.get("request_text", ""), body.request_text.strip()) if value
-    )
+    request_text = payload.get("request_text", "")
+    if body.request_text.strip():
+        request_text += "\n用户补充回答：" + body.request_text.strip()
     record = await service.requeue_run(
         run_id=run.id,
         user_profile=user_profile_from_dict(payload["user_profile"]),

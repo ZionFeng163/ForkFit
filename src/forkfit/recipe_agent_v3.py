@@ -7,7 +7,7 @@ from typing import Any
 from .llm import FunctionTool, LLMClient
 from .models import AgentFinding, ChangeLogEntry, ConstraintSpec, MealPack, QualityIssue, RecipePatch, RecipePatchOperation, RunTrace
 
-WORKFLOW_VERSION = "recipe-adaptation-v3"
+WORKFLOW_VERSION = "recipe-adaptation-v3.1"
 KNOWLEDGE_VERSION = "forkfit-substitutions-v2"
 MAX_PATCH_OPERATIONS = 32
 
@@ -24,7 +24,8 @@ class AdaptationAgent:
         self.substitution_tool = substitution_tool
 
     def generate(self, meal_pack: MealPack, spec: ConstraintSpec, findings: list[AgentFinding], *, locale: str,
-                 trace: RunTrace | None = None, repair_issues: list[QualityIssue] | None = None) -> tuple[RecipePatch, dict[str, set[str]]]:
+                 trace: RunTrace | None = None, repair_issues: list[QualityIssue] | None = None,
+                 request_text: str = "", previous_attempt: MealPack | None = None) -> tuple[RecipePatch, dict[str, set[str]]]:
         request = {
             "task": "只输出满足审核意见所需的最小结构化补丁，不要重写整份菜谱。",
             "schema": {"operations": [{"op": "replace_ingredient | add_ingredient | remove_ingredient | replace_equipment | remove_equipment | set_cook_time | replace_steps | update_tags | set_name | set_notes", "meal_id": "existing meal id", "target": "exact current value", "value": "按 op 类型填写", "reason": "short reason"}], "summary": "一句话说明修改", "description": "简短说明", "unresolved_items": []},
@@ -40,9 +41,13 @@ class AdaptationAgent:
                 "最多 32 个操作；无法安全完成时写入 unresolved_items。",
             ],
             "meal_pack": meal_pack.to_dict(), "constraints": asdict(spec),
+            "request_text": request_text,
             "findings": [asdict(item) for item in findings],
             "repair_issues": [asdict(item) for item in (repair_issues or [])], "locale": locale,
         }
+        if previous_attempt is not None:
+            request["previous_attempt"] = previous_attempt.to_dict()
+            request["rules"].append("previous_attempt 是被退回的结果，用来定位审核问题；保留其中正确的调整。输出相对于 meal_pack 原菜谱的完整修订补丁，不是叠加在 previous_attempt 上的增量补丁。")
         needs_substitution = any(item.type in {"allergy", "diet_rule"} for item in findings)
         if self.substitution_tool is not None and needs_substitution:
             allowed: dict[str, set[str]] = {}

@@ -318,6 +318,17 @@ class PostgresMealPlanStore:
             )
             if pending is not None:
                 raise ValueError("上一条菜单修改还在处理中，请稍候。")
+            clarification = session.query(MealPlanMessageRow).filter(
+                MealPlanMessageRow.plan_id == plan_id,
+                MealPlanMessageRow.role == "user",
+                MealPlanMessageRow.status == "needs_clarification",
+            ).order_by(MealPlanMessageRow.created_at.desc()).first()
+            context = None
+            if clarification is not None:
+                prior = (clarification.patch_payload or {}).get("clarification_context", "")
+                context = "\n".join(filter(None, [prior, clarification.content]))
+                if len(context) > 4500:
+                    raise ValueError("这次澄清内容较长，请重新整理完整要求后创建计划。")
             session.query(MealPlanMessageRow).filter(
                 MealPlanMessageRow.plan_id == plan_id,
                 MealPlanMessageRow.status == "needs_clarification",
@@ -352,6 +363,7 @@ class PostgresMealPlanStore:
                     role="user",
                     content=content.strip(),
                     status="queued",
+                    patch_payload={"clarification_context": context} if context else None,
                 )
             )
             session.commit()
@@ -597,10 +609,19 @@ class PostgresMealPlanStore:
             row.status = status
             row.intent = intent
             row.response_payload = response
-            row.patch_payload = patch
+            row.patch_payload = {**(row.patch_payload or {}), **(patch or {})} or None
             row.error_payload = error
             row.lease_expires_at = None
             row.processed_at = utc_now()
+            if status == "needs_clarification" and response and response.get("message"):
+                reply_id = f"{message_id}_reply"
+                if session.get(MealPlanMessageRow, reply_id) is None:
+                    session.add(MealPlanMessageRow(
+                        id=reply_id, plan_id=row.plan_id, user_id=row.user_id,
+                        base_version_id=row.base_version_id, role="assistant",
+                        content=response["message"], intent=intent, status=status,
+                        response_payload=response, processed_at=utc_now(),
+                    ))
             session.commit()
         loaded = self.get_message(message_id)
         if loaded is None:
@@ -688,6 +709,7 @@ def _attach_pending_message(session: Session, row: MealPlanRow) -> None:
         session.query(MealPlanMessageRow)
         .filter(
             MealPlanMessageRow.plan_id == row.id,
+            MealPlanMessageRow.role == "user",
             MealPlanMessageRow.status.in_(["queued", "processing", "needs_confirmation", "needs_clarification"]),
         )
         .order_by(MealPlanMessageRow.created_at.desc())

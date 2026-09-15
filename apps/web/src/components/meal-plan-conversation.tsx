@@ -92,7 +92,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
       </div>
 
       {messages.length > 0 && (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3" role="log" aria-live="polite">
           {[messages.slice(0, -2), messages.slice(-2)].map((group, groupIndex) => {
             const content = group.map((message) => (
             <div key={message.message_id} className={message.role === "user" ? "ml-auto max-w-[88%] rounded-lg bg-[var(--brand-soft)] px-4 py-3 text-sm" : "max-w-[88%] rounded-lg border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm"}>
@@ -143,7 +143,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           value={text}
           maxLength={1500}
           onChange={(event) => setText(event.target.value)}
-          placeholder={isZh ? "想调整哪里？" : "What would you change?"}
+          placeholder={pendingMessage?.status === "needs_clarification" ? (isZh ? "回答上面的问题，继续调整…" : "Reply to continue…") : (isZh ? "想调整哪里？" : "What would you change?")}
           aria-label={isZh ? "输入菜单修改" : "Describe a menu change"}
         />
         <button type="submit" className="button-primary h-12 min-h-12 w-12 px-0" disabled={!text.trim() || send.isPending || Boolean(isWaitingForMessage)} aria-label={isZh ? "发送修改" : "Send change"}>

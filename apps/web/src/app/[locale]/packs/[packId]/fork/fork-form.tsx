@@ -10,7 +10,7 @@ import { RemoteImage } from "@/components/remote-image";
 import { ImageUpload } from "@/components/image-upload";
 import { Link, useRouter } from "@/i18n/routing";
 import {
-  createRun, getRun, getPost, publishRun, saveRun, extractMyPreferences,
+  createRun, getRun, getPost, publishRun, saveRun, extractMyPreferences, resumeRun,
 } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { recipeRunMessage } from "@/lib/user-facing";
@@ -26,6 +26,8 @@ export function ForkContent({ post }: { post: RecipePost }) {
   const [runResult, setRunResult] = useState<RunResultPayload | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [conversation, setConversation] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const isRunning = runStatus === "queued" || runStatus === "running";
 
   // User input
@@ -85,7 +87,9 @@ export function ForkContent({ post }: { post: RecipePost }) {
         } else if (run.status === "failed") {
           setRunError(recipeRunMessage(run.error?.message, "定制失败"));
         } else if (run.status === "needs_input") {
-          setRunError(recipeRunMessage(run.unresolved_payload?.message, "这个要求还需要你确认一下，再继续定制。"));
+          const question = run.unresolved_payload?.message || "原菜谱保持不变。你能接受怎样的食材或做法调整？";
+          setConversation((messages) => messages.at(-1)?.role === "assistant" && messages.at(-1)?.text === question ? messages : [...messages, { role: "assistant", text: question }]);
+          setRunError(null);
         }
       } catch {
         consecutiveFailures += 1;
@@ -120,10 +124,28 @@ export function ForkContent({ post }: { post: RecipePost }) {
       });
       setRunId(resp.run_id);
       setRunStatus(resp.status);
+      setConversation([{ role: "user", text: requirement.trim() || "按我的口味调整" }]);
+      setAnswer("");
     } catch (error: unknown) {
       setActionError(errorMessage(error, "定制失败"));
     }
     setCreating(false);
+  }
+
+  async function handleAnswer() {
+    if (!runId || !answer.trim() || creating) return;
+    setCreating(true);
+    setActionError(null);
+    try {
+      const response = await resumeRun(runId, answer.trim());
+      setConversation((messages) => [...messages, { role: "user", text: answer.trim() }]);
+      setRunStatus(response.status);
+      setAnswer("");
+    } catch (error) {
+      setActionError(errorMessage(error, "回复暂时无法提交，你的输入已保留。"));
+    } finally {
+      setCreating(false);
+    }
   }
 
   // Extract preferences into requirement box
@@ -221,7 +243,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       </div>
 
       {/* Requirement input */}
-      {!runResult && (
+      {!runResult && runStatus !== "needs_input" && conversation.length < 2 && (
         <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6">
           <h2 className="section-heading mb-4">你的定制需求</h2>
           <textarea
@@ -254,6 +276,19 @@ export function ForkContent({ post }: { post: RecipePost }) {
             </button>
           </div>
         </div>
+      )}
+
+      {conversation.length > 1 && !runResult && (
+        <section className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6" aria-label="定制对话">
+          <h2 className="section-heading mb-4">继续调整</h2>
+          <div className="space-y-3" role="log" aria-live="polite">
+            {conversation.map((message, index) => <p key={index} className={`max-w-[90%] whitespace-pre-line rounded-lg px-4 py-3 text-sm leading-6 ${message.role === "user" ? "ml-auto bg-[var(--brand-soft)]" : "border border-[var(--line)]"}`}>{message.text}</p>)}
+          </div>
+          {runStatus === "needs_input" ? <form className="mt-4 flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); void handleAnswer(); }}>
+            <textarea className="textarea flex-1" aria-label="回复定制问题" placeholder="告诉我你的选择…" maxLength={1000} value={answer} onChange={(event) => setAnswer(event.target.value)} />
+            <button className="button-primary" type="submit" disabled={creating || !answer.trim()}>{creating ? <Loader2 size={16} className="animate-spin" /> : "发送"}</button>
+          </form> : isRunning ? <p className="mt-4 text-sm" role="status">正在根据你的回答调整…</p> : <button className="button-secondary mt-4" onClick={() => { setRunStatus(null); setConversation([]); }}>重新调整</button>}
+        </section>
       )}
 
       {(actionError || runError) && (

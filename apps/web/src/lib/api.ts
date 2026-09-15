@@ -153,6 +153,13 @@ export function getRun(runId: string) {
   return request<RunStatusResponse>(`/runs/${runId}`);
 }
 
+export function resumeRun(runId: string, requestText: string) {
+  return request<RunStatusResponse>(`/runs/${runId}/resume`, {
+    method: "POST",
+    body: JSON.stringify({ request_text: requestText }),
+  });
+}
+
 export function publishRun(runId: string, data?: {
   title?: string;
   description?: string;

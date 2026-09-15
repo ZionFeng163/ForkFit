@@ -5,6 +5,7 @@ from dataclasses import asdict
 from functools import lru_cache
 
 from forkfit.api.schemas import PublicRunError, result_payload_from_forkfit
+from forkfit.clarification import recipe_question
 
 logger = logging.getLogger(__name__)
 from forkfit.config import get_settings
@@ -104,7 +105,7 @@ def run_forkfit_job(
             partial_result = result_payload_from_forkfit(meal_pack, result)
             unresolved = {
                 "items": [asdict(f) for f in result.adapter_output.unresolved_items],
-                "message": _build_failure_message(result, locale),
+                "message": recipe_question(result.adapter_output.unresolved_items, locale),
                 "partial_result": partial_result.model_dump(mode="json"),
             }
             record = store.mark_needs_input(

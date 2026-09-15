@@ -78,6 +78,10 @@ def run_meal_plan_message_job(
                 created_by=plan.user_id,
             )
             return
+        message = store.get_message(message_id)
+        context = (message.patch_payload or {}).get("clarification_context", "") if message else ""
+        if context:
+            content = f"{context}\n用户补充回答：{content}"
         outcome = workflow.process(plan, content, confirmed=confirmed)
         response = {"message": outcome.message, "summary": outcome.summary}
         if outcome.status == "needs_clarification":

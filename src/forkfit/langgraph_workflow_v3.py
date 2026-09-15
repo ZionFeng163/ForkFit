@@ -126,7 +126,10 @@ class ForkFitLangGraphWorkflow:
         def one(index, meal):
             findings = [f for f in state["findings"] if not f.affected_items or meal.id in f.affected_items]
             issues = [issue for issue in state.get("repair_issues", []) if not issue.meal_id or issue.meal_id == meal.id]
-            return index, *self.adapter.generate(MealPack(state["meal_pack"].id, state["meal_pack"].title, state["meal_pack"].theme, [meal.clone()]), state["constraint_spec"], findings, locale=state["locale"], trace=state["trace"], repair_issues=issues)
+            prior = state.get("adapter_output")
+            prior_meal = prior.forked_meal_pack.find_meal(meal.id) if prior and issues else None
+            previous_attempt = MealPack(state["meal_pack"].id, state["meal_pack"].title, state["meal_pack"].theme, [prior_meal.clone()]) if prior_meal else None
+            return index, *self.adapter.generate(MealPack(state["meal_pack"].id, state["meal_pack"].title, state["meal_pack"].theme, [meal.clone()]), state["constraint_spec"], findings, locale=state["locale"], trace=state["trace"], repair_issues=issues, request_text=state.get("request_text", ""), previous_attempt=previous_attempt)
         with ThreadPoolExecutor(max_workers=min(4, len(targets))) as pool:
             futures = [pool.submit(one, index, meal) for index, meal in enumerate(targets)]
             for future in as_completed(futures): patches.append(future.result())
@@ -156,21 +159,23 @@ class ForkFitLangGraphWorkflow:
 
     def _review_output(self, state: ForkFitGraphState) -> ForkFitGraphState:
         adapter = state.get("adapter_output") or AdapterOutput(state["meal_pack"].clone(), [], [], "菜谱未作修改。")
-        report = self.reviewer.review_adjusted(state["meal_pack"], adapter.forked_meal_pack, state["constraint_spec"], locale=state["locale"], trace=state["trace"], request_text=state.get("request_text", ""))
+        deterministic_issues = []
         for meal in adapter.forked_meal_pack.meals:
             ingredient_text = " ".join(meal.ingredients).casefold()
             step_text = " ".join(meal.steps).casefold()
             missing = [term for term in STEP_INGREDIENT_TERMS if term.casefold() in step_text and term.casefold() not in ingredient_text]
             if missing:
-                report.issues.append(QualityIssue(
+                deterministic_issues.append(QualityIssue(
                     "unlisted_step_ingredient", "high", meal.id,
                     "步骤使用了食材清单中没有的内容：" + "、".join(missing),
                     "将实际使用的调味料补入食材清单，或从步骤中删除未使用内容。",
                 ))
         safety = self.safety_guard.review(adapter.forked_meal_pack, state["constraint_spec"], state["locale"])
         for finding in safety.findings:
-            if finding.type in {"allergy", "diet_rule"} and finding.severity == "high":
-                report.issues.append(QualityIssue(f"safety_{finding.type}", "high", finding.affected_items[0] if finding.affected_items else "", finding.message, finding.action()))
+            if finding.severity == "high":
+                deterministic_issues.append(QualityIssue(f"safety_{finding.type}", "high", finding.affected_items[0] if finding.affected_items else "", finding.message, finding.action()))
+        report = self.reviewer.review_adjusted(state["meal_pack"], adapter.forked_meal_pack, state["constraint_spec"], locale=state["locale"], trace=state["trace"], request_text=state.get("request_text", ""), deterministic_issues=deterministic_issues)
+        report.issues.extend(deterministic_issues)
         report.status = "block" if any(i.severity == "high" for i in report.issues) else "warn" if report.issues else "pass"
         report.repair_count = state.get("repair_count", 0)
         return {"adapter_output": adapter, "quality_report": report, "repair_issues": report.issues,
@@ -191,8 +196,7 @@ class ForkFitLangGraphWorkflow:
             unresolved = [AgentFinding(i.code, "high", [i.meal_id] if i.meal_id else [], i.message, required_action=i.repair_instruction) for i in state.get("repair_issues", [])]
         if state["constraint_spec"].clarification and not unresolved:
             c = state["constraint_spec"].clarification; unresolved = [AgentFinding(c.code, "high", c.affected_items, c.question, required_action="请确认这项限制。")]
-        adapter = state.get("adapter_output") or AdapterOutput(state["meal_pack"].clone(), [], unresolved, "需要补充信息。")
-        adapter.unresolved_items = unresolved
+        adapter = AdapterOutput(state["meal_pack"].clone(), [], unresolved, "调整未通过审核，原菜谱保持不变。")
         return {"adapter_output": adapter, "final_review": AgentReview("recipe_reviewer", "block", unresolved), "success": False}
 
     def _finalize(self, state: ForkFitGraphState) -> ForkFitGraphState:

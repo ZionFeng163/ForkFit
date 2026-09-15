@@ -48,6 +48,63 @@ def pack():
 
 
 class AgentWorkflowV3Tests(unittest.TestCase):
+    def test_confirmed_allergen_answer_resolves_old_ambiguity_without_dropping_constraint(self):
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        raw = "吃完不舒服，不知道哪种食材引起的\n用户补充回答：确认是花生过敏"
+        spec = RecipeReviewAgent._constraint_spec({"items": [{"kind": "allergy", "value": "花生", "hard": True}]}, UserProfile(1), raw)
+        self.assertIsNone(spec.clarification)
+        self.assertTrue(any(item.kind == "allergy" and item.value == "花生" and item.hard for item in spec.items))
+        uncertain = RecipeReviewAgent._constraint_spec({}, UserProfile(1), raw.replace("确认是花生过敏", "还是不知道"))
+        self.assertIsNotNone(uncertain.clarification)
+
+    def test_input_review_rejects_missing_contract_or_invented_target(self):
+        from unittest.mock import Mock
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        for payload in ({}, {"constraints": {}, "review": {"status": "block", "findings": [{
+            "type": "allergy", "severity": "high", "affected_items": ["missing"],
+            "message": "conflict", "required_action": "fix", "affected_ingredients": [],
+        }]}}):
+            llm = Mock()
+            llm.complete_json.return_value = payload
+            with self.assertRaisesRegex(ValueError, "Input review failed"):
+                RecipeReviewAgent(llm).understand_and_review(UserProfile(1), "不要香菜", pack(), locale="zh")
+            self.assertEqual(llm.complete_json.call_count, 2)
+
+    def test_repair_receives_rejected_candidate_and_is_reviewed_again(self):
+        from unittest.mock import Mock
+        from forkfit.models import AgentReview, ConstraintSpec, QualityReport, QualityIssue, RecipePatch, RecipePatchOperation
+        workflow = ForkFitLangGraphWorkflow(FakeLLM(), FakeTool())
+        workflow.reviewer = Mock()
+        workflow.reviewer.understand_and_review.return_value = (ConstraintSpec([], 1, 30), AgentReview("reviewer", "pass", []))
+        workflow.reviewer.review_adjusted.side_effect = [QualityReport("block", [QualityIssue("method", "high", "m1", "做法不符", "修正做法")]), QualityReport("pass", [])]
+        workflow.adapter = Mock()
+        workflow.adapter.generate.side_effect = [
+            (RecipePatch([RecipePatchOperation("set_notes", "m1", "", "第一版", "调整")], "调整"), {}),
+            (RecipePatch([RecipePatchOperation("set_notes", "m1", "", "修订版", "修复")], "修复"), {}),
+        ]
+        original = pack()
+        result = workflow.run(UserProfile(1), original, locale="zh", request_text="调整做法", require_change=True)
+        self.assertTrue(result.success)
+        self.assertEqual(workflow.reviewer.review_adjusted.call_count, 2)
+        self.assertEqual(workflow.adapter.generate.call_args.kwargs["previous_attempt"].meals[0].notes, "第一版")
+        self.assertEqual(original.meals[0].notes, "")
+
+    def test_failed_repair_returns_original_not_rejected_draft(self):
+        from unittest.mock import Mock
+        from forkfit.models import AgentReview, ConstraintSpec, QualityReport, QualityIssue, RecipePatch, RecipePatchOperation
+        workflow = ForkFitLangGraphWorkflow(FakeLLM(), FakeTool())
+        workflow.reviewer = Mock()
+        workflow.reviewer.understand_and_review.return_value = (ConstraintSpec([], 1, 30), AgentReview("reviewer", "pass", []))
+        workflow.reviewer.review_adjusted.side_effect = lambda *a, **k: QualityReport("block", [QualityIssue("method", "high", "m1", "做法不符", "修正做法")])
+        workflow.adapter = Mock()
+        workflow.adapter.generate.return_value = (RecipePatch([RecipePatchOperation("set_notes", "m1", "", "未通过版本", "调整")], "调整"), {})
+        original = pack()
+        result = workflow.run(UserProfile(1), original, locale="zh", request_text="调整做法", require_change=True)
+        self.assertFalse(result.success)
+        self.assertEqual(workflow.adapter.generate.call_count, 2)
+        self.assertEqual(workflow.reviewer.review_adjusted.call_count, 2)
+        self.assertEqual(result.adapter_output.forked_meal_pack.to_dict(), original.to_dict())
+
     def test_requested_edit_with_no_changes_repairs_once_then_stops(self):
         from unittest.mock import Mock
         from forkfit.models import ConstraintSpec, AgentReview, RecipePatch
