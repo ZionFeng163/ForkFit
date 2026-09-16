@@ -15,6 +15,8 @@ type Props = {
   planId: string;
   currentVersionId?: string | null;
   onVersionChanged: () => void;
+  initialPlanning?: boolean;
+  initialQuestion?: string;
 };
 
 const SUGGESTIONS = [
@@ -25,7 +27,7 @@ const SUGGESTIONS = [
   "恢复上一版",
 ];
 
-export function MealPlanConversation({ planId, currentVersionId, onVersionChanged }: Props) {
+export function MealPlanConversation({ planId, currentVersionId, onVersionChanged, initialPlanning = false, initialQuestion }: Props) {
   const locale = useLocale();
   const isZh = locale === "zh";
   const [text, setText] = useState("");
@@ -85,12 +87,13 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
         <div>
           <div className="flex items-center gap-2">
             <MessageCircle size={18} className="text-[var(--brand)]" />
-            <h2 className="section-heading">{isZh ? "继续调整" : "Keep refining"}</h2>
+            <h2 className="section-heading">{initialPlanning ? (isZh ? "补充你的想法" : "Tell us more") : (isZh ? "继续调整" : "Keep refining")}</h2>
           </div>
         </div>
         {conversation.isFetching && <Loader2 size={16} className="mt-1 animate-spin text-[var(--muted-text)]" />}
       </div>
 
+      {initialPlanning && !conversation.isLoading && messages.length === 0 && initialQuestion && <p className="mt-4 text-sm leading-6">{initialQuestion}</p>}
       {messages.length > 0 && (
         <div className="mt-4 space-y-3" role="log" aria-live="polite">
           {[messages.slice(0, -2), messages.slice(-2)].map((group, groupIndex) => {
@@ -143,7 +146,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           value={text}
           maxLength={1500}
           onChange={(event) => setText(event.target.value)}
-          placeholder={pendingMessage?.status === "needs_clarification" ? (isZh ? "回答上面的问题，继续调整…" : "Reply to continue…") : (isZh ? "想调整哪里？" : "What would you change?")}
+          placeholder={initialPlanning || pendingMessage?.status === "needs_clarification" ? (isZh ? "回答上面的问题，继续规划…" : "Reply to continue…") : (isZh ? "想调整哪里？" : "What would you change?")}
           aria-label={isZh ? "输入菜单修改" : "Describe a menu change"}
         />
         <button type="submit" className="button-primary h-12 min-h-12 w-12 px-0" disabled={!text.trim() || send.isPending || Boolean(isWaitingForMessage)} aria-label={isZh ? "发送修改" : "Send change"}>
@@ -162,13 +165,14 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
             {isZh ? "重试上一次" : "Retry last change"}
           </button>
         )}
-        {SUGGESTIONS.map((suggestion) => (
+        {!initialPlanning && SUGGESTIONS.map((suggestion) => (
           <button key={suggestion} type="button" className="meal-plan-example" onClick={() => setText(suggestion)}>
             {suggestion === "恢复上一版" && <RotateCcw size={13} />}
             {suggestion}
           </button>
         ))}
       </div>
+      {conversation.isError && <p role="alert" className="mt-3 text-sm text-[var(--danger)]">{isZh ? "对话加载失败。" : "Could not load the conversation."}<button type="button" className="ml-2 underline" onClick={() => void conversation.refetch()}>{isZh ? "重试" : "Retry"}</button></p>}
       {(send.isError || confirm.isError) && (
         <p className="mt-3 text-sm text-[var(--danger)]">
           {(send.error instanceof Error && send.error.message) || (confirm.error instanceof Error && confirm.error.message) || (isZh ? "修改暂时无法提交。" : "Could not submit the change.")}

@@ -64,6 +64,7 @@ class ReferenceEvalLLM:
                 "status": "pass",
                 "summary": "候选方案满足当前规划要求。",
                 "issues": [],
+                "assessments": [{"candidate_index": index, "checks": [{"requirement_id": key, "status": "pass", "evidence": "固定测试候选满足该要求", "day_indices": [1], "post_ids": [candidate["days"][0]["dishes"][0]["post_id"]]} for key in payload["requirements"]]} for index, candidate in enumerate(payload["candidates"])],
             }
         if agent == "eval_judge":
             return {

@@ -164,22 +164,14 @@ class MealPlanConversationWorkflowV3:
                     try:
                         self._validate_locked_meal(plan, dish.meal, day.day_index)
                     except ValueError as exc:
-                        raise ValueError(f"第 {day.day_index} 天已锁定，无法确认它满足新要求。请先解锁该日期或缩小修改范围。") from exc
+                        raise MealPlanNeedsInput(f"第 {day.day_index} 天已锁定，无法确认它满足新要求。你愿意先解锁这一天，还是只调整其他日期？") from exc
         payload = deepcopy(plan.request_payload)
         payload["request_text"] = scoped_request(payload)
+        payload["fixed_days"] = [
+            day.model_dump(mode="json") for day in plan.result.days
+            if day.day_index in plan.locked_days
+        ] if plan.result else []
         result = MealPlanWorkflow(llm=self.llm).run(payload)
-        if plan.locked_days and plan.result is not None:
-            data = result.model_dump(mode="json")
-            locked = {
-                day.day_index: day.model_dump(mode="json")
-                for day in plan.result.days
-                if day.day_index in plan.locked_days
-            }
-            for day_index, day in locked.items():
-                data["days"][day_index - 1] = day
-            result = MealPlanResult.model_validate(data)
-            result.shopping_list = MealPlanWorkflow._shopping_list(result.days)
-            self._validate_sources(plan, result)
         state = plan.request_payload.get("effective_requirements", {})
         data = result.model_dump(mode="json")
         for day in data["days"]:
@@ -189,6 +181,32 @@ class MealPlanConversationWorkflowV3:
                 dish["meal"] = asdict(self._adapt_meal(plan, meal_from_dict(dish["meal"]), "", day["day_index"], require_change=False))
         result = MealPlanResult.model_validate(data)
         result.shopping_list = MealPlanWorkflow._shopping_list(result.days)
+        self._validate_sources(plan, result)
+        if state.get("days"):
+            # Day-specific adaptations change what was reviewed; check the final composition.
+            from forkfit.meal_planner_v3 import CandidatePlan
+            workflow = MealPlanWorkflow(llm=self.llm)
+            pool = [
+                {"post_id": dish.source_post_id, "recipe": asdict(dish.meal)}
+                for day in result.days for dish in day.dishes
+            ]
+            candidate = CandidatePlan(
+                title=result.title, summary=result.summary,
+                days=[{
+                    "day_index": day.day_index, "label": day.label,
+                    "dishes": [{"post_id": dish.source_post_id} for dish in day.dishes],
+                } for day in result.days],
+                prep_notes=result.prep_notes,
+            )
+            reviewed = workflow._review_candidates_node({
+                "days": len(result.days), "request_text": payload["request_text"],
+                "profile": user_profile_from_dict(payload["user_profile"]),
+                "locale": payload.get("locale", "zh"), "selected": pool,
+                "candidates": [candidate],
+                "fixed_days": [day for day in result.days if day.day_index in plan.locked_days],
+            })
+            if reviewed["review"].status == "block":
+                raise MealPlanNeedsInput("单日要求调整后，整份菜单仍有冲突。你希望调整哪一天的时间或菜品？", reviewed["review"].issues)
         return result
 
     @staticmethod

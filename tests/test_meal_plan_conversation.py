@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 from forkfit.meal_plan_conversation import MealPlanConversationWorkflow
-from forkfit.meal_planner import MealPlanResult, PlannedDay
+from forkfit.meal_planner import MealPlanResult, PlannedDay, MealPlanNeedsInput
 from forkfit.models import Meal
 from forkfit.stores.meal_plans import MealPlanRecord
 
@@ -90,7 +90,7 @@ class MealPlanConversationTests(unittest.TestCase):
         workflow = MealPlanConversationWorkflow(llm=Mock())
         original = plan.result.model_dump()
         with patch.object(workflow, "_validate_locked_meal", side_effect=ValueError("与素食冲突")), patch("forkfit.meal_plan_conversation_v3.MealPlanWorkflow") as planner:
-            with self.assertRaisesRegex(ValueError, "解锁"):
+            with self.assertRaisesRegex(MealPlanNeedsInput, "解锁"):
                 workflow._replan(plan, "所有天吃素")
             planner.assert_not_called()
         self.assertEqual(plan.result.model_dump(), original)

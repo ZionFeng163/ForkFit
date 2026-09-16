@@ -371,6 +371,7 @@ class V3PlannerLLM:
                 "status": "pass",
                 "summary": "菜品来源、搭配和时间安排合理。",
                 "issues": [],
+                "assessments": [{"candidate_index": index, "checks": [{"requirement_id": key, "status": "pass", "evidence": "已检查该候选的菜谱和要求", "day_indices": [1], "post_ids": [candidate["days"][0]["dishes"][0]["post_id"]]} for key in payload["requirements"]]} for index, candidate in enumerate(payload["candidates"])],
             }
         raise AssertionError(f"Unexpected agent: {agent}")
 
@@ -407,7 +408,7 @@ class MealPlanWorkflowV3Tests(unittest.TestCase):
             llm=llm, recipe_workflow=SelectedRecipeWorkflow()
         ).run(_request(3, _selected_pool(5)))
 
-        self.assertEqual(result.workflow_version, "meal-plan-v4")
+        self.assertEqual(result.workflow_version, "meal-plan-v4.1")
         self.assertEqual(len(result.days), 3)
         self.assertEqual([len(day.dishes) for day in result.days], [2, 2, 1])
         used = [dish.source_post_id for day in result.days for dish in day.dishes]

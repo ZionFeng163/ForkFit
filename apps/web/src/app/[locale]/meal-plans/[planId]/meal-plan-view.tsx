@@ -88,12 +88,20 @@ export function MealPlanView({ planId }: { planId: string }) {
     );
   }
 
-  if (plan.status === "failed" || plan.status === "needs_input" || !plan.result) {
+  if (plan.status === "needs_input" && !plan.result) {
+    return <div className="site-container py-10"><div className="mx-auto max-w-[680px]">
+      <h1 className="page-heading mb-6">{isZh ? "确认一下，再安排菜单" : "One question before planning"}</h1>
+      <MealPlanConversation planId={planId} currentVersionId={null} initialPlanning initialQuestion={plan.error?.message} onVersionChanged={refreshPlan} />
+      <Link href="/meal-plans/new" className="button-secondary mt-6">{isZh ? "重新选菜" : "Choose different recipes"}</Link>
+    </div></div>;
+  }
+
+  if (plan.status === "failed" || !plan.result) {
     return (
       <div className="site-container py-16">
         <div className="mx-auto max-w-[680px] border-y border-[var(--line)] py-10 text-center">
           <AlertTriangle className="mx-auto text-[var(--danger)]" />
-          <h1 className="mt-4 text-xl font-semibold">{plan.status === "needs_input" ? (isZh ? "需要调整一项要求" : "One requirement needs adjusting") : (isZh ? "这次没有规划成功" : "Planning did not complete")}</h1>
+          <h1 className="mt-4 text-xl font-semibold">{isZh ? "这次没有规划成功" : "Planning did not complete"}</h1>
           <p className="mx-auto mt-3 max-w-lg leading-7 text-[var(--muted-text)]">{plan.error?.message || (isZh ? "你的选择还在，可以稍后重试。" : "Your choices are saved. Please try again.")}</p>
           {plan.status === "failed" ? (
             <div className="mt-6"><button type="button" className="button-primary" disabled={retryMutation.isPending} onClick={() => retryMutation.mutate()}>{retryMutation.isPending ? (isZh ? "正在重新排队…" : "Re-queueing…") : (isZh ? "用原选择重试" : "Retry with the same choices")}</button>{retryMutation.isError && <p className="mt-3 text-sm text-[var(--danger)]">{retryMutation.error instanceof Error ? retryMutation.error.message : (isZh ? "暂时无法重试。" : "Could not retry.")}</p>}</div>

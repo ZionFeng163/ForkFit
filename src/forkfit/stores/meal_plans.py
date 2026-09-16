@@ -173,10 +173,13 @@ class PostgresMealPlanStore:
             session.commit()
 
     def mark_succeeded(
-        self, plan_id: str, result: MealPlanResult
+        self, plan_id: str, result: MealPlanResult, *, message_id: str | None = None
     ) -> MealPlanRecord:
         with self.session_factory() as session:
-            row = _require_row(session, plan_id)
+            row = session.query(MealPlanRow).filter(MealPlanRow.id == plan_id).with_for_update().one()
+            message = session.get(MealPlanMessageRow, message_id) if message_id else None
+            if message_id and (message is None or message.plan_id != plan_id or message.status != "processing" or row.current_version_id is not None):
+                raise ValueError("这条回复已处理或菜单已更新，请刷新后查看。")
             row.status = "succeeded"
             row.mode = result.mode
             row.result_payload = result.model_dump(mode="json")
@@ -200,6 +203,13 @@ class PostgresMealPlanStore:
                 )
                 row.current_version_id = version_id
             row.last_change_summary = "已生成第一版菜单。"
+            if message is not None:
+                message.status = "applied"
+                message.version_id = row.current_version_id
+                message.processed_at = utc_now()
+                message.lease_expires_at = None
+                message.response_payload = {"message": "已根据你的回答生成菜单，可以继续调整。"}
+                session.add(MealPlanMessageRow(id=f"{message.id}_reply", plan_id=plan_id, user_id=row.user_id, role="assistant", content=message.response_payload["message"], status="applied", version_id=row.current_version_id))
             session.commit()
         record = self.get_plan(plan_id)
         if record is None:
@@ -258,6 +268,8 @@ class PostgresMealPlanStore:
             row.current_stage = stage
             row.finished_at = utc_now()
             row.lease_expires_at = None
+            if status == "needs_input" and not row.current_version_id:
+                session.add(MealPlanMessageRow(id=f"message_{uuid4().hex}", plan_id=plan_id, user_id=row.user_id, role="assistant", content=message, status="needs_clarification"))
             session.commit()
         record = self.get_plan(plan_id)
         if record is None:
@@ -306,7 +318,8 @@ class PostgresMealPlanStore:
             )
             if plan is None or plan.user_id != user_id:
                 raise KeyError("Meal plan not found.")
-            if plan.status != "succeeded" or not plan.result_payload:
+            initial = plan.status == "needs_input" and not plan.result_payload and not plan.current_version_id
+            if not initial and (plan.status != "succeeded" or not plan.result_payload):
                 raise ValueError("这份菜单还没有生成完成。")
             pending = (
                 session.query(MealPlanMessageRow.id)
@@ -318,6 +331,25 @@ class PostgresMealPlanStore:
             )
             if pending is not None:
                 raise ValueError("上一条菜单修改还在处理中，请稍候。")
+            if initial:
+                if base_version_id is not None:
+                    raise ValueError("这份菜单尚未生成版本，请刷新后回复。")
+                payload = deepcopy(plan.request_payload)
+                request = str(payload.get("request_text", ""))
+                question = (plan.error_payload or {}).get("message", "")
+                combined = f"{request}\n助手询问：{question}\n用户补充回答：{content.strip()}"
+                if len(combined) > 6000:
+                    raise ValueError("澄清内容过长，请整理要求后重新创建计划。")
+                payload["request_text"] = combined
+                plan.request_payload = payload
+                session.query(MealPlanMessageRow).filter(
+                    MealPlanMessageRow.plan_id == plan_id,
+                    MealPlanMessageRow.role == "user",
+                    MealPlanMessageRow.status == "needs_clarification",
+                ).update({MealPlanMessageRow.status: "rejected"})
+                session.add(MealPlanMessageRow(id=message_id, plan_id=plan_id, user_id=user_id, role="user", content=content.strip(), status="queued", patch_payload={"initial_planning": True}))
+                session.commit()
+                return self.get_message(message_id)
             clarification = session.query(MealPlanMessageRow).filter(
                 MealPlanMessageRow.plan_id == plan_id,
                 MealPlanMessageRow.role == "user",
@@ -606,6 +638,10 @@ class PostgresMealPlanStore:
             row = session.get(MealPlanMessageRow, message_id)
             if row is None:
                 raise KeyError("Unknown conversation message.")
+            session.query(MealPlanRow).filter(MealPlanRow.id == row.plan_id).with_for_update().one()
+            session.refresh(row)
+            if row.status == "applied":
+                return _message_from_row(row)
             row.status = status
             row.intent = intent
             row.response_payload = response
@@ -613,6 +649,12 @@ class PostgresMealPlanStore:
             row.error_payload = error
             row.lease_expires_at = None
             row.processed_at = utc_now()
+            if (row.patch_payload or {}).get("initial_planning"):
+                plan = session.get(MealPlanRow, row.plan_id)
+                if plan is not None and not plan.current_version_id:
+                    plan.current_stage = "needs_input"
+                    if response:
+                        plan.error_payload = {"message": response.get("message", "请补充要求。")}
             if status == "needs_clarification" and response and response.get("message"):
                 reply_id = f"{message_id}_reply"
                 if session.get(MealPlanMessageRow, reply_id) is None:

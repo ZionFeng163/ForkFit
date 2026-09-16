@@ -43,6 +43,56 @@ class PlanVersionStateTests(unittest.TestCase):
         self.assertEqual(restored.request_payload, self.original.request_payload)
         self.assertEqual(restored.locked_days, [])
 
+    def test_initial_clarification_survives_refresh_and_creates_one_version(self):
+        plan = self.store.create_plan(user_id="u", request_payload={"request_text": "不要花生"}, mode="team", workflow_version="meal-plan-v4.1")
+        self.store.mark_needs_input(plan.id, "可以接受豆腐吗？", [])
+        self.assertEqual(self.store.list_messages(plan.id, "u")[0].content, "可以接受豆腐吗？")
+        with self.assertRaises(KeyError):
+            self.store.create_message(plan_id=plan.id, user_id="other", content="可以", base_version_id=None, locale="zh")
+        first = self.store.create_message(plan_id=plan.id, user_id="u", content="可以", base_version_id=None, locale="zh")
+        with self.assertRaises(ValueError):
+            self.store.create_message(plan_id=plan.id, user_id="u", content="重复点击", base_version_id=None, locale="zh")
+        self.store.claim_next_message()
+        self.store.mark_message_needs_clarification(first.id, intent="initial_planning", response={"message": "你有哪些厨具？"})
+        self.assertIsNone(self.store.get_plan(plan.id).current_version_id)
+        second = self.store.create_message(plan_id=plan.id, user_id="u", content="炒锅", base_version_id=None, locale="zh")
+        context = self.store.get_plan(plan.id).request_payload["request_text"]
+        self.assertIn("不要花生", context)
+        self.assertIn("用户补充回答：可以", context)
+        self.assertIn("用户补充回答：炒锅", context)
+        self.store.claim_next_message()
+        self.store.mark_succeeded(plan.id, self.result, message_id=second.id)
+        completed = self.store.get_plan(plan.id)
+        self.assertIsNotNone(completed.current_version_id)
+        self.assertIsNone(completed.pending_message_id)
+        self.assertEqual(self.store.get_message(second.id).status, "applied")
+        with self.assertRaises(ValueError):
+            self.store.mark_succeeded(plan.id, self.result, message_id=second.id)
+        self.assertEqual(self.store.get_plan(plan.id).current_version_id, completed.current_version_id)
+        self.store.mark_message_failed(second.id, "迟到的失败响应")
+        self.assertEqual(self.store.get_message(second.id).status, "applied")
+
+    def test_initial_message_worker_routes_clarification_then_success(self):
+        from unittest.mock import patch
+        from forkfit.meal_planner_v3 import MealPlanNeedsInput
+        from forkfit.workers.meal_plan_runner import run_meal_plan_message_job
+        plan = self.store.create_plan(user_id="u", request_payload={"request_text": "少盐"}, mode="team", workflow_version="meal-plan-v4.1")
+        self.store.mark_needs_input(plan.id, "有哪些厨具？", [])
+        with patch("forkfit.workers.meal_plan_runner.make_session_factory", return_value=self.sessions), patch("forkfit.workers.meal_plan_runner._get_workflow") as workflow:
+            first = self.store.create_message(plan_id=plan.id, user_id="u", content="炒锅", base_version_id=None, locale="zh")
+            self.store.claim_next_message()
+            workflow.return_value.run.side_effect = MealPlanNeedsInput("能接受清炒吗？")
+            run_meal_plan_message_job(first.id, plan.id, first.content)
+            self.assertEqual(self.store.get_message(first.id).status, "needs_clarification")
+            self.assertIsNone(self.store.get_plan(plan.id).result)
+            second = self.store.create_message(plan_id=plan.id, user_id="u", content="可以", base_version_id=None, locale="zh")
+            self.store.claim_next_message()
+            workflow.return_value.run.side_effect = None
+            workflow.return_value.run.return_value = self.result
+            run_meal_plan_message_job(second.id, plan.id, second.content)
+            self.assertEqual(self.store.get_plan(plan.id).status, "succeeded")
+            self.assertIn("少盐", workflow.return_value.run.call_args.args[0]["request_text"])
+
     def test_clarification_is_a_chat_reply_and_keeps_context_without_new_version(self):
         first = self.store.create_message(plan_id="p", user_id="u", content="第二天不要烤箱", base_version_id=self.original.current_version_id, locale="zh")
         self.store.mark_message_needs_clarification(first.id, intent="modify_day", response={"message": "你可以使用哪些厨具？"})

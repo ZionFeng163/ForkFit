@@ -56,6 +56,17 @@ def run_meal_plan_message_job(
         store.mark_message_failed(message_id, "这份菜单已经不存在，请返回计划列表。")
         return
     try:
+        message = store.get_message(message_id)
+        if message and (message.patch_payload or {}).get("initial_planning"):
+            if message.status != "processing":
+                return
+            try:
+                result = _get_workflow().run(plan.request_payload)
+            except MealPlanNeedsInput as exc:
+                store.mark_message_needs_clarification(message_id, intent="initial_planning", response={"message": exc.message})
+                return
+            store.mark_succeeded(plan_id, result, message_id=message_id)
+            return
         workflow = MealPlanConversationWorkflow()
         intent = workflow.parse_intent(content, plan)
         if intent.kind == "undo":
