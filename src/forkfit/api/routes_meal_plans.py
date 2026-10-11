@@ -137,6 +137,20 @@ async def confirm_conversation_message(
     )
 
 
+@router.post("/{plan_id}/conversation/messages/{message_id}/cancel", response_model=CreateMealPlanMessageResponse)
+async def cancel_conversation_message(
+    plan_id: str,
+    message_id: str,
+    user: CurrentUser = Depends(current_user),
+    service: MealPlanService = Depends(get_meal_plan_service),
+) -> CreateMealPlanMessageResponse:
+    message = service.store.get_message(message_id)
+    if message is None or message.plan_id != plan_id:
+        raise HTTPException(status_code=404, detail="Conversation message not found.")
+    cancelled = service.cancel_message(user_id=user.id, message_id=message_id)
+    return CreateMealPlanMessageResponse(message_id=cancelled.id, run_id=cancelled.id, status=cancelled.status, base_version_id=cancelled.base_version_id)
+
+
 @router.post(
     "/{plan_id}/versions/{version_id}/restore",
     response_model=MealPlanRestoreVersionResponse,

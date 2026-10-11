@@ -12,6 +12,10 @@ class RequirementUpdate(BaseModel):
     mode: Literal["modify", "relax_only"] = "modify"
 
 
+class RequirementNeedsInput(ValueError):
+    """A valid model response that asks the user to resolve a conflict."""
+
+
 def update_requirements(llm, payload: dict, text: str, day: int | None) -> dict:
     return prepare_requirement_update(llm, payload, text, day)[0]
 
@@ -40,7 +44,7 @@ def prepare_requirement_update(llm, payload: dict, text: str, day: int | None) -
     )
     update = RequirementUpdate.model_validate(data)
     if update.clarification:
-        raise ValueError(update.clarification)
+        raise RequirementNeedsInput(update.clarification)
     days = dict(state["days"])
     relax_only = bool(current.strip()) and update.mode == "relax_only" and update.text != current
     if day is None:

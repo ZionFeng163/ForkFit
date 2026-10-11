@@ -42,6 +42,91 @@ class FakePatchLLM:
 
 
 class MealPlanConversationTests(unittest.TestCase):
+    def test_method_and_ingredient_changes_are_not_recipe_replacements(self):
+        plan = _plan()
+        for text in ("第二天改成清炒", "第二天把鱼换成豆腐", "第二天把烤箱替换成炒锅"):
+            with self.subTest(text=text):
+                intent = MealPlanConversationWorkflow.parse_intent(text, plan)
+                self.assertEqual(intent.kind, "modify_day")
+                self.assertEqual(intent.day_index, 2)
+        self.assertEqual(MealPlanConversationWorkflow.parse_intent("第二天换一道更快的", plan).kind, "replace_recipe")
+        plan = replace(plan, request_payload={**plan.request_payload, "selected_recipes": [{"title": "凉拌豆腐", "recipe": {"name": "凉拌豆腐"}}]})
+        self.assertEqual(MealPlanConversationWorkflow.parse_intent("第二天换成凉拌豆腐", plan).kind, "replace_recipe")
+
+    def test_method_answer_keeps_previously_clarified_remaining_scope(self):
+        plan = replace(_plan(), workflow_version="meal-plan-v4", locked_days=[1])
+        context = "整份菜单不要用烤箱，保留已锁定的第一天。\n用户补充回答：只调整其他日期，第一天保持锁定。"
+        intent = MealPlanConversationWorkflow.parse_intent(context + "\n用户补充回答：可以清炒", plan)
+        self.assertEqual(intent.kind, "modify_day")
+        self.assertEqual(intent.day_index, 2)
+        changed_scope = MealPlanConversationWorkflow.parse_intent(context + "\n用户补充回答：整份菜单都少盐", plan)
+        self.assertEqual(changed_scope.kind, "change_constraint")
+        self.assertIsNone(changed_scope.day_index)
+
+    def test_only_remaining_day_uses_local_adjustment_not_full_replan(self):
+        plan = replace(_plan(), workflow_version="meal-plan-v4", locked_days=[1])
+        dish = plan.result.days[1].dishes[0]
+        plan = replace(plan, request_payload={**plan.request_payload, "selected_recipes": [{"post_id": item.source_post_id} for day in plan.result.days for item in day.dishes]})
+        text = "整份菜单不要用烤箱，保留已锁定的第一天。\n用户补充回答：只调整其他日期，第一天保持锁定。"
+        llm = Mock()
+        llm.complete_json.return_value = {"text": "不用烤箱", "clarification": ""}
+        workflow = MealPlanConversationWorkflow(llm=llm)
+        changed = dish.meal.clone()
+        changed.notes = "使用炒锅"
+        with patch.object(workflow, "_adapt_meal", return_value=changed), patch.object(workflow, "_replan") as replan:
+            outcome = workflow.process(plan, text)
+        self.assertEqual(outcome.status, "applied")
+        self.assertEqual(outcome.intent.day_index, 2)
+        self.assertEqual(outcome.result.days[0], plan.result.days[0])
+        self.assertEqual(outcome.effective_requirements["days"], {"2": "不用烤箱"})
+        replan.assert_not_called()
+
+    def test_remaining_days_keep_global_and_locked_requirements(self):
+        plan = replace(_plan(), workflow_version="meal-plan-v4", locked_days=[1])
+        plan.result.days.append(plan.result.days[1].model_copy(update={"day_index": 3}, deep=True))
+        original = plan.request_payload.copy()
+        llm = Mock()
+        llm.complete_json.return_value = {"text": "不用烤箱", "clarification": ""}
+        workflow = MealPlanConversationWorkflow(llm=llm)
+        with patch.object(workflow, "_replan", return_value=plan.result) as replan:
+            outcome = workflow.process(plan, "只调整其他日期，不要用烤箱", confirmed=True)
+        state = replan.call_args.args[0].request_payload["effective_requirements"]
+        self.assertEqual(state["global"], original["request_text"])
+        self.assertEqual(state["days"], {"2": "不用烤箱", "3": "不用烤箱"})
+        self.assertEqual(outcome.status, "applied")
+        self.assertEqual(plan.request_payload, original)
+
+    def test_requirement_conflict_becomes_chat_question_not_failed_task(self):
+        plan = replace(_plan(), workflow_version="meal-plan-v4")
+        llm = Mock()
+        llm.complete_json.return_value = {"text": "", "clarification": "要保留原做法还是改用炒锅？"}
+        outcome = MealPlanConversationWorkflow(llm=llm).process(plan, "整份菜单不要用烤箱", confirmed=True)
+        self.assertEqual(outcome.status, "needs_clarification")
+        self.assertEqual(outcome.message, "要保留原做法还是改用炒锅？")
+        self.assertIsNone(outcome.result)
+
+    def test_global_request_with_preserved_lock_cannot_unlock_or_target_that_day(self):
+        plan = replace(_plan(), workflow_version="meal-plan-v4", locked_days=[1])
+        for suffix in ("保留已锁定的第一天", "第一天保持锁定", "不要解锁第一天"):
+            for prefix in ("", "不要用烤箱\n用户补充回答："):
+                with self.subTest(suffix=suffix, prefix=prefix):
+                    llm = Mock()
+                    outcome = MealPlanConversationWorkflow(llm=llm).process(plan, prefix + "整份菜单都不要用烤箱，" + suffix)
+                    self.assertEqual(outcome.status, "needs_confirmation")
+                    self.assertEqual(outcome.intent.kind, "change_constraint")
+                    self.assertIsNone(outcome.intent.day_index)
+                    self.assertIsNone(outcome.result)
+                    self.assertEqual(plan.locked_days, [1])
+                    llm.complete_json.assert_not_called()
+
+    def test_vague_dissatisfaction_asks_before_replanning(self):
+        for text in ("这份菜单感觉不太合适", "第一天感觉不太对", "想更有家的感觉"):
+            llm = Mock()
+            outcome = MealPlanConversationWorkflow(llm=llm).process(_plan(), text)
+            self.assertEqual(outcome.status, "needs_clarification")
+            self.assertIn("口味", outcome.message)
+            llm.complete_json.assert_not_called()
+
     def test_unchanged_recipe_does_not_report_success(self):
         plan = _plan()
         dish = plan.result.days[1].dishes[0]
@@ -134,6 +219,8 @@ class MealPlanConversationTests(unittest.TestCase):
                 llm = Mock()
                 outcome = MealPlanConversationWorkflow(llm=llm).process(plan, text)
                 self.assertEqual(outcome.status, "needs_confirmation")
+                self.assertIn("第 1 天已锁定", outcome.message)
+                self.assertNotIn("重排多天", outcome.message)
                 self.assertEqual(plan.result.model_dump(), original)
                 llm.complete_json.assert_not_called()
 

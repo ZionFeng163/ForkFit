@@ -65,6 +65,11 @@ export function DiscoverContent({
     const requestId = ++requestRef.current;
     setLoading(true);
     setError(null);
+    if (offset === 0) {
+      setPosts([]);
+      setTotal(0);
+      setNextOffset(0);
+    }
     return frontendAdapter.listRecipes({ limit: PAGE_SIZE, offset, query: q, category: nextCategory })
       .then(({ posts: fresh, total: freshTotal }) => {
         if (requestId !== requestRef.current) return;
@@ -91,6 +96,12 @@ export function DiscoverContent({
 
   function changeSearch(value: string) {
     setSearch(value);
+    requestRef.current += 1;
+    setPosts([]);
+    setTotal(0);
+    setNextOffset(0);
+    setLoading(true);
+    setError(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       updateAddress(value.trim(), category);
@@ -106,6 +117,7 @@ export function DiscoverContent({
   }
 
   function resetFilters() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setSearch("");
     setCategory("推荐");
     updateAddress("", "推荐");
@@ -140,7 +152,7 @@ export function DiscoverContent({
 
       <div className="category-tabs" aria-label={locale === "zh" ? "菜谱分类" : "Recipe categories"}>
         {CATEGORIES.map((item) => (
-          <button key={item.key} type="button" disabled={!interactive} className="category-tab" data-active={category === item.key} onClick={() => changeCategory(item.key)}>
+          <button key={item.key} type="button" disabled={!interactive} className="category-tab" aria-pressed={category === item.key} data-active={category === item.key} onClick={() => changeCategory(item.key)}>
             {locale === "zh" ? item.zh : item.en}
           </button>
         ))}
@@ -149,12 +161,12 @@ export function DiscoverContent({
       <section className="pt-6">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="section-heading">{search ? (locale === "zh" ? `“${search}”的搜索结果` : `Results for “${search}”`) : CATEGORIES.find((item) => item.key === category)?.[locale === "zh" ? "zh" : "en"]}</h2>
-          <span className="meta-text">{total} {locale === "zh" ? "道" : "recipes"}</span>
+          {!(loading && posts.length === 0) && <span className="meta-text">{total} {locale === "zh" ? "道" : "recipes"}</span>}
         </div>
 
         {posts.length > 0 ? (
           <div className="grid gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => <PostCard key={post.id} post={post} />)}
+            {posts.map((post) => <PostCard key={post.id} post={post} returnTo={`/discover?${new URLSearchParams({ q: search, category }).toString()}`} />)}
           </div>
         ) : loading ? <LoadingState label={locale === "zh" ? "正在找菜谱" : "Finding recipes"} />
           : error ? null

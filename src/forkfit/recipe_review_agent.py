@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from .llm import LLMClient
-from .constraints import ConstraintNormalizer
+from .constraints import ConstraintNormalizer, EQUIPMENT_ALIASES, KNOWN_EQUIPMENT
 from .models import (
     AgentFinding, AgentReview, ClarificationRequest, ConstraintEvidence,
     ConstraintSpec, MealPack, QualityIssue, QualityReport, RunTrace, UserProfile,
@@ -56,6 +56,8 @@ class RecipeReviewAgent:
                 "不能因为限制已写入 constraints 就省略 review。开放表达按语义理解，不能只做关键词匹配。"
                 "过敏和饮食禁忌需要识别食材类别及常见派生形式，例如花生包含花生酱，素食与鸡肉冲突。"
                 "profile 中只有炒锅而菜谱要求烤箱，也属于 equipment 冲突。affected_items 必须填写原菜谱 meal id，"
+                "constraints.items 中 equipment 表示可用厨具，excluded_equipment 表示禁用厨具；value 只能是实际厨具名称。"
+                "例如不要用烤箱必须是 {kind:excluded_equipment,value:烤箱}，不能把 exclude_oven 或 不用烤箱 当厨具名称。"
                 "食材冲突的 affected_ingredients 必须逐字复制原菜谱食材。"
                 "如果用户表达了可能存在的高风险限制但对象不明确，必须返回 clarification，不能当作没有限制。"
                 "示例：allergies=[花生] 且 main.ingredients 包含花生酱或花生碎，review 必须包含 allergy finding，"
@@ -118,7 +120,7 @@ class RecipeReviewAgent:
         *, locale: str, trace: RunTrace | None = None, request_text: str = "",
         deterministic_issues: list[QualityIssue] | None = None,
     ) -> QualityReport:
-        requirements = {"integrity": "菜谱食材、步骤、主要厨具一致且能够完成烹饪。"}
+        requirements = {"integrity": "菜谱名称、食材、步骤、主要厨具一致且能够完成烹饪。主料或做法变化后，名称不得仍声称使用已移除的主料或厨具。"}
         if request_text.strip():
             requirements["request"] = request_text
         requirements.update({f"constraint_{index}": asdict(item) for index, item in enumerate(spec.items)})
@@ -148,7 +150,7 @@ class RecipeReviewAgent:
             user=json.dumps({
                 "schema": {"checks": [{"requirement_id": "requirements 中的键", "meal_id": "existing meal id",
                     "verdict": "satisfied|violated|uncertain", "reason": "简短判断依据",
-                    "evidence": [{"field": "ingredients|steps|equipment|notes", "index": "列表从0开始的条目编号；notes 使用0"}]}],
+                    "evidence": [{"field": "name|ingredients|steps|equipment|notes", "index": "列表从0开始的条目编号；name 和 notes 使用0"}]}],
                     "status": "pass|warn|block", "issues": [{
                     "code": "string", "severity": "low|medium|high", "meal_id": "string", "requirement_id": "对应 requirements 的键",
                     "message": "用户可读的问题", "repair_instruction": "明确修复要求",
@@ -203,7 +205,7 @@ class RecipeReviewAgent:
                     if not isinstance(evidence, list) or not evidence:
                         raise ValueError("Review check lacks evidence.")
                     for reference in evidence:
-                        if not isinstance(reference, dict) or reference.get("field") not in {"ingredients", "steps", "equipment", "notes"}:
+                        if not isinstance(reference, dict) or reference.get("field") not in {"name", "ingredients", "steps", "equipment", "notes"}:
                             raise ValueError("Invalid evidence reference.")
                         source = meals[key[1]][reference["field"]]
                         values = source if isinstance(source, list) else [source]
@@ -252,10 +254,16 @@ class RecipeReviewAgent:
         ] + [ConstraintEvidence("diet_rule", value, True, "profile") for value in profile.diet_rules]
         items += [ConstraintEvidence("equipment", value, True, "profile") for value in profile.equipment]
         allowed = {"allergy", "diet_rule", "equipment", "excluded_equipment", "preference"}
+        equipment_names = {
+            name.casefold() for name in [*KNOWN_EQUIPMENT.split("|"), *EQUIPMENT_ALIASES, *profile.equipment]
+        } | {name.casefold() for aliases in EQUIPMENT_ALIASES.values() for name in aliases}
         for item in data.get("items", []):
             if isinstance(item, dict) and item.get("kind") in allowed and str(item.get("value", "")).strip():
+                value = str(item["value"]).strip()
+                if item["kind"] in {"equipment", "excluded_equipment"} and value.casefold() not in equipment_names and value.casefold() not in raw.casefold():
+                    raise ValueError("Equipment value must be a real utensil name from the request or known equipment vocabulary; use excluded_equipment for exclusions, not an encoded value such as exclude_oven.")
                 items.append(ConstraintEvidence(
-                    item["kind"], str(item["value"]).strip(), bool(item.get("hard", True)),
+                    item["kind"], value, bool(item.get("hard", True)),
                     "request_text", float(item.get("confidence", 1.0)), raw,
                 ))
         # Explicit profile/rule evidence takes precedence over model omissions or downgrades.

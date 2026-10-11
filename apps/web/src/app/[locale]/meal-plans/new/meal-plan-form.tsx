@@ -6,6 +6,9 @@ import { CalendarDays, Loader2, Plus, X } from "lucide-react";
 import { useLocale } from "next-intl";
 
 import { useMealPlanSelection } from "@/components/meal-plan-provider";
+import { useAuth } from "@/components/auth-provider";
+import { useStoredState } from "@/lib/use-stored-state";
+import { planDimensions, restorePlanDraft } from "@/lib/plan-draft";
 import { RemoteImage } from "@/components/remote-image";
 import { Link, useRouter } from "@/i18n/routing";
 import { createMealPlan } from "@/lib/api";
@@ -19,9 +22,14 @@ export function MealPlanForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mealPlan = useMealPlanSelection();
-  const [days, setDays] = useState(Math.min(7, Math.max(3, mealPlan.selected.length)));
-  const [peopleCount, setPeopleCount] = useState(1);
-  const [requestText, setRequestText] = useState(() => searchParams.get("request_text") ?? "");
+  const { user } = useAuth();
+  const entryText = searchParams.get("request_text") ?? "";
+  const initial = { days: Math.min(7, Math.max(2, mealPlan.selected.length || 3)), peopleCount: 1, requestText: entryText, entryText, ...planDimensions(entryText) };
+  const storageKey = user ? `forkfit.planDraft.v1.${user.id}` : null;
+  const [draft, setDraft, ready] = useStoredState(storageKey, initial, (value) => restorePlanDraft(value, initial));
+  const { days, peopleCount, requestText } = draft;
+  const mentioned = planDimensions(requestText);
+  const dimensionMismatch = (mentioned.days !== undefined && mentioned.days !== days) || (mentioned.peopleCount !== undefined && mentioned.peopleCount !== peopleCount);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +58,7 @@ export function MealPlanForm() {
         user_profile: { ...storedProfile, people_count: peopleCount },
       });
       mealPlan.clear();
+      if (storageKey) { try { localStorage.removeItem(storageKey); } catch { /* Storage may be unavailable. */ } }
       router.push(`/meal-plans/${created.plan_id}`);
     } catch (cause: unknown) {
       setError(errorMessage(cause, isZh ? "创建计划失败" : "Could not create plan"));
@@ -99,14 +108,14 @@ export function MealPlanForm() {
           <section className="plan-entry-section grid gap-5 sm:grid-cols-2">
             <label>
               <span className="block text-sm font-semibold">{isZh ? "规划几天" : "Number of days"}</span>
-              <select className="input mt-2" value={days} onChange={(event) => setDays(Number(event.target.value))}>
+              <select className="input mt-2" value={days} disabled={!ready} onChange={(event) => setDraft({ ...draft, days: Number(event.target.value) })}>
                 {[2, 3, 4, 5, 6, 7].map((value) => <option key={value} value={value}>{value} {isZh ? "天" : "days"}</option>)}
               </select>
             </label>
             <label>
               <span className="block text-sm font-semibold">{isZh ? "几个人吃" : "People"}</span>
-              <select className="input mt-2" value={peopleCount} onChange={(event) => setPeopleCount(Number(event.target.value))}>
-                {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((value) => <option key={value} value={value}>{value} {isZh ? "人" : "people"}</option>)}
+              <select className="input mt-2" value={peopleCount} disabled={!ready} onChange={(event) => setDraft({ ...draft, peopleCount: Number(event.target.value) })}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((value) => <option key={value} value={value}>{value} {isZh ? "人" : "people"}</option>)}
               </select>
             </label>
           </section>
@@ -115,12 +124,13 @@ export function MealPlanForm() {
             <label htmlFor="meal-plan-request">
               <span className="block text-sm font-semibold">{isZh ? "口味与限制（选填）" : "Preferences and limits (optional)"}</span>
             </label>
-            <textarea id="meal-plan-request" className="textarea mt-3" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={1500} placeholder={isZh ? "例如：少盐，不吃香菜，30 分钟内" : "For example: less salt, no cilantro, under 30 minutes"} />
+            <textarea id="meal-plan-request" className="textarea mt-3" value={requestText} disabled={!ready} onChange={(event) => setDraft({ ...draft, requestText: event.target.value, ...planDimensions(event.target.value) })} maxLength={1500} placeholder={isZh ? "例如：少盐，不吃香菜，30 分钟内" : "For example: less salt, no cilantro, under 30 minutes"} />
           </section>
 
           <div className="pt-6">
+            {dimensionMismatch && <p role="status" className="mb-4 text-sm">{isZh ? `文字中的天数或人数与选择不一致。本次将按 ${days} 天、${peopleCount} 人规划，请确认并修改文字。` : `Your text differs from the selected ${days} days / ${peopleCount} people. Please update the text to match.`}</p>}
             {error && <p className="mb-4 text-sm text-[var(--danger)]" role="alert">{error}</p>}
-            <button type="submit" className="button-primary min-w-40" disabled={submitting}>
+            <button type="submit" className="button-primary min-w-40" disabled={submitting || !ready || !mealPlan.hydrated || mealPlan.selected.length < days || dimensionMismatch}>
               {submitting ? <Loader2 size={17} className="animate-spin" /> : <CalendarDays size={17} />}
               {submitting ? (isZh ? "正在安排" : "Planning") : (isZh ? "生成菜单" : "Create my plan")}
             </button>

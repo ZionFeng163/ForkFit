@@ -15,7 +15,7 @@ def recipe_question(findings: list[AgentFinding], locale: str = "zh") -> str:
         question = "你现在可以使用哪些厨具？"
     elif "time" in kind:
         question = "你最多能接受多少分钟的总用时？"
-    elif "allergy" in kind or "diet_rule" in kind:
+    elif "allergy" in kind or "diet_rule" in kind or kind == "unsafe_substitution":
         question = "在保留忌口的前提下，你能接受哪种替代食材或做法？"
     else:
         question = "你能接受怎样的食材或做法调整？"

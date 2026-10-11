@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from forkfit.api.schemas import CreatePostRequest, UpdatePostRequest
 from forkfit.db.models import PostLikeRow, PostRow, PostSaveRow
 from forkfit.models import Meal
+from forkfit.constraints import DIET_RULE_BLOCKED_TERMS
 from forkfit.preset_posts import PRESET_POSTS
 from forkfit.serialization import meal_from_dict
 
@@ -577,8 +578,12 @@ def _matches_category(record: PostRecord, category: str) -> bool:
     if normalized == "早餐":
         return "早餐" in text or "早餐" in tags
     if normalized == "素食":
-        terms = {"素食", "素菜", "蔬菜"}
-        return bool(terms & tags) or any(term in text for term in terms)
+        # Vegetables in a meat dish are not evidence of a vegetarian recipe.
+        terms = {"素食", "素菜", "全素", "vegetarian", "vegan"}
+        composition = " ".join([record.recipe.name, *record.recipe.ingredients]).lower()
+        blocked = DIET_RULE_BLOCKED_TERMS["素食"] | DIET_RULE_BLOCKED_TERMS["vegetarian"] | {"鸭肉", "鸭腿", "鸭胸", "鹅肉", "培根", "香肠", "蛤蜊", "牡蛎", "螃蟹", "蚝油", "鱼露", "鸡汤", "骨汤", "猪油", "duck", "oyster", "clam", "crab", "anchovy", "chorizo", "lard", "gelatin"}
+        has_animal = any(re.search(rf"\b{re.escape(term)}\b", composition) if term.isascii() else term in composition for term in blocked)
+        return not has_animal and (bool(terms & tags) or any(term in record.recipe.name.lower() for term in terms))
     return _matches_tag(record, normalized)
 
 

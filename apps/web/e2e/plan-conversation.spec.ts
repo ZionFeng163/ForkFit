@@ -31,7 +31,10 @@ test("受控 API：连续修改、提交失败保留输入、撤销刷新菜单"
     },
   };
   const initialResult = structuredClone(plan.result!);
-  const conversation: MealPlanConversation = { plan_id: planId, current_version_id: "v1", messages: [] };
+  const conversation: MealPlanConversation = { plan_id: planId, current_version_id: "v1", messages: [{
+    message_id: "previous_failed", plan_id: planId, base_version_id: "v1", role: "user", content: "第二天少放盐",
+    intent: "modify_day", status: "failed", error: { message: "这次修改没有应用。" }, created_at: now,
+  }] };
   let rejectNext = false;
   let round = 0;
   await page.route("**/api/backend/posts/recipe_*", (route) => route.fulfill({ json: { image_urls: [] } }));
@@ -68,9 +71,14 @@ test("受控 API：连续修改、提交失败保留输入、撤销刷新菜单"
   const input = page.getByRole("textbox", { name: "输入菜单修改" });
   const send = page.getByRole("button", { name: "发送修改", exact: true });
   await expect(dayTwo.getByRole("heading", { name: "清蒸鱼" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重试上一次", exact: true })).toBeVisible();
+  await page.getByRole("checkbox", { name: "鱼", exact: true }).check();
+  await page.reload();
+  await expect(page.getByRole("checkbox", { name: "鱼", exact: true })).toBeChecked();
   await input.fill("第二天换成香菇鸡肉");
   await send.click();
   await expect(dayTwo.getByRole("heading", { name: "香菇鸡肉" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重试上一次", exact: true })).toHaveCount(0);
   await expect(dayOne.getByRole("heading", { name: "番茄炒蛋" })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "鸡肉", exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "鱼", exact: true })).toHaveCount(0);
@@ -87,6 +95,7 @@ test("受控 API：连续修改、提交失败保留输入、撤销刷新菜单"
   await expect(dayTwo.getByRole("heading", { name: "清蒸鱼" })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "鱼", exact: true })).toBeVisible();
   await expect(input).toHaveValue("");
+  await expect(page.getByRole("button", { name: "重试上一次", exact: true })).toHaveCount(0);
   await expectMainVisible(page);
   await finish();
 });

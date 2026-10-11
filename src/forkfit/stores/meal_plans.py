@@ -236,7 +236,6 @@ class PostgresMealPlanStore:
             if row.status != "failed":
                 raise ValueError("Only failed meal plans can be retried.")
             row.status = "queued"
-            row.confirmed = True
             row.result_payload = None
             row.error_payload = None
             row.current_stage = "queued"
@@ -361,6 +360,17 @@ class PostgresMealPlanStore:
                 context = "\n".join(filter(None, [prior, clarification.content]))
                 if len(context) > 4500:
                     raise ValueError("这次澄清内容较长，请重新整理完整要求后创建计划。")
+            else:
+                latest = session.query(MealPlanMessageRow).filter(
+                    MealPlanMessageRow.plan_id == plan_id,
+                    MealPlanMessageRow.role == "user",
+                ).order_by(MealPlanMessageRow.created_at.desc()).first()
+                # Retrying an answer must preserve its question's scope, but never
+                # borrow context from an older request or a different menu version.
+                if (latest is not None and latest.status == "failed"
+                        and latest.content == content.strip()
+                        and latest.base_version_id == plan.current_version_id):
+                    context = (latest.patch_payload or {}).get("clarification_context")
             session.query(MealPlanMessageRow).filter(
                 MealPlanMessageRow.plan_id == plan_id,
                 MealPlanMessageRow.status == "needs_clarification",
@@ -560,7 +570,7 @@ class PostgresMealPlanStore:
 
     def requeue_message(self, message_id: str, user_id: str) -> MealPlanMessageRecord:
         with self.session_factory() as session:
-            row = session.get(MealPlanMessageRow, message_id)
+            row = session.query(MealPlanMessageRow).filter_by(id=message_id).with_for_update().one_or_none()
             if row is None or row.user_id != user_id:
                 raise KeyError("Conversation message not found.")
             if row.status != "needs_confirmation":
@@ -569,6 +579,7 @@ class PostgresMealPlanStore:
             if plan is None or plan.current_version_id != row.base_version_id:
                 raise ValueError("这份菜单已经更新，请刷新后再修改。")
             row.status = "queued"
+            row.confirmed = True
             row.response_payload = None
             row.error_payload = None
             row.lease_expires_at = None
@@ -577,6 +588,19 @@ class PostgresMealPlanStore:
         if loaded is None:
             raise RuntimeError("Conversation message disappeared while confirming.")
         return loaded
+
+    def cancel_message(self, message_id: str, user_id: str) -> MealPlanMessageRecord:
+        with self.session_factory() as session:
+            row = session.query(MealPlanMessageRow).filter_by(id=message_id).with_for_update().one_or_none()
+            if row is None or row.user_id != user_id:
+                raise KeyError("Conversation message not found.")
+            if row.status not in {"needs_confirmation", "needs_clarification", "rejected"}:
+                raise ValueError("这条修改已经开始处理，当前不能取消。")
+            row.status = "rejected"
+            row.response_payload = {"message": "已取消这次修改，菜单保持不变。", "cancelled": True}
+            row.lease_expires_at = None
+            session.commit()
+        return self.get_message(message_id)
 
     def requeue_expired_messages(self) -> int:
         now = utc_now()

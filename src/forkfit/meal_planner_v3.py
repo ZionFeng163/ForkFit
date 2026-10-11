@@ -623,7 +623,7 @@ fixed_days 中的日期和菜品必须原样保留，不可把这些菜安排到
                     if day.day_index not in item["days"]:
                         item["days"].append(day.day_index)
         return [ShoppingItem(
-            name=name, amount=" + ".join(item["amounts"]) or "适量", used_on=item["days"]
+            name=name, amount=" + ".join(item["amounts"]) or "用量未提供", used_on=item["days"]
         ) for name, item in grouped.items()]
 
     @staticmethod

@@ -13,7 +13,7 @@ import { getLocalizedLoginUrl } from "@/lib/auth-navigation";
 import { toggleLike } from "@/lib/api";
 import type { RecipePost } from "@/types/forkfit";
 
-export function PostCard({ post, compact = false }: { post: RecipePost; compact?: boolean }) {
+export function PostCard({ post, compact = false, returnTo }: { post: RecipePost; compact?: boolean; returnTo?: string }) {
   const locale = useLocale();
   const { user } = useAuth();
   const [likeState, setLikeState] = useState({ liked: post.liked ?? false, likes: post.likes ?? 0 });
@@ -22,6 +22,7 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
   const [busy, setBusy] = useState(false);
   const mealPlan = useMealPlanSelection();
   const planned = mealPlan.isSelected(post.id);
+  const detailHref = `/packs/${post.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`;
 
   function handleLike() {
     if (!user) {
@@ -37,7 +38,7 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
 
   return (
     <article className={`recipe-card ${compact ? "lg:grid lg:grid-cols-[132px_1fr] lg:gap-4 lg:pb-5" : ""}`}>
-      <Link href={`/packs/${post.id}`} className="block" aria-label={post.title}>
+      <Link href={detailHref} className="block" aria-label={post.title}>
         <div className={`recipe-card-media ${compact ? "lg:aspect-square" : ""}`}>
           <RemoteImage src={post.image_urls[0] ?? ""} alt={post.title} className="h-full w-full object-cover" />
         </div>
@@ -46,7 +47,7 @@ export function PostCard({ post, compact = false }: { post: RecipePost; compact?
       <div className="recipe-card-body flex min-w-0 flex-col">
         <div className="min-w-0">
           <h3 className="recipe-card-title">
-            <Link href={`/packs/${post.id}`} title={post.title}>{post.title}</Link>
+            <Link href={detailHref} title={post.title}>{post.title}</Link>
           </h3>
         </div>
         <div className="recipe-card-meta mt-auto">

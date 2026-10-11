@@ -13,6 +13,8 @@ import {
   createRun, getRun, getPost, publishRun, saveRun, extractMyPreferences, resumeRun,
 } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { useAuth } from "@/components/auth-provider";
+import { useStoredState } from "@/lib/use-stored-state";
 import { recipeRunMessage } from "@/lib/user-facing";
 import type { RecipePost, RunResultPayload } from "@/types/forkfit";
 
@@ -21,7 +23,18 @@ export function ForkContent({ post }: { post: RecipePost }) {
   const firstMeal = post.recipe;
 
   // Run state
-  const [runId, setRunId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [savedInput, setSavedInput, restored] = useStoredState<{ runId: string | null; requirement: string }>(
+    user ? `forkfit.recipeRun.v1.${user.id}.${post.id}` : null,
+    { runId: null, requirement: "" },
+    (value) => {
+      const data = value as { runId?: unknown; requirement?: unknown } | null;
+      return { runId: typeof data?.runId === "string" ? data.runId : null, requirement: typeof data?.requirement === "string" ? data.requirement : "" };
+    },
+  );
+  const { runId, requirement } = savedInput;
+  const setRunId = (value: string | null) => setSavedInput((previous) => ({ ...previous, runId: value }));
+  const setRequirement = (value: string | ((previous: string) => string)) => setSavedInput((previous) => ({ ...previous, requirement: typeof value === "function" ? value(previous.requirement) : value }));
   const [runStatus, setRunStatus] = useState<string | null>(null);
   const [runResult, setRunResult] = useState<RunResultPayload | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
@@ -31,7 +44,6 @@ export function ForkContent({ post }: { post: RecipePost }) {
   const isRunning = runStatus === "queued" || runStatus === "running";
 
   // User input
-  const [requirement, setRequirement] = useState("");
   const [extracting, setExtracting] = useState(false);
 
   // Editable result fields
@@ -71,7 +83,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
           setRunResult(run.result);
           const meal = run.result.forked_meal_pack?.meals?.[0];
           if (meal) {
-            setEditTitle(run.result.forked_meal_pack.title || meal.name || "");
+            setEditTitle(meal.name || run.result.forked_meal_pack.title || "");
             setEditDesc(run.result.description || run.result.summary || "");
             setEditIngredients(meal.ingredients.join(", "));
             setEditEquipment(meal.equipment.join(", "));
@@ -88,7 +100,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
           setRunError(recipeRunMessage(run.error?.message, "定制失败"));
         } else if (run.status === "needs_input") {
           const question = run.unresolved_payload?.message || "原菜谱保持不变。你能接受怎样的食材或做法调整？";
-          setConversation((messages) => messages.at(-1)?.role === "assistant" && messages.at(-1)?.text === question ? messages : [...messages, { role: "assistant", text: question }]);
+          setConversation((messages) => messages.at(-1)?.role === "assistant" && messages.at(-1)?.text === question ? messages : [...(messages.length ? messages : [{ role: "user" as const, text: requirement }]), { role: "assistant", text: question }]);
           setRunError(null);
         }
       } catch {
@@ -101,7 +113,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [runId, runStatus, post.id]);
+  }, [runId, runStatus, post.id, requirement]);
 
   // Start customization
   async function handleStart() {
@@ -247,6 +259,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
         <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-6">
           <h2 className="section-heading mb-4">你的定制需求</h2>
           <textarea
+            aria-label="你的定制需求"
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
             placeholder="例如：少盐、30 分钟内、多加蔬菜"
@@ -264,7 +277,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
             ))}
           </div>
           <div className="flex gap-3 flex-wrap">
-            <button onClick={handleStart} disabled={creating || isRunning}
+            <button onClick={handleStart} disabled={!restored || creating || isRunning || Boolean(runId && !runStatus)}
               className="button-primary disabled:opacity-50">
               {creating || isRunning ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
               开始定制
@@ -343,7 +356,7 @@ export function ForkContent({ post }: { post: RecipePost }) {
                 {runResult.change_log.slice(0, 4).map((change, index) => (
                   <div key={`${change.affected_item}-${index}`} className="border-l-2 border-[var(--brand)] pl-3 text-sm leading-6">
                     <div className="font-medium text-[var(--text)]">{change.reason}</div>
-                    <div className="text-[var(--muted-text)]">{change.from_value} → {change.to_value || "移除"}</div>
+                    <ChangeValues before={change.from_value} after={change.to_value} />
                   </div>
                 ))}
               </div>
@@ -418,9 +431,9 @@ export function ForkContent({ post }: { post: RecipePost }) {
               {editSteps.map((step, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className="w-7 h-7 min-w-7 rounded-full grid place-items-center text-[13px] font-bold text-white mt-2" style={{ background: "var(--brand)" }}>{i + 1}</div>
-                  <input value={step} onChange={(e) => { const s = [...editSteps]; s[i] = e.target.value; setEditSteps(s); }}
+                  <input aria-label={`第 ${i + 1} 步`} value={step} onChange={(e) => { const s = [...editSteps]; s[i] = e.target.value; setEditSteps(s); }}
                     className="flex-1 px-3.5 py-2.5 text-sm rounded-lg outline-none" style={{ border: "1.5px solid var(--separator)", background: "var(--surface)", color: "var(--text)" }} />
-                  <button onClick={() => setEditSteps(editSteps.filter((_, j) => j !== i))} className="mt-2 p-1" style={{ color: "var(--muted)" }}>
+                  <button aria-label={`移除第 ${i + 1} 步`} onClick={() => setEditSteps(editSteps.filter((_, j) => j !== i))} className="mt-2 p-1" style={{ color: "var(--muted)" }}>
                     <X size={16} />
                   </button>
                 </div>
@@ -471,10 +484,26 @@ export function ForkContent({ post }: { post: RecipePost }) {
 
 function EditField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="block text-[13px] font-semibold mb-1.5" style={{ color: "var(--text)" }}>{label}</label>
+    <label className="block">
+      <span className="block text-[13px] font-semibold mb-1.5" style={{ color: "var(--text)" }}>{label}</span>
       {children}
       {hint && <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{hint}</div>}
-    </div>
+    </label>
   );
+}
+
+function ChangeValues({ before, after }: { before: string; after: string }) {
+  function values(text: string): string[] | null {
+    try {
+      const value: unknown = JSON.parse(text);
+      return Array.isArray(value) && value.every((item) => typeof item === "string") ? value : null;
+    } catch { return null; }
+  }
+  const oldItems = values(before);
+  const newItems = values(after);
+  if (!oldItems && !newItems) return <p className="text-[var(--muted-text)]">{before} → {after || "移除"}</p>;
+  return <details className="text-[var(--muted-text)]"><summary>查看具体变化</summary>
+    <p className="mt-2 font-medium">调整前</p><ul>{(oldItems ?? [before]).map((item, i) => <li key={i}>{item}</li>)}</ul>
+    <p className="mt-2 font-medium">调整后</p><ul>{(newItems ?? [after || "移除"]).map((item, i) => <li key={i}>{item}</li>)}</ul>
+  </details>;
 }

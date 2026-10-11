@@ -1,10 +1,12 @@
 import unittest
+from datetime import timedelta
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from forkfit.db.models import MealPlanRow, MealPlanVersionRow, MealPlanMessageRow
 from forkfit.stores.meal_plans import PostgresMealPlanStore, _snapshot
+from forkfit.stores.base import utc_now
 from test_meal_plan_conversation import _plan
 
 
@@ -24,6 +26,85 @@ class PlanVersionStateTests(unittest.TestCase):
 
     def tearDown(self):
         self.engine.dispose()
+
+    def pending(self):
+        message = self.store.create_message(plan_id="p", user_id="u", content="所有菜少盐", base_version_id=self.original.current_version_id, locale="zh")
+        self.store.mark_message_needs_confirmation(message.id, intent="rebalance_plan", response={"message": "确认？"}, patch=None)
+        return message
+
+    def test_confirmation_is_persisted_and_claimed_once(self):
+        message = self.pending()
+        with self.assertRaises(KeyError):
+            self.store.requeue_message(message.id, "other")
+        self.assertTrue(self.store.requeue_message(message.id, "u").confirmed)
+        with self.assertRaises(ValueError):
+            self.store.requeue_message(message.id, "u")
+        claimed = self.store.claim_next_message()
+        self.assertTrue(claimed.confirmed)
+        self.assertIsNone(self.store.claim_next_message())
+
+    def test_cancel_keeps_version_and_unblocks_next_message(self):
+        message = self.pending()
+        with self.assertRaises(KeyError):
+            self.store.cancel_message(message.id, "other")
+        cancelled = self.store.cancel_message(message.id, "u")
+        self.assertEqual(cancelled.status, "rejected")
+        self.assertIsNone(self.store.get_plan("p").pending_message_id)
+        self.assertEqual(self.store.get_plan("p").current_version_id, self.original.current_version_id)
+        self.assertIsNone(self.store.claim_next_message())
+        next_message = self.store.create_message(plan_id="p", user_id="u", content="第二天去掉香菜", base_version_id=self.original.current_version_id, locale="zh")
+        with self.assertRaises(ValueError):
+            self.store.cancel_message(next_message.id, "u")
+
+    def test_confirm_stale_version_is_rejected(self):
+        message = self.pending()
+        with self.sessions() as session:
+            session.get(MealPlanRow, "p").current_version_id = "new-version"
+            session.commit()
+        with self.assertRaises(ValueError):
+            self.store.requeue_message(message.id, "u")
+
+    def test_retry_failed_answer_keeps_scope_without_changing_menu(self):
+        first = self.store.create_message(plan_id="p", user_id="u", content="第二天不要烤箱", base_version_id=self.original.current_version_id, locale="zh")
+        self.store.mark_message_needs_clarification(first.id, intent="modify_day", response={"message": "用什么厨具？"})
+        answer = self.store.create_message(plan_id="p", user_id="u", content="用炒锅", base_version_id=self.original.current_version_id, locale="zh")
+        self.store.mark_message_failed(answer.id, "格式错误，请重试")
+        # SQLite's server timestamp has second precision, unlike PostgreSQL.
+        with self.sessions() as session:
+            session.get(MealPlanMessageRow, first.id).created_at = utc_now() - timedelta(seconds=2)
+            session.get(MealPlanMessageRow, answer.id).created_at = utc_now() - timedelta(seconds=1)
+            session.commit()
+        retry = self.store.create_message(plan_id="p", user_id="u", content="用炒锅", base_version_id=self.original.current_version_id, locale="zh")
+        self.assertEqual(retry.patch_payload, answer.patch_payload)
+        self.assertEqual(retry.patch_payload["clarification_context"], "第二天不要烤箱")
+        unchanged = self.store.get_plan("p")
+        self.assertEqual(unchanged.current_version_id, self.original.current_version_id)
+        self.assertEqual(unchanged.result, self.original.result)
+        self.store.mark_message_failed(retry.id, "重试失败")
+        different = self.store.create_message(plan_id="p", user_id="u", content="第一天不要葱", base_version_id=self.original.current_version_id, locale="zh")
+        self.assertIsNone(different.patch_payload)
+
+    def test_retry_does_not_reuse_context_from_an_old_version(self):
+        message = self.store.create_message(plan_id="p", user_id="u", content="用炒锅", base_version_id=self.original.current_version_id, locale="zh")
+        with self.sessions() as session:
+            session.get(MealPlanMessageRow, message.id).patch_payload = {"clarification_context": "第二天不要烤箱"}
+            session.get(MealPlanRow, "p").current_version_id = "new-version"
+            session.commit()
+        self.store.mark_message_failed(message.id, "失败")
+        retry = self.store.create_message(plan_id="p", user_id="u", content="用炒锅", base_version_id="new-version", locale="zh")
+        self.assertIsNone(retry.patch_payload)
+
+    def test_cancel_route_serializes_rejected_status(self):
+        import asyncio
+        from types import SimpleNamespace
+        from forkfit.api.routes_meal_plans import cancel_conversation_message
+        from forkfit.services.meal_plan_service import MealPlanService
+
+        message = self.pending()
+        service = SimpleNamespace(store=self.store)
+        service.cancel_message = lambda **kwargs: MealPlanService.cancel_message(service, **kwargs)
+        response = asyncio.run(cancel_conversation_message("p", message.id, SimpleNamespace(id="u"), service))
+        self.assertEqual(response.model_dump()["status"], "rejected")
 
     def edit(self, text, *, intent="change_constraint", patch=None, requirements=None):
         plan = self.store.get_plan("p")

@@ -7,7 +7,7 @@ test.describe("公共浏览", () => {
     const finish = watchPage(page, testInfo);
     await page.goto("/zh", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { level: 1 })).toContainText("吃什么");
-    await expect(page.getByRole("button", { name: "开始规划" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "选菜并规划" })).toBeVisible();
     await expect(page.getByRole("link", { name: /先逛菜谱/ })).toBeVisible();
     await expectMainVisible(page);
     await finish();

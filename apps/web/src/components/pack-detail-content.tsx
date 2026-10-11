@@ -25,7 +25,7 @@ function timeAgo(value: string, locale: string) {
   return locale === "zh" ? `${days} 天前` : `${days}d ago`;
 }
 
-export function PackDetailContent({ post, locale }: { post: RecipePost; locale: string }) {
+export function PackDetailContent({ post, locale, backHref = "/discover" }: { post: RecipePost; locale: string; backHref?: string }) {
   const tc = useTranslations("Comments");
   const { user, loading: authLoading } = useAuth();
   const recipe = post.recipe;
@@ -131,7 +131,7 @@ export function PackDetailContent({ post, locale }: { post: RecipePost; locale: 
 
   return (
     <div className="site-container pb-20 pt-6 md:pt-8">
-      <Link href="/discover" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--muted-text)] hover:text-[var(--text)]">
+      <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--muted-text)] hover:text-[var(--text)]">
         <ArrowLeft size={16} />{isZh ? "返回发现" : "Back to discover"}
       </Link>
 

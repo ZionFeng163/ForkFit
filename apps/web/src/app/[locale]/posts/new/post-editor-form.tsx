@@ -65,10 +65,12 @@ function TagInput({
   tags,
   onChange,
   placeholder,
+  id,
 }: {
   tags: string[];
   onChange: (tags: string[]) => void;
   placeholder: string;
+  id: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,12 +97,13 @@ function TagInput({
       {tags.map((tag, i) => (
         <span key={i} className="fp-tag-item">
           {tag}
-          <button type="button" onClick={() => removeTag(i)} className="fp-tag-remove">
+          <button type="button" aria-label={`移除 ${tag}`} onClick={() => removeTag(i)} className="fp-tag-remove">
             <X size={12} />
           </button>
         </span>
       ))}
       <input
+        id={id}
         ref={inputRef}
         type="text"
         placeholder={tags.length === 0 ? placeholder : ""}
@@ -286,7 +289,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
               {/* Title */}
               <div className="mb-5">
-                <label className="block text-[13px] font-semibold mb-1.5">
+                <label htmlFor="post-title" className="block text-[13px] font-semibold mb-1.5">
                   菜谱标题 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <input
@@ -304,7 +307,7 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
               {/* Description */}
               <div className="mb-5">
-                <label className="block text-[13px] font-semibold mb-1.5">
+                <label htmlFor="post-description" className="block text-[13px] font-semibold mb-1.5">
                   菜谱描述 <span style={{ color: "var(--brand)" }}>*</span>
                 </label>
                 <textarea
@@ -384,22 +387,22 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
               {/* Ingredients */}
               <div className="mb-5">
-                <label className="block text-[13px] font-semibold mb-1.5">食材清单</label>
-                <TagInput tags={form.ingredients} onChange={(t) => update("ingredients", t)} placeholder="输入食材后按回车添加" />
+                <label htmlFor="post-ingredients" className="block text-[13px] font-semibold mb-1.5">食材清单</label>
+                <TagInput id="post-ingredients" tags={form.ingredients} onChange={(t) => update("ingredients", t)} placeholder="输入食材后按回车添加" />
                 <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>逐一输入食材名称，按回车分隔</div>
               </div>
 
               {/* Equipment */}
               <div className="mb-5">
-                <label className="block text-[13px] font-semibold mb-1.5">厨具</label>
-                <TagInput tags={form.equipment} onChange={(t) => update("equipment", t)} placeholder="输入厨具后按回车添加" />
+                <label htmlFor="post-equipment" className="block text-[13px] font-semibold mb-1.5">厨具</label>
+                <TagInput id="post-equipment" tags={form.equipment} onChange={(t) => update("equipment", t)} placeholder="输入厨具后按回车添加" />
                 <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>例如：炒锅、烤箱、空气炸锅</div>
               </div>
 
               {/* Tags */}
               <div>
-                <label className="block text-[13px] font-semibold mb-1.5">标签</label>
-                <TagInput tags={form.tags} onChange={(t) => update("tags", t)} placeholder="输入标签后按回车添加" />
+                <label htmlFor="post-tags" className="block text-[13px] font-semibold mb-1.5">标签</label>
+                <TagInput id="post-tags" tags={form.tags} onChange={(t) => update("tags", t)} placeholder="输入标签后按回车添加" />
                 <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>例如：家常菜、快手菜、减脂、早餐</div>
               </div>
             </div>
@@ -416,13 +419,14 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
                   <div key={i} className="fp-step">
                     <div className="fp-step-num">{i + 1}</div>
                     <input
+                      aria-label={`第 ${i + 1} 步`}
                       type="text"
                       value={step}
                       onChange={(e) => handleStepChange(i, e.target.value)}
                       placeholder={`第${i + 1}步`}
                       className="fp-input"
                     />
-                    <button type="button" onClick={() => removeStep(i)} className="fp-step-remove">
+                    <button type="button" aria-label={`移除第 ${i + 1} 步`} onClick={() => removeStep(i)} className="fp-step-remove">
                       <X size={16} />
                     </button>
                   </div>
@@ -436,8 +440,9 @@ export function PostEditorForm({ post }: { post?: RecipePost }) {
 
               {/* Notes */}
               <div className="mt-5">
-                <label className="block text-[13px] font-semibold mb-1.5">小贴士</label>
+                <label htmlFor="post-notes" className="block text-[13px] font-semibold mb-1.5">小贴士</label>
                 <textarea
+                  id="post-notes"
                   rows={3}
                   value={form.notes}
                   onChange={(e) => update("notes", e.target.value)}

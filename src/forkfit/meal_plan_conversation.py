@@ -174,15 +174,48 @@ class MealPlanConversationWorkflow:
             return ConversationIntent(
                 kind="explain", day_index=cls._day_index(value), raw_text=value
             )
-        day_index = cls._day_index(value)
-        if re.search(r"解锁|(?:取消|解除|不再|不要).*锁定", value):
+        # A preservation clause describes scope, not a lock/unlock command.
+        day_pattern = r"第\s*[1-7一二三四五六七]\s*天"
+        clauses = re.split(r"[，,。；;\n]+", value)
+        retained = []
+        remaining = []
+        for clause in clauses:
+            clause = clause.strip()
+            if re.fullmatch(
+                rf"(?:保留|保持)(?:已)?锁定(?:的)?(?:{day_pattern}|日期)|"
+                rf"{day_pattern}(?:保持|继续)(?:已)?锁定|(?:不要|别)解锁(?:{day_pattern})?",
+                clause,
+            ):
+                retained.append(clause)
+            elif clause:
+                remaining.append(clause)
+        routing_value = "，".join(remaining)
+        if retained and not routing_value:
+            return ConversationIntent(kind="explain", day_index=cls._day_index(value), raw_text=value)
+        day_index = cls._day_index(routing_value)
+        if re.search(rf"解锁|(?:取消|解除|不再|不要)\s*(?:{day_pattern}\s*(?:的)?)?锁定", routing_value):
             return ConversationIntent(kind="unlock_day", day_index=day_index, raw_text=value)
-        if re.search(r"锁定|固定下来", value):
+        if re.search(r"锁定|固定下来", routing_value):
             return ConversationIntent(
                 kind="lock_day", day_index=day_index, raw_text=value
             )
+        latest = value.rsplit("用户补充回答：", 1)[-1].strip()
+        scope_text = latest if re.search(rf"{day_pattern}|整份|全部|所有|整体", latest) else value
+        if re.search(r"只(?:调整|修改|重排|重新安排)(?:其他|其余|剩余|未锁定)(?:的)?(?:日期|天|菜单)", scope_text):
+            unlocked = [day.day_index for day in plan.result.days if day.day_index not in plan.locked_days] if plan.result else []
+            if not plan.locked_days or not unlocked:
+                return ConversationIntent(kind="clarification", raw_text=value, question="请说明要调整第几天；如果所有日期都已锁定，请先选择要解锁的日期。")
+            if len(unlocked) == 1:
+                return ConversationIntent(kind="modify_day", day_index=unlocked[0], raw_text=value)
+            return ConversationIntent(kind="regenerate_remaining", raw_text=value, requires_confirmation=True)
+        if latest in {"口味", "时间", "耗时", "食材", "菜品类型"}:
+            return ConversationIntent(kind="clarification", raw_text=value,
+                question=f"你希望{latest}具体怎么调整？例如哪一天要更清淡、少用什么食材，或控制在多少分钟内。")
+        if re.search(r"不太合适|不太对|不满意|不喜欢|更好吃|家的感觉", latest) and not re.search(r"换成|换为|去掉|不要|少放|多放|分钟|烤箱|电饭煲|清淡|少盐|更辣", latest):
+            return ConversationIntent(kind="clarification", raw_text=value,
+                question="你觉得口味、耗时、食材，还是菜品类型不合适？")
         global_request = bool(
-            re.search(r"三天|几天|所有|整体|菜单|每一天|蔬菜多|高蛋白|清淡|口味|饮食", value)
+            re.search(r"三天|几天|所有|整体|菜单|每一天|蔬菜多|高蛋白|清淡|口味|饮食", routing_value)
         )
         if global_request and day_index is None:
             kind: ConversationIntentKind = (
@@ -195,7 +228,18 @@ class MealPlanConversationWorkflow:
                 raw_text=value,
                 requires_confirmation=True,
             )
-        if re.search(r"换成|换为|换一道|替换|改成", value):
+        candidate_names = {
+            str(name).strip()
+            for item in plan.request_payload.get("selected_recipes", [])
+            for name in (item.get("title", ""), item.get("recipe", {}).get("name", ""))
+            if str(name).strip()
+        }
+        named_replacement = any(
+            re.search(rf"(?:换成|换为|替换成|替换为|改成)\s*{re.escape(name)}", latest)
+            for name in candidate_names
+        )
+        # Changing a method or ingredient is not a request to replace the recipe.
+        if re.search(r"换一道|换道菜|换菜", latest) or named_replacement:
             if day_index is None:
                 return ConversationIntent(
                     kind="clarification",
@@ -427,8 +471,12 @@ class MealPlanConversationWorkflow:
 
     @staticmethod
     def _confirmation_message(intent: ConversationIntent) -> str:
+        if intent.day_index is not None:
+            return f"第 {intent.day_index} 天已锁定。这次仅允许按你的要求修改这一天，完成后仍保持锁定；其他日期不变。确认修改吗？"
         if intent.kind == "change_constraint":
             return "这会影响整份菜单的硬约束，需要重新检查所有日期。确认要按这个要求重新规划吗？"
+        if intent.kind == "regenerate_remaining":
+            return "这次只调整未锁定日期，锁定日期及原有全局限制保持不变。确认继续吗？"
         return "这会重新安排多天菜单，当前结果会保留为历史版本。确认继续吗？"
 
     @staticmethod

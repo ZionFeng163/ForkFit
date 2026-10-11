@@ -68,7 +68,7 @@ class BailianLLMClient:
         load_env()
         self.api_key = api_key or os.environ.get("BAILIAN_API_KEY")
         self.model = model or os.environ.get(
-            "BAILIAN_MODEL", "deepseek-v4-flash-0731"
+            "BAILIAN_MODEL", "deepseek-v4.1-flash"
         )
         self.base_url = (
             base_url

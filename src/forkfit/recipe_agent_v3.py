@@ -16,6 +16,10 @@ class PatchValidationError(ValueError):
     pass
 
 
+class PatchSafetyError(PatchValidationError):
+    pass
+
+
 class AdaptationAgent:
     agent_name = "recipe_adapter"
 
@@ -33,9 +37,10 @@ class AdaptationAgent:
                 "涉及过敏或饮食禁忌的替换必须先调用 search_substitutions，并只能选本轮工具返回的候选。",
                 "工具候选为空时禁止编造替代食材；香草等非关键装饰可直接移除并同步步骤。完成移除后不应再报告未解决；功能性原料无法安全移除才写入 unresolved_items。",
                 "replace_ingredient 的 value 必须逐字等于工具结果的 substitute，不能添加数量、括号或说明。",
-                "replace_steps 的 value 必须是包含 1 至 20 个非空字符串的数组，不能是单个字符串；set_cook_time 的 value 必须是整数；其他 replace/set 操作使用字符串。",
+                "replace_steps 的 value 是包含 1 至 20 个非空字符串的数组；update_tags 是最多 12 个非空字符串的数组，清空标签用 []。两者都不能使用单个字符串。",
+                "set_cook_time 的 value 是 1 至 360 的整数；replace_ingredient、add_ingredient、replace_equipment、set_name、set_notes 使用字符串；remove 操作不需要 value。",
                 "同一个 meal_id、op 和 target 只能出现一次，不能对同一厨具或食材重复执行替换。",
-                "只有原菜名明确包含被移除的过敏或禁忌食材时才允许 set_name；中性菜名不得修改。",
+                "原菜名提到的主料或做法因本轮要求被替换时，必须用 set_name 同步菜名，例如肥牛换豆腐后不能仍叫牛肉锅，烤箱改炒锅后不能仍叫烤盘。中性菜名保持不变，不改变不相关的菜品身份。",
                 "保持 meal_id 与菜品身份不变，target 必须逐字来自当前菜谱。",
                 "食材变化后同步修改相关步骤，确保食材、厨具、时间与步骤一致。",
                 "最多 32 个操作；无法安全完成时写入 unresolved_items。",
@@ -127,7 +132,7 @@ class PatchApplier:
             if op.op == "replace_ingredient":
                 index = self._index(meal.ingredients, op.target); value = self._string(op.value); before = meal.ingredients[index]
                 if op.target.casefold() in safety_targets and value.casefold() not in allowed_replacements.get(op.target.casefold(), set()):
-                    raise PatchValidationError("安全类替代品不在本轮检索结果中。")
+                    raise PatchSafetyError("安全类替代品不在本轮检索结果中。")
                 meal.ingredients[index] = value
             elif op.op == "add_ingredient":
                 value = self._string(op.value); before = ""
@@ -140,15 +145,17 @@ class PatchApplier:
             elif op.op == "remove_equipment":
                 index = self._index(meal.equipment, op.target); before = meal.equipment.pop(index); value = ""
             elif op.op == "set_cook_time":
-                value = int(op.value)
-                if not 1 <= value <= 360: raise PatchValidationError("cook time out of range")
+                value = op.value
+                if type(value) is not int or not 1 <= value <= 360: raise PatchValidationError("set_cook_time.value must be an integer from 1 to 360")
                 before = meal.cook_time_minutes; meal.cook_time_minutes = value
             elif op.op == "replace_steps":
-                value = self._strings(op.value, 20); before = list(meal.steps); meal.steps = value
+                value = self._strings(op.value, 20, field="replace_steps.value"); before = list(meal.steps); meal.steps = value
             elif op.op == "update_tags":
-                value = self._strings(op.value, 12); before = list(meal.tags); meal.tags = value
+                value = self._strings(op.value, 12, field="update_tags.value", allow_empty=True); before = list(meal.tags); meal.tags = value
             elif op.op == "set_name":
                 value = self._string(op.value, 160); before = meal.name; meal.name = value
+                if len(meal_pack.meals) == 1 and meal_pack.title == before:
+                    meal_pack.title = value
             elif op.op == "set_notes":
                 value = self._string(op.value, 1200, True); before = meal.notes; meal.notes = value
             else: raise PatchValidationError(f"Unsupported operation: {op.op}")
@@ -169,8 +176,9 @@ class PatchApplier:
         return value
 
     @classmethod
-    def _strings(cls, value: Any, limit: int) -> list[str]:
-        if not isinstance(value, list) or not value or len(value) > limit: raise PatchValidationError("Invalid patch list")
+    def _strings(cls, value: Any, limit: int, *, field: str, allow_empty: bool = False) -> list[str]:
+        if not isinstance(value, list) or (not value and not allow_empty) or len(value) > limit:
+            raise PatchValidationError(f"{field} must be an array of {0 if allow_empty else 1} to {limit} non-empty strings")
         return [cls._string(item) for item in value]
 
     @staticmethod

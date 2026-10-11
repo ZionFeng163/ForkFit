@@ -9,7 +9,7 @@ from forkfit.clarification import recipe_question
 from forkfit.models import MealPack
 from forkfit.serialization import meal_from_dict, user_profile_from_dict
 from forkfit.stores.meal_plans import MealPlanRecord
-from forkfit.plan_requirements import scoped_request, prepare_requirement_update
+from forkfit.plan_requirements import scoped_request, prepare_requirement_update, RequirementNeedsInput
 
 
 class MealPlanConversationWorkflowV3:
@@ -31,10 +31,10 @@ class MealPlanConversationWorkflowV3:
         from forkfit.meal_plan_conversation import ConversationResult
         try:
             return self._process_request(plan, text, confirmed=confirmed)
-        except MealPlanNeedsInput as exc:
+        except (MealPlanNeedsInput, RequirementNeedsInput) as exc:
             return ConversationResult(
                 status="needs_clarification", intent=self.parse_intent(text, plan),
-                message=exc.message, summary="需要你确认，当前菜单保持不变。",
+                message=exc.message if isinstance(exc, MealPlanNeedsInput) else str(exc), summary="需要你确认，当前菜单保持不变。",
             )
 
     def _process_request(self, plan: MealPlanRecord, text: str, *, confirmed: bool = False):
@@ -47,7 +47,18 @@ class MealPlanConversationWorkflowV3:
             day = next((day for day in plan.result.days if day.day_index == intent.day_index), None)
             if day is None or self._target_dish(day.dishes, text) is None:
                 return self._process(plan, text, confirmed=confirmed)
-        state, relax_only = prepare_requirement_update(self.llm or self.legacy.llm, plan.request_payload, text, intent.day_index)
+        if intent.kind == "regenerate_remaining":
+            payload = deepcopy(plan.request_payload)
+            relax_only = True
+            for day in plan.result.days:
+                if day.day_index in plan.locked_days:
+                    continue
+                state, relaxed = prepare_requirement_update(self.llm or self.legacy.llm, payload, text, day.day_index)
+                payload["effective_requirements"] = state
+                relax_only = relax_only and relaxed
+            state = payload["effective_requirements"]
+        else:
+            state, relax_only = prepare_requirement_update(self.llm or self.legacy.llm, plan.request_payload, text, intent.day_index)
         prepared = replace(plan, request_payload={**plan.request_payload, "effective_requirements": state})
         previous = plan.request_payload.get("effective_requirements") or {"global": str(plan.request_payload.get("request_text", "")), "days": {}}
         outcome = self._process(prepared, text, confirmed=confirmed, requirements_changed=relax_only and state != previous)

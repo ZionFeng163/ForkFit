@@ -157,10 +157,10 @@ class ConstraintNormalizer:
 
         for match in re.finditer(r"(?:不要|去掉|不吃)([A-Za-z\u4e00-\u9fff]{1,12})", raw):
             value = match.group(1).strip()
-            if value and not re.fullmatch(KNOWN_EQUIPMENT, value, re.IGNORECASE):
+            if value and not re.fullmatch(rf"(?:使用|用)?(?:{KNOWN_EQUIPMENT})", value, re.IGNORECASE):
                 items.append(ConstraintEvidence("diet_rule", f"不吃{value}", True, "request_text", 0.98, raw))
 
-        for match in re.finditer(rf"(?:没有|不用|无)({KNOWN_EQUIPMENT})", raw, re.IGNORECASE):
+        for match in re.finditer(rf"(?:没有|不用|无|不要(?:使用|用)?|不使用)({KNOWN_EQUIPMENT})", raw, re.IGNORECASE):
             items.append(ConstraintEvidence("excluded_equipment", match.group(1), True, "request_text", 1.0, raw))
 
         only_match = re.search(rf"只有({KNOWN_EQUIPMENT})(?:可用|能用)?", raw, re.IGNORECASE)

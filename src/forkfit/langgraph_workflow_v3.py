@@ -11,7 +11,7 @@ from langsmith import tracing_context
 from .constraints import ConstraintGuard
 from .llm import BailianLLMClient, LLMClient
 from .models import AdapterOutput, AgentFinding, AgentReview, ForkFitResult, MealPack, PreferenceProfile, PreferenceReview, QualityIssue, QualityReport, RecipePatch, RunTrace, StepTrace, UserAgentOutput, UserProfile
-from .recipe_agent_v3 import AdaptationAgent, KNOWLEDGE_VERSION, PatchApplier, PatchValidationError, WORKFLOW_VERSION
+from .recipe_agent_v3 import AdaptationAgent, KNOWLEDGE_VERSION, PatchApplier, PatchSafetyError, PatchValidationError, WORKFLOW_VERSION
 from .recipe_review_agent import RecipeReviewAgent
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,8 @@ class ForkFitLangGraphWorkflow:
         try:
             meal_pack, changes = self.applier.apply(state["meal_pack"], state["patch"], safety_targets=safety_targets, allowed_replacements=state.get("allowed_replacements", {}))
         except (PatchValidationError, KeyError, TypeError, ValueError) as exc:
-            issue = QualityIssue("invalid_patch", "high", "", "调整结果未通过结构校验。", str(exc))
+            issue = QualityIssue("unsafe_substitution" if isinstance(exc, PatchSafetyError) else "invalid_patch", "high", "",
+                                 "未找到经工具确认的安全替代项。" if isinstance(exc, PatchSafetyError) else "调整结果未通过结构校验。", str(exc))
             return {"repair_issues": [issue], "final_review": AgentReview("recipe_reviewer", "block", [])}
         adapter = AdapterOutput(meal_pack, changes, list(state["patch"].unresolved_items), state["patch"].summary, state["patch"].description)
         if state.get("require_change") and meal_pack.to_dict() == state["meal_pack"].to_dict() and not adapter.unresolved_items:
@@ -161,6 +162,22 @@ class ForkFitLangGraphWorkflow:
         adapter = state.get("adapter_output") or AdapterOutput(state["meal_pack"].clone(), [], [], "菜谱未作修改。")
         deterministic_issues = []
         for meal in adapter.forked_meal_pack.meals:
+            original = state["meal_pack"].find_meal(meal.id)
+            if original:
+                stale = []
+                for aliases in (("牛肉", "肥牛", "beef"), ("鸡肉", "鸡胸", "chicken"), ("三文鱼", "salmon"), ("花生", "peanut")):
+                    named = [term for term in aliases if term in meal.name.lower()]
+                    old_composition = " ".join(original.ingredients).lower()
+                    new_composition = " ".join(meal.ingredients).lower()
+                    if named and any(term in old_composition for term in aliases) and not any(term in new_composition for term in aliases):
+                        stale.extend(named)
+                for names, equipment in ((("空气炸锅",), "空气炸锅"), (("烤盘", "烤箱"), "烤箱")):
+                    if equipment in original.equipment and equipment not in meal.equipment:
+                        stale.extend(name for name in names if name in meal.name)
+                if stale:
+                    deterministic_issues.append(QualityIssue("stale_recipe_name", "high", meal.id,
+                        "菜名仍包含已替换的主料或厨具：" + "、".join(stale),
+                        "只用 set_name 更新不再符合实际的词，保留其他菜品身份和正确修改。"))
             ingredient_text = " ".join(meal.ingredients).casefold()
             step_text = " ".join(meal.steps).casefold()
             missing = [term for term in STEP_INGREDIENT_TERMS if term.casefold() in step_text and term.casefold() not in ingredient_text]
@@ -194,6 +211,13 @@ class ForkFitLangGraphWorkflow:
         unresolved = state.get("adapter_output", AdapterOutput(state["meal_pack"].clone(), [], [], "需要补充信息。")).unresolved_items
         if not unresolved:
             unresolved = [AgentFinding(i.code, "high", [i.meal_id] if i.meal_id else [], i.message, required_action=i.repair_instruction) for i in state.get("repair_issues", [])]
+        if any(item.type == "invalid_patch" for item in unresolved):
+            # A malformed model result is a retryable generation failure, not a user decision.
+            raise ValueError(
+                "调整结果格式校验失败，这次修改没有应用。请重试，原菜单和要求保持不变。"
+                if state["locale"].startswith("zh") else
+                "The generated adjustment had an invalid format. Please retry; your menu and requirements are unchanged."
+            )
         if state["constraint_spec"].clarification and not unresolved:
             c = state["constraint_spec"].clarification; unresolved = [AgentFinding(c.code, "high", c.affected_items, c.question, required_action="请确认这项限制。")]
         adapter = AdapterOutput(state["meal_pack"].clone(), [], unresolved, "调整未通过审核，原菜谱保持不变。")

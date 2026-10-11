@@ -22,7 +22,7 @@ def load_env(path: Path) -> None:
 def main() -> int:
     load_env(Path(".env"))
     api_key = os.environ.get("BAILIAN_API_KEY")
-    model = os.environ.get("BAILIAN_MODEL", "deepseek-v4-flash-0731")
+    model = os.environ.get("BAILIAN_MODEL", "deepseek-v4.1-flash")
     base_url = os.environ.get(
         "BAILIAN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
     ).rstrip("/")

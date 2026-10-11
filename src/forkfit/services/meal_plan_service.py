@@ -141,6 +141,14 @@ class MealPlanService:
             raise HTTPException(status_code=503, detail="Job queue unavailable.") from exc
         return message
 
+    def cancel_message(self, *, user_id: str, message_id: str) -> MealPlanMessageRecord:
+        try:
+            return self.store.cancel_message(message_id, user_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Conversation message not found.") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
     def conversation(self, *, user_id: str, plan_id: str) -> list[MealPlanMessageRecord]:
         try:
             return self.store.list_messages(plan_id, user_id)

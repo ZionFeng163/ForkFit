@@ -151,12 +151,31 @@ def _change_preview(before, after) -> list[dict[str, object]]:
         before_payload = [item.model_dump(mode="json") for item in previous.dishes]
         after_payload = [item.model_dump(mode="json") for item in day.dishes]
         if before_payload != after_payload:
+            fields = []
+            old_dishes = {item.source_post_id: item.meal for item in previous.dishes}
+            new_dishes = {item.source_post_id: item.meal for item in day.dishes}
+            if old_dishes.keys() != new_dishes.keys():
+                fields.append("菜品组合")
+            for source_id in old_dishes.keys() & new_dishes.keys():
+                old, new = old_dishes[source_id], new_dishes[source_id]
+                removed = [item for item in old.ingredients if item not in new.ingredients]
+                added = [item for item in new.ingredients if item not in old.ingredients]
+                if removed:
+                    fields.append("移除：" + "、".join(removed))
+                if added:
+                    fields.append("加入：" + "、".join(added))
+                if old.steps != new.steps:
+                    fields.append("制作步骤已更新")
+                if old.equipment != new.equipment:
+                    fields.append("厨具已更新")
+                if old.cook_time_minutes != new.cook_time_minutes:
+                    fields.append(f"耗时 {old.cook_time_minutes} → {new.cook_time_minutes} 分钟")
             changes.append(
                 {
                     "day_index": day.day_index,
                     "before": "、".join(item.meal.name for item in previous.dishes),
                     "after": "、".join(item.meal.name for item in day.dishes),
-                    "changed_fields": ["菜品组合"],
+                    "changed_fields": fields or ["安排说明"],
                 }
             )
     return changes

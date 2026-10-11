@@ -251,6 +251,10 @@ export function confirmMealPlanMessage(planId: string, messageId: string) {
   );
 }
 
+export function cancelMealPlanMessage(planId: string, messageId: string) {
+  return request<CreateMealPlanMessageResponse>(`/meal-plans/${planId}/conversation/messages/${messageId}/cancel`, { method: "POST" });
+}
+
 export function listPosts(limit = 20, offset = 0, q = "", tag = "", category = "") {
   return listPostsPage(limit, offset, q, tag, category).then(({ posts }) => posts);
 }

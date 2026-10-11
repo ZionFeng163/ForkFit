@@ -112,7 +112,7 @@ ForkFit/
 
 **后端:** FastAPI + SQLAlchemy + PostgreSQL + Redis + LangGraph + Bailian (DeepSeek LLM)
 
-**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。文本生成模型通过百炼兼容接口调用 `deepseek-v4-flash-0731`。
+**基础设施:** VPS + Nginx + systemd + PostgreSQL 16 + Redis 7。任务由 PostgreSQL 队列和 inline executor 执行，生产环境不依赖 Kafka。文本生成模型通过百炼兼容接口调用，默认模型为 `deepseek-v4.1-flash`；运行环境以 `BAILIAN_MODEL` 配置为准。
 
 ## 测试
 

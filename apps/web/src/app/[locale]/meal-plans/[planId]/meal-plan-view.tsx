@@ -9,6 +9,8 @@ import { MealPlanConversation } from "@/components/meal-plan-conversation";
 import { RemoteImage } from "@/components/remote-image";
 import { Link } from "@/i18n/routing";
 import { getMealPlan, getPost, retryMealPlan } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
+import { useStoredState } from "@/lib/use-stored-state";
 
 const STAGES: Record<string, { zh: string; en: string }> = {
   queued: { zh: "排队中", en: "In the queue" },
@@ -31,7 +33,12 @@ export function MealPlanView({ planId }: { planId: string }) {
   const isZh = locale === "zh";
   const [activeDay, setActiveDay] = useState(1);
   const [sourceImages, setSourceImages] = useState<Record<string, string>>({});
-  const [checkedShoppingItems, setCheckedShoppingItems] = useState<Record<string, boolean>>({});
+  const { user } = useAuth();
+  const [checkedShoppingItems, setCheckedShoppingItems, shoppingReady] = useStoredState<Record<string, boolean>>(
+    user ? `forkfit.shopping.v1.${user.id}.${planId}` : null, {},
+    (value) => value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).filter(([, checked]) => checked === true)) : {},
+  );
   const query = useQuery({
     queryKey: ["meal-plan", planId],
     queryFn: () => getMealPlan(planId),
@@ -113,7 +120,7 @@ export function MealPlanView({ planId }: { planId: string }) {
 
   const result = plan.result;
   const selectedDay = result.days.find((day) => day.day_index === activeDay) ?? result.days[0];
-  const versionLabel = plan.last_change_summary ? (isZh ? "最近调整" : "Recently adjusted") : (isZh ? "初始菜单" : "Initial menu");
+  const versionLabel = !plan.last_change_summary || plan.last_change_summary === "已生成第一版菜单。" ? (isZh ? "初始菜单" : "Initial menu") : (isZh ? "已调整" : "Updated");
 
   function jumpToDay(dayIndex: number) {
     setActiveDay(dayIndex);
@@ -180,7 +187,7 @@ export function MealPlanView({ planId }: { planId: string }) {
               const checked = Boolean(checkedShoppingItems[itemKey]);
               return <li key={itemKey} className={checked ? "opacity-60" : undefined}>
                 <label className="flex min-w-0 items-start gap-2">
-                  <input type="checkbox" checked={checked} onChange={(event) => setCheckedShoppingItems((current) => ({ ...current, [itemKey]: event.target.checked }))} className="mt-1 accent-[var(--brand)]" />
+                  <input type="checkbox" disabled={!shoppingReady} checked={checked} onChange={(event) => { const checked = event.target.checked; setCheckedShoppingItems((current) => ({ ...current, [itemKey]: checked })); }} className="mt-1 accent-[var(--brand)]" />
                   <span className={checked ? "line-through" : undefined}>{item.name}</span>
                 </label>
                 <span className="text-right text-[var(--muted-text)]">{item.amount}{item.used_on.length > 0 && <small className="block">{isZh ? `第 ${item.used_on.join("、")} 天` : `Days ${item.used_on.join(", ")}`}</small>}</span>

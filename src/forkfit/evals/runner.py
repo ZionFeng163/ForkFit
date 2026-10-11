@@ -81,7 +81,7 @@ def run_langsmith(
         max_concurrency=2,
         metadata={
             "models": [
-                os.getenv("BAILIAN_MODEL", "deepseek-v4-flash-0731"),
+                os.getenv("BAILIAN_MODEL", "deepseek-v4.1-flash"),
                 *([os.getenv("EVAL_JUDGE_MODEL", "qwen3.7-max-2026-06-08")] if with_judge else []),
             ],
             "prompts": ["recipe-review-v3", "recipe-adaptation-v3", "meal-plan-v4"],

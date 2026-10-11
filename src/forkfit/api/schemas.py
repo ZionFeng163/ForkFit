@@ -164,6 +164,7 @@ class CreateMealPlanMessageResponse(BaseModel):
         "applied",
         "needs_clarification",
         "needs_confirmation",
+        "rejected",
         "failed",
     ]
     base_version_id: str | None = None

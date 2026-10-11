@@ -7,6 +7,7 @@ import { useLocale } from "next-intl";
 
 import {
   confirmMealPlanMessage,
+  cancelMealPlanMessage,
   getMealPlanConversation,
   sendMealPlanMessage,
 } from "@/lib/api";
@@ -56,6 +57,10 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
     mutationFn: (messageId: string) => confirmMealPlanMessage(planId, messageId),
     onSuccess: () => void conversation.refetch(),
   });
+  const cancel = useMutation({
+    mutationFn: (messageId: string) => cancelMealPlanMessage(planId, messageId),
+    onSuccess: () => void conversation.refetch(),
+  });
 
   const messages = useMemo(
     () => (conversation.data?.messages ?? []).slice(-8),
@@ -65,9 +70,12 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
     (message) => message.message_id === conversation.data?.pending_message_id,
   );
   const isWaitingForMessage = pendingMessage && ["queued", "processing", "needs_confirmation"].includes(pendingMessage.status);
-  const failedMessage = [...messages]
+  const latestUserMessage = [...(conversation.data?.messages ?? [])]
     .reverse()
-    .find((message) => message.role === "user" && message.status === "failed");
+    .find((message) => message.role === "user");
+  const failedMessage = latestUserMessage?.status === "failed"
+    && (latestUserMessage.base_version_id ?? null) === (conversation.data?.current_version_id ?? currentVersionId ?? null)
+    ? latestUserMessage : undefined;
 
   useEffect(() => {
     const nextVersion = conversation.data?.current_version_id;
@@ -77,7 +85,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
   function submit(event: FormEvent) {
     event.preventDefault();
     const value = text.trim();
-    if (!value || send.isPending) return;
+    if (!value || send.isPending || isWaitingForMessage) return;
     send.mutate(value);
   }
 
@@ -106,7 +114,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
                 <div className="mt-3 space-y-1 border-t border-[var(--line)] pt-2 text-xs text-[var(--muted-text)]">
                   {message.response.changes.map((change) => (
                     <p key={`${message.message_id}-${change.day_index}`}>
-                      第 {change.day_index} 天：{change.before} → {change.after}
+                      {isZh ? `第 ${change.day_index} 天：` : `Day ${change.day_index}: `}{change.before === change.after ? change.after : `${change.before} → ${change.after}`}
                       {change.changed_fields?.length ? `（${change.changed_fields.join("、")}）` : ""}
                     </p>
                   ))}
@@ -118,6 +126,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
               {message.status === "failed" && (
                 <span className="mt-2 block text-xs text-[var(--danger)]">{message.error?.message || (isZh ? "这次修改没有应用。" : "This change was not applied.")}</span>
               )}
+              {message.response?.cancelled && <span className="mt-2 block text-xs text-[var(--muted-text)]">{isZh ? "已取消，菜单未修改" : "Cancelled. Menu unchanged."}</span>}
             </div>
             ));
             return groupIndex === 0 ? (group.length > 0 && <details key="history" className="conversation-history"><summary>{isZh ? "历史对话" : "Conversation history"}</summary><div className="conversation-messages mt-3 space-y-3">{content}</div></details>) : <div key="recent" className="space-y-3">{content}</div>;
@@ -131,11 +140,14 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           <button
             type="button"
             className="button-primary h-9 min-h-9"
-            disabled={confirm.isPending}
+            disabled={confirm.isPending || cancel.isPending}
             onClick={() => confirm.mutate(pendingMessage.message_id)}
           >
             {confirm.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             {isZh ? "确认调整" : "Apply change"}
+          </button>
+          <button type="button" className="button-secondary" disabled={confirm.isPending || cancel.isPending} onClick={() => cancel.mutate(pendingMessage.message_id)}>
+            {isZh ? "取消这次修改" : "Cancel change"}
           </button>
         </div>
       )}
@@ -158,7 +170,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           <button
             type="button"
             className="meal-plan-example"
-            disabled={send.isPending}
+            disabled={send.isPending || Boolean(isWaitingForMessage)}
             onClick={() => send.mutate(failedMessage.content)}
           >
             <RotateCcw size={13} />
@@ -173,9 +185,9 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
         ))}
       </div>
       {conversation.isError && <p role="alert" className="mt-3 text-sm text-[var(--danger)]">{isZh ? "对话加载失败。" : "Could not load the conversation."}<button type="button" className="ml-2 underline" onClick={() => void conversation.refetch()}>{isZh ? "重试" : "Retry"}</button></p>}
-      {(send.isError || confirm.isError) && (
+      {(send.isError || confirm.isError || cancel.isError) && (
         <p className="mt-3 text-sm text-[var(--danger)]">
-          {(send.error instanceof Error && send.error.message) || (confirm.error instanceof Error && confirm.error.message) || (isZh ? "修改暂时无法提交。" : "Could not submit the change.")}
+          {(send.error instanceof Error && send.error.message) || (confirm.error instanceof Error && confirm.error.message) || (cancel.error instanceof Error && cancel.error.message) || (isZh ? "修改暂时无法提交。" : "Could not submit the change.")}
         </p>
       )}
     </section>

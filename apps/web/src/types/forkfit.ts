@@ -205,6 +205,7 @@ export type MealPlanMessage = {
     message?: string;
     summary?: string;
     requires_confirmation?: boolean;
+    cancelled?: boolean;
     changes?: Array<{
       day_index: number;
       before: string;

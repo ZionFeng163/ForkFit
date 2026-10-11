@@ -35,7 +35,7 @@ export function HomePlannerEntry() {
         <div className="home-planner-form-actions">
           <button type="submit" className="button-primary">
             <CalendarDays size={16} />
-            {isZh ? "开始规划" : "Start planning"}
+            {selected.length > 0 ? (isZh ? "开始规划" : "Start planning") : (isZh ? "选菜并规划" : "Choose recipes and plan")}
           </button>
           <Link href="/discover" className="button-secondary">
             {isZh ? "先逛菜谱" : "Browse recipes"}

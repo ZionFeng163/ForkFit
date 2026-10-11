@@ -6,11 +6,14 @@ import { loadPost } from "@/lib/posts";
 
 type PageProps = {
   params: Promise<{ locale: string; packId: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 };
 
-export default async function PackDetailPage({ params }: PageProps) {
+export default async function PackDetailPage({ params, searchParams }: PageProps) {
   const { locale, packId } = await params;
   const post = await loadPost(packId);
+  const { returnTo } = await searchParams;
+  const backHref = typeof returnTo === "string" && /^\/discover(?:\?|$)/.test(returnTo) ? returnTo : "/discover";
 
   if (!post) {
     notFound();
@@ -18,7 +21,7 @@ export default async function PackDetailPage({ params }: PageProps) {
 
   return (
     <AppShell>
-      <PackDetailContent post={post} locale={locale} />
+      <PackDetailContent post={post} locale={locale} backHref={backHref} />
     </AppShell>
   );
 }

@@ -30,7 +30,9 @@ test.describe("Agent 用户界面", () => {
     await page.route("**/api/backend/users/me/extract-preferences", async (route) => {
       await route.fulfill({ json: { preferences: { likes: ["番茄"], dislikes: ["香菜"], allergies: [], diet_rules: ["少盐"] } } });
     });
+    let creates = 0;
     await page.route("**/api/backend/runs", async (route) => {
+      creates += 1;
       await route.fulfill({ status: 201, json: { run_id: "run_e2e", status: "queued" } });
     });
     await page.route("**/api/backend/runs/run_e2e", async (route) => {
@@ -57,6 +59,10 @@ test.describe("Agent 用户界面", () => {
     await page.getByRole("button", { name: "开始定制" }).click();
     await expect(page.getByText("定制完成")).toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole("heading", { name: meal.name })).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("定制完成")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("heading", { name: meal.name })).toBeVisible();
+    expect(creates).toBe(1);
     await expectMainVisible(page);
     await finish();
   });
