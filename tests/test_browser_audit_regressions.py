@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from forkfit.models import AdapterOutput, AgentReview, ConstraintSpec, Meal, MealPack, QualityReport, RecipePatch, RecipePatchOperation, RunTrace, UserProfile
-from forkfit.recipe_agent_v3 import PatchApplier, PatchValidationError
+from forkfit.recipe_agent_v3 import PatchApplier, PatchValidationError, patch_from_dict
 from forkfit.stores.posts import _matches_category
 from forkfit.workers.meal_plan_runner import _change_preview
 from forkfit.langgraph_workflow_v3 import ForkFitLangGraphWorkflow
@@ -12,6 +12,20 @@ from test_agent_workflow_v3 import FakeLLM, FakeTool
 
 
 class BrowserAuditRegressions(unittest.TestCase):
+    def test_atomic_step_patch_keeps_preparation_and_cooking_steps(self):
+        steps = ["食材洗净切好", "把豆腐炒熟", "加入盐调味"]
+        original = MealPack("p", "家常", "晚餐", [Meal("m", "晚餐", "豆腐", ["豆腐", "盐"], ["炒锅"], 20, steps=steps)])
+        operation = {"op": "replace_step", "meal_id": "m", "target": steps[2], "value": "加入少量盐调味", "reason": "少盐"}
+        patch = patch_from_dict({"operations": [operation]})
+        updated, _ = PatchApplier().apply(original, patch)
+        self.assertEqual(updated.meals[0].steps, [*steps[:2], "加入少量盐调味"])
+        self.assertEqual(original.meals[0].steps, steps)
+        for target, value in (("不存在的步骤", "新步骤"), (steps[2], []), (steps[2], "")):
+            with self.subTest(target=target, value=value), self.assertRaises(PatchValidationError):
+                PatchApplier().apply(original, patch_from_dict({"operations": [{**operation, "target": target, "value": value}]}))
+        with self.assertRaisesRegex(PatchValidationError, "Cannot mix"):
+            patch_from_dict({"operations": [operation, {"op": "replace_steps", "meal_id": "m", "value": steps}]})
+
     def test_equipment_exclusion_is_not_a_dietary_restriction(self):
         from forkfit.constraints import ConstraintNormalizer
         for text in ("不要用烤箱", "不要使用烤箱", "不用烤箱", "不要烤箱"):

@@ -42,6 +42,21 @@ class FakePatchLLM:
 
 
 class MealPlanConversationTests(unittest.TestCase):
+    def test_local_adaptation_receives_assigned_day_without_mutating_source(self):
+        from types import SimpleNamespace
+        from forkfit.meal_plan_conversation_v3 import MealPlanConversationWorkflowV3
+        plan = _plan()
+        source = replace(plan.result.days[1].dishes[0].meal, day="午餐")
+        with patch("forkfit.meal_plan_conversation_v3.ForkFitLangGraphWorkflow") as factory:
+            def run(profile, pack, **kwargs):
+                self.assertEqual(pack.meals[0].day, "第 2 天")
+                self.assertIn("第二天少放盐", kwargs["request_text"])
+                return SimpleNamespace(success=True, adapter_output=SimpleNamespace(forked_meal_pack=pack))
+            factory.return_value.run.side_effect = run
+            result = MealPlanConversationWorkflowV3(llm=Mock())._adapt_meal(plan, source, "第二天少放盐", 2)
+        self.assertEqual(result.day, "第 2 天")
+        self.assertEqual(source.day, "午餐")
+
     def test_method_and_ingredient_changes_are_not_recipe_replacements(self):
         plan = _plan()
         for text in ("第二天改成清炒", "第二天把鱼换成豆腐", "第二天把烤箱替换成炒锅"):

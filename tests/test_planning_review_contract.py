@@ -20,7 +20,7 @@ class PlanningReviewContractTests(unittest.TestCase):
         return workflow, state, payload
 
     def test_invalid_winner_or_missing_evidence_never_materializes(self):
-        for kind in ("winner", "coverage", "reference", "contradiction"):
+        for kind in ("winner", "coverage", "reference"):
             with self.subTest(kind=kind):
                 workflow, state, payload = self.prepared()
                 if kind == "winner":
@@ -29,12 +29,20 @@ class PlanningReviewContractTests(unittest.TestCase):
                     payload["assessments"][0]["checks"].pop()
                 elif kind == "reference":
                     payload["assessments"][0]["checks"][0]["post_ids"] = ["invented"]
-                else:
-                    payload["status"] = "block"
                 workflow.llm = Mock()
                 workflow.llm.complete_json.return_value = payload
                 with self.assertRaises(ValueError):
                     workflow._review_candidates_node(state)
+
+    def test_verdict_is_derived_from_checks_not_redundant_model_status(self):
+        for status in ("pass", "warn", "block"):
+            workflow, state, payload = self.prepared()
+            payload["status"] = "block" if status == "pass" else "pass"
+            for assessment in payload["assessments"]:
+                assessment["checks"][0].update(status=status, repair_action="调整不符项")
+            workflow.llm = Mock()
+            workflow.llm.complete_json.return_value = payload
+            self.assertEqual(workflow._review_candidates_node(state)["review"].status, status)
 
     def test_blocked_winner_is_replaced_only_with_an_assessed_eligible_candidate(self):
         workflow, state, payload = self.prepared()

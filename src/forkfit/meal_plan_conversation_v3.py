@@ -255,6 +255,8 @@ class MealPlanConversationWorkflowV3:
     def _adapt_meal(self, plan: MealPlanRecord, meal, text: str, day_index: int | None = None, *, require_change: bool = True):
         profile = user_profile_from_dict(plan.request_payload["user_profile"])
         workflow = ForkFitLangGraphWorkflow(llm_client=self.llm) if self.llm else ForkFitLangGraphWorkflow()
+        # The recipe's source slot (e.g. lunch) is not its assigned day in this plan.
+        meal = replace(meal, day=f"第 {day_index} 天") if day_index is not None else meal
         result = workflow.run(
             profile,
             MealPack(id="conversation-dish", title=meal.name, theme="edit", meals=[meal]),

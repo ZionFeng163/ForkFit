@@ -23,6 +23,7 @@ PatchOperationType = Literal[
     "replace_equipment",
     "remove_equipment",
     "set_cook_time",
+    "replace_step",
     "replace_steps",
     "update_tags",
     "set_name",

@@ -389,6 +389,26 @@ def _selected_pool(count: int) -> list[dict]:
 
 
 class MealPlanWorkflowV3Tests(unittest.TestCase):
+    def test_review_derives_issues_from_checks_not_redundant_model_summary(self) -> None:
+        class StructuredIssuesLLM(V3PlannerLLM):
+            def complete_json(self, *, agent, **kwargs):
+                result = super().complete_json(agent=agent, **kwargs)
+                if agent == "comprehensive_plan_reviewer":
+                    result["status"] = "block"
+                    result["issues"] = [{"candidate_index": 0, "reason": "redundant summary"}]
+                    for assessment in result["assessments"]:
+                        assessment["checks"][0].update(status="block", evidence="食材与要求冲突", repair_action="替换冲突食材")
+                return result
+
+        llm = StructuredIssuesLLM()
+        workflow = MealPlanWorkflow(llm=llm, recipe_workflow=SelectedRecipeWorkflow())
+        state = workflow._prepare({"request_payload": _request(2, _selected_pool(2))})
+        state.update(workflow._draft_candidates_node(state))
+        outcome = workflow._review_candidates_node(state)
+        self.assertEqual(outcome["review"].status, "block")
+        self.assertTrue(all(isinstance(issue, str) for issue in outcome["review"].issues))
+        self.assertTrue(any("食材与要求冲突" in issue for issue in outcome["review"].issues))
+
     def test_registry_contains_two_subgraphs_and_six_business_agents(self) -> None:
         self.assertEqual(len(AGENT_REGISTRY), 6)
         self.assertEqual(

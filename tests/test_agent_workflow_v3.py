@@ -157,6 +157,81 @@ class AgentWorkflowV3Tests(unittest.TestCase):
                 RecipeReviewAgent(llm).review_adjusted(pack(), pack(), ConstraintSpec([], 1, 30), locale="zh")
             self.assertEqual(llm.complete_json.call_count, 2)
 
+    def test_review_derives_summary_from_evidence_checks(self):
+        from unittest.mock import Mock
+        from forkfit.models import ConstraintSpec
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        for severity, expected in (("medium", "warn"), ("high", "block")):
+            def response(*, user, **kwargs):
+                checks = pass_review(user)["checks"]
+                checks[0].update(verdict="violated", reason="步骤缺少熟制过程",
+                                 severity=severity, repair_instruction="补充完整熟制步骤")
+                return {"checks": checks}
+            llm = Mock()
+            llm.complete_json.side_effect = response
+            report = RecipeReviewAgent(llm).review_adjusted(pack(), pack(), ConstraintSpec([], 1, 30), locale="zh")
+            self.assertEqual(report.status, expected)
+            self.assertEqual(report.issues[0].repair_instruction, "补充完整熟制步骤")
+            self.assertEqual(llm.complete_json.call_count, 1)
+
+    def test_review_accepts_actual_recipe_metadata_evidence_only(self):
+        from unittest.mock import Mock
+        from forkfit.models import ConstraintSpec
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        for field, index, valid in (("day", 0, True), ("tags", 0, True), ("cook_time_minutes", 0, True),
+                                    ("difficulty", 0, True), ("tags", 1, False),
+                                    ("cook_time_minutes", 1, False), ("invented", 0, False)):
+            with self.subTest(field=field, index=index):
+                def response(*, user, **kwargs):
+                    checks = pass_review(user)["checks"]
+                    checks[0]["evidence"] = [{"field": field, "index": index}]
+                    return {"checks": checks}
+                llm = Mock()
+                llm.complete_json.side_effect = response
+                recipe = pack()
+                recipe.meals[0].tags = ["家常"]
+                if valid:
+                    report = RecipeReviewAgent(llm).review_adjusted(recipe, recipe, ConstraintSpec([], 1, 30), locale="zh")
+                    self.assertEqual(report.status, "pass")
+                else:
+                    with self.assertRaisesRegex(ValueError, "failed validation"):
+                        RecipeReviewAgent(llm).review_adjusted(recipe, recipe, ConstraintSpec([], 1, 30), locale="zh")
+
+    def test_unsatisfied_review_check_without_repair_cannot_pass(self):
+        from unittest.mock import Mock
+        from forkfit.models import ConstraintSpec
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        def response(*, user, **kwargs):
+            checks = pass_review(user)["checks"]
+            checks[0].update(verdict="violated", reason="缺少熟制过程")
+            return {"checks": checks}
+        llm = Mock()
+        llm.complete_json.side_effect = response
+        with self.assertRaisesRegex(ValueError, "failed validation"):
+            RecipeReviewAgent(llm).review_adjusted(pack(), pack(), ConstraintSpec([], 1, 30), locale="zh")
+        self.assertEqual(llm.complete_json.call_count, 2)
+
+    def test_evidence_retry_identifies_invalid_reference_and_preserves_review(self):
+        from unittest.mock import Mock
+        from forkfit.models import ConstraintSpec
+        from forkfit.recipe_review_agent import RecipeReviewAgent
+        calls = []
+        def response(*, user, **kwargs):
+            request = json.loads(user)
+            calls.append(request)
+            result = pass_review(user)
+            if len(calls) == 1:
+                result["checks"][0]["evidence"] = [{"field": "steps", "index": 999}]
+            return result
+        llm = Mock()
+        llm.complete_json.side_effect = response
+        report = RecipeReviewAgent(llm).review_adjusted(pack(), pack(), ConstraintSpec([], 1, 30), locale="zh")
+        self.assertEqual(report.status, "pass")
+        self.assertEqual(calls[0]["valid_evidence_indices"]["m1"]["steps"], [0])
+        self.assertEqual(calls[1]["previous_review"]["checks"][0]["evidence"][0]["index"], 999)
+        self.assertIn("steps index 999", calls[1]["validation_error"])
+        self.assertIn("allowed indices are [0]", calls[1]["validation_error"])
+
     def test_malformed_or_contradictory_review_cannot_pass(self):
         from unittest.mock import Mock
         from forkfit.models import ConstraintSpec

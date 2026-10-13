@@ -32,12 +32,14 @@ class AdaptationAgent:
                  request_text: str = "", previous_attempt: MealPack | None = None) -> tuple[RecipePatch, dict[str, set[str]]]:
         request = {
             "task": "只输出满足审核意见所需的最小结构化补丁，不要重写整份菜谱。",
-            "schema": {"operations": [{"op": "replace_ingredient | add_ingredient | remove_ingredient | replace_equipment | remove_equipment | set_cook_time | replace_steps | update_tags | set_name | set_notes", "meal_id": "existing meal id", "target": "exact current value", "value": "按 op 类型填写", "reason": "short reason"}], "summary": "一句话说明修改", "description": "简短说明", "unresolved_items": []},
+            "schema": {"operations": [{"op": "replace_ingredient | add_ingredient | remove_ingredient | replace_equipment | remove_equipment | set_cook_time | replace_step | replace_steps | update_tags | set_name | set_notes", "meal_id": "existing meal id", "target": "exact current value", "value": "按 op 类型填写", "reason": "short reason"}], "summary": "一句话说明修改", "description": "简短说明", "unresolved_items": []},
             "rules": [
                 "涉及过敏或饮食禁忌的替换必须先调用 search_substitutions，并只能选本轮工具返回的候选。",
                 "工具候选为空时禁止编造替代食材；香草等非关键装饰可直接移除并同步步骤。完成移除后不应再报告未解决；功能性原料无法安全移除才写入 unresolved_items。",
                 "replace_ingredient 的 value 必须逐字等于工具结果的 substitute，不能添加数量、括号或说明。",
-                "replace_steps 的 value 是包含 1 至 20 个非空字符串的数组；update_tags 是最多 12 个非空字符串的数组，清空标签用 []。两者都不能使用单个字符串。",
+                "少盐、去掉香草等局部调整使用 replace_step：target 逐字复制原步骤，value 为修改后的单个步骤字符串，其他步骤由代码保留。多个受影响步骤分别输出 replace_step。",
+                "只有重组整套烹饪流程时才用 replace_steps：value 是调整后的完整步骤数组（1 至 20 个非空字符串），必须包含未改动但仍需执行的步骤，不能仅返回变化的步骤；同一道菜不能混用 replace_step 和 replace_steps。",
+                "update_tags 是最多 12 个非空字符串的数组，清空标签用 []，不能使用单个字符串。",
                 "set_cook_time 的 value 是 1 至 360 的整数；replace_ingredient、add_ingredient、replace_equipment、set_name、set_notes 使用字符串；remove 操作不需要 value。",
                 "同一个 meal_id、op 和 target 只能出现一次，不能对同一厨具或食材重复执行替换。",
                 "原菜名提到的主料或做法因本轮要求被替换时，必须用 set_name 同步菜名，例如肥牛换豆腐后不能仍叫牛肉锅，烤箱改炒锅后不能仍叫烤盘。中性菜名保持不变，不改变不相关的菜品身份。",
@@ -150,6 +152,8 @@ class PatchApplier:
                 before = meal.cook_time_minutes; meal.cook_time_minutes = value
             elif op.op == "replace_steps":
                 value = self._strings(op.value, 20, field="replace_steps.value"); before = list(meal.steps); meal.steps = value
+            elif op.op == "replace_step":
+                index = self._index(meal.steps, op.target); value = self._string(op.value); before = meal.steps[index]; meal.steps[index] = value
             elif op.op == "update_tags":
                 value = self._strings(op.value, 12, field="update_tags.value", allow_empty=True); before = list(meal.tags); meal.tags = value
             elif op.op == "set_name":
@@ -205,4 +209,7 @@ def patch_from_dict(data: dict[str, Any]) -> RecipePatch:
     for item in data.get("unresolved_items", []):
         if isinstance(item, str): unresolved.append(AgentFinding("model_clarification", "high", [], item, required_action="请补充这项要求。"))
         elif isinstance(item, dict): unresolved.append(AgentFinding(str(item.get("type", "unresolved")), item.get("severity", "high"), [str(v) for v in item.get("affected_items", [])], str(item.get("message", "需要补充信息。")), required_action=str(item.get("required_action", "请确认后重试。"))))
+    full_steps = {op.meal_id for op in operations if op.op == "replace_steps"}
+    if any(op.op == "replace_step" and op.meal_id in full_steps for op in operations):
+        raise PatchValidationError("Cannot mix replace_step and replace_steps for the same recipe")
     return RecipePatch(operations, str(data.get("summary", "")), str(data.get("description", "")), unresolved, [])

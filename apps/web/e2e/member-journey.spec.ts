@@ -38,7 +38,7 @@ test.describe("登录用户主流程", () => {
     }
     await page.goto("/zh/meal-plans/new");
     await expect(page.getByText("已选 3 道 · 安排 3 天")).toBeVisible();
-    await page.getByLabel("这几天有什么讲究").fill("少盐，工作日 30 分钟内，多一点蔬菜");
+    await page.getByLabel("口味与限制（选填）").fill("少盐，工作日 30 分钟内，多一点蔬菜");
     await page.getByRole("button", { name: "生成菜单" }).click();
     await expect(page).toHaveURL(/\/zh\/meal-plans\/plan_/);
     await expectMainVisible(page);
