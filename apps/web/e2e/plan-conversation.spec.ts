@@ -37,8 +37,14 @@ test("受控 API：连续修改、提交失败保留输入、撤销刷新菜单"
   }] };
   let rejectNext = false;
   let round = 0;
+  let holdPlanRefresh = false;
+  let releasePlanRefresh!: () => void;
+  const planRefreshGate = new Promise<void>((resolve) => { releasePlanRefresh = resolve; });
   await page.route("**/api/backend/posts/recipe_*", (route) => route.fulfill({ json: { image_urls: [] } }));
-  await page.route(`**/api/backend/meal-plans/${planId}`, (route) => route.fulfill({ json: plan }));
+  await page.route(`**/api/backend/meal-plans/${planId}`, async (route) => {
+    if (holdPlanRefresh && plan.current_version_id === "v2") await planRefreshGate;
+    await route.fulfill({ json: plan });
+  });
   await page.route(`**/api/backend/meal-plans/${planId}/conversation`, (route) => route.fulfill({ json: conversation }));
   await page.route(`**/api/backend/meal-plans/${planId}/conversation/messages`, async (route) => {
     const body = route.request().postDataJSON();
@@ -75,9 +81,22 @@ test("受控 API：连续修改、提交失败保留输入、撤销刷新菜单"
   await page.getByRole("checkbox", { name: "鱼", exact: true }).check();
   await page.reload();
   await expect(page.getByRole("checkbox", { name: "鱼", exact: true })).toBeChecked();
+  holdPlanRefresh = true;
   await input.fill("第二天换成香菇鸡肉");
   await send.click();
+  try {
+    await expect(page.getByRole("log")).toContainText("已完成第 1 次调整");
+    await input.fill("第二天少放盐");
+    await expect(page.getByRole("status")).toHaveText("正在同步菜单…");
+    await expect(send).toBeDisabled();
+    await expect(dayTwo.getByRole("heading", { name: "清蒸鱼" })).toBeVisible();
+  } finally {
+    holdPlanRefresh = false;
+    releasePlanRefresh();
+  }
   await expect(dayTwo.getByRole("heading", { name: "香菇鸡肉" })).toBeVisible();
+  await expect(send).toBeEnabled();
+  await expect(input).toHaveValue("第二天少放盐");
   await expect(page.getByRole("button", { name: "重试上一次", exact: true })).toHaveCount(0);
   await expect(dayOne.getByRole("heading", { name: "番茄炒蛋" })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "鸡肉", exact: true })).toBeVisible();

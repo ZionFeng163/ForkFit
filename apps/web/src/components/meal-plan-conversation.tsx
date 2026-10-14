@@ -48,18 +48,18 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
       base_version_id: currentVersionId,
       locale,
     }),
-    onSuccess: () => {
-      setText("");
-      void conversation.refetch();
+    onSuccess: async (_result, submittedText) => {
+      setText((current) => current.trim() === submittedText.trim() ? "" : current);
+      await conversation.refetch();
     },
   });
   const confirm = useMutation({
     mutationFn: (messageId: string) => confirmMealPlanMessage(planId, messageId),
-    onSuccess: () => void conversation.refetch(),
+    onSuccess: () => conversation.refetch(),
   });
   const cancel = useMutation({
     mutationFn: (messageId: string) => cancelMealPlanMessage(planId, messageId),
-    onSuccess: () => void conversation.refetch(),
+    onSuccess: () => conversation.refetch(),
   });
 
   const messages = useMemo(
@@ -70,6 +70,10 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
     (message) => message.message_id === conversation.data?.pending_message_id,
   );
   const isWaitingForMessage = pendingMessage && ["queued", "processing", "needs_confirmation"].includes(pendingMessage.status);
+  const versionOutOfSync = Boolean(conversation.data
+    && (conversation.data.current_version_id ?? null) !== (currentVersionId ?? null));
+  const sendBlocked = send.isPending || confirm.isPending || cancel.isPending
+    || !conversation.data || conversation.isError || Boolean(isWaitingForMessage) || versionOutOfSync;
   const latestUserMessage = [...(conversation.data?.messages ?? [])]
     .reverse()
     .find((message) => message.role === "user");
@@ -85,7 +89,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
   function submit(event: FormEvent) {
     event.preventDefault();
     const value = text.trim();
-    if (!value || send.isPending || isWaitingForMessage) return;
+    if (!value || sendBlocked) return;
     send.mutate(value);
   }
 
@@ -161,16 +165,17 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           placeholder={initialPlanning || pendingMessage?.status === "needs_clarification" ? (isZh ? "回答上面的问题，继续规划…" : "Reply to continue…") : (isZh ? "想调整哪里？" : "What would you change?")}
           aria-label={isZh ? "输入菜单修改" : "Describe a menu change"}
         />
-        <button type="submit" className="button-primary h-12 min-h-12 w-12 px-0" disabled={!text.trim() || send.isPending || Boolean(isWaitingForMessage)} aria-label={isZh ? "发送修改" : "Send change"}>
-          {send.isPending ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={17} />}
+        <button type="submit" className="button-primary h-12 min-h-12 w-12 px-0" disabled={!text.trim() || sendBlocked} aria-label={isZh ? "发送修改" : "Send change"}>
+          {send.isPending || versionOutOfSync ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={17} />}
         </button>
       </form>
+      {versionOutOfSync && <p role="status" className="mt-2 text-sm text-[var(--muted-text)]">{isZh ? "正在同步菜单…" : "Syncing your menu…"}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         {failedMessage && (
           <button
             type="button"
             className="meal-plan-example"
-            disabled={send.isPending || Boolean(isWaitingForMessage)}
+            disabled={sendBlocked}
             onClick={() => send.mutate(failedMessage.content)}
           >
             <RotateCcw size={13} />

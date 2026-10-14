@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
 from forkfit.knowledge.store import SubstitutionStore
 
 
@@ -41,6 +45,20 @@ def _canonical_allergen(value: str) -> str:
     return ALLERGEN_ALIASES.get(normalized, normalized)
 
 
+@lru_cache(maxsize=1)
+def _chinese_names() -> dict[str, str]:
+    path = Path(__file__).resolve().parents[1] / "knowledge" / "substitution_names_zh.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _localized_results(results: list[dict], locale: str) -> list[dict]:
+    if not locale.startswith("zh"):
+        return results
+    names = _chinese_names()
+    return [{**item, "canonical_substitute": item["substitute"],
+             "substitute": names.get(item["substitute"], item["substitute"])} for item in results]
+
+
 class SubstitutionTool:
     """Tool for looking up ingredient substitutions from the knowledge base."""
 
@@ -57,6 +75,7 @@ class SubstitutionTool:
         cooking_use: str = "",
         top_k: int = 5,
         context: str = "",
+        locale: str = "en",
     ) -> list[dict]:
         """
         Find suitable substitutes for an ingredient.
@@ -80,18 +99,20 @@ class SubstitutionTool:
         for value in (desired_taste, desired_texture, cooking_use):
             if not isinstance(value, str) or len(value) > 80:
                 raise ValueError("taste, texture and cooking use must be strings up to 80 characters")
+        if not isinstance(context, str) or len(context) > 500:
+            raise ValueError("context must be a string up to 500 characters")
         exclude = [_canonical_allergen(str(a)) for a in (exclude_allergens or [])]
         lookup_ingredient = INGREDIENT_LOOKUP_ALIASES.get(ingredient.lower(), ingredient)
         query_parts = [lookup_ingredient, desired_taste, desired_texture, cooking_use, context]
         query = " ".join(part.strip() for part in query_parts if part and part.strip())[:500]
-        cache_key = ":".join([
-            "v3", lookup_ingredient, ",".join(sorted(exclude)), desired_taste.strip(),
-            desired_texture.strip(), cooking_use.strip(), str(top_k),
-        ])
+        cache_key = json.dumps([
+            "v4", lookup_ingredient, sorted(exclude), desired_taste.strip(),
+            desired_texture.strip(), cooking_use.strip(), context.strip(), top_k,
+        ], ensure_ascii=False)
         if self._cache:
             cached = self._cache.get("substitution", cache_key)
             if cached is not None:
-                return cached
+                return _localized_results(cached, locale)
         results = self._store.search(
             query=query,
             exclude_allergens=exclude,
@@ -103,7 +124,7 @@ class SubstitutionTool:
         )
         if self._cache and results:
             self._cache.set("substitution", cache_key, results, ttl=3600)
-        return results
+        return _localized_results(results, locale)
 
     def get_substitution_context(
         self,

@@ -4,6 +4,7 @@ import json
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 
 import numpy as np
 
@@ -41,11 +42,12 @@ class SubstitutionStore:
         self._candidates: list[dict] = []
         self._client: EmbeddingClient | None = None
         self._loaded = False
+        self._embedding_lock = Lock()
 
     def load(self, client: EmbeddingClient | None = None) -> None:
         if self._loaded:
             return
-        self._client = client or EmbeddingClient()
+        self._client = client
 
         kb_path = Path(__file__).parent / "substitutions.json"
         with open(kb_path) as f:
@@ -53,6 +55,7 @@ class SubstitutionStore:
 
         self._entries = []
         self._texts = []
+        self._candidates = []
         for item in raw:
             entry = SubstitutionEntry(
                 id=item["id"],
@@ -86,18 +89,26 @@ class SubstitutionStore:
                 self._candidates.append(candidate)
                 self._texts.append(text)
 
-        # Check cache
-        kb_hash = hashlib.md5(("candidate-v2:" + json.dumps(raw, sort_keys=True)).encode()).hexdigest()
-        cache_file = _CACHE_DIR / f"embeddings_{kb_hash}.npy"
-
-        if cache_file.exists():
-            self._embeddings = np.load(cache_file)
-        else:
-            self._embeddings = np.array(self._client.embed(self._texts))
-            _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            np.save(cache_file, self._embeddings)
-
         self._loaded = True
+
+    def _ensure_embeddings(self) -> None:
+        # Exact ingredient lookups need neither credentials nor an embedding request.
+        with self._embedding_lock:
+            if self._embeddings is not None:
+                return
+            self._client = self._client or EmbeddingClient()
+            digest = hashlib.sha256(json.dumps([self._client.model, self._texts]).encode()).hexdigest()
+            cache_file = _CACHE_DIR / f"embeddings_{digest}.npy"
+            if cache_file.exists():
+                self._embeddings = np.load(cache_file)
+            else:
+                self._embeddings = np.array(self._client.embed(self._texts))
+                try:
+                    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                    np.save(cache_file, self._embeddings)
+                except OSError:
+                    # Read-only source mounts must not make retrieval unavailable.
+                    pass
 
     def get_by_ingredient(self, ingredient: str) -> SubstitutionEntry | None:
         """Exact match lookup by ingredient name."""
@@ -120,21 +131,25 @@ class SubstitutionStore:
         cooking_use: str = "",
         top_k: int = 5,
     ) -> list[dict]:
-        """Candidate-level keyword/vector retrieval with RRF and allergen filtering."""
+        """Use local exact matches; rank fuzzy candidates only after allergen filtering."""
         if not self._loaded:
             self.load()
         top_k = max(1, min(5, int(top_k)))
-        query_vec = np.array(self._client.embed_single(query))
-        vector_scores = [
-            (i, cosine_similarity(query_vec, self._embeddings[i]))
-            for i in range(len(self._candidates))
-        ]
-        vector_scores.sort(key=lambda x: x[1], reverse=True)
+        term = ingredient.lower().strip()
+        exact = [i for i, candidate in enumerate(self._candidates)
+                 if term and term in {candidate["original"].lower(), *(alias.lower() for alias in candidate["aliases"])}]
+        exclude = {a.lower() for a in (exclude_allergens or [])}
+        eligible = [i for i in (exact if exact else range(len(self._candidates)))
+                    if exclude.issubset({a.lower() for a in self._candidates[i]["allergens_free"]})
+                    and not any(a in self._candidates[i]["substitute"].lower() for a in exclude)]
+        if not eligible:
+            return []
         terms = [value.lower().strip() for value in (
             ingredient, desired_taste, desired_texture, cooking_use
         ) if value.strip()]
         keyword_scores: list[tuple[int, float]] = []
-        for index, candidate in enumerate(self._candidates):
+        for index in eligible:
+            candidate = self._candidates[index]
             text = candidate["searchable_text"]
             aliases = {alias.lower() for alias in candidate["aliases"]}
             score = sum(3.0 if term == candidate["original"].lower() or term in aliases else 1.0
@@ -142,24 +157,26 @@ class SubstitutionStore:
             if score > 0:
                 keyword_scores.append((index, score))
         keyword_scores.sort(key=lambda item: item[1], reverse=True)
-        vector_rank = {index: rank for rank, (index, _score) in enumerate(vector_scores, 1)}
         keyword_rank = {index: rank for rank, (index, _score) in enumerate(keyword_scores, 1)}
+        vector_rank = {}
+        if not exact:
+            self._ensure_embeddings()
+            query_vec = np.array(self._client.embed_single(query))
+            vector_scores = sorted(
+                ((i, cosine_similarity(query_vec, self._embeddings[i])) for i in eligible),
+                key=lambda item: item[1], reverse=True,
+            )
+            vector_rank = {index: rank for rank, (index, _score) in enumerate(vector_scores, 1)}
         fused = []
-        for index in range(len(self._candidates)):
-            score = 1 / (60 + vector_rank[index])
+        for index in eligible:
+            score = 1 / (60 + vector_rank[index]) if index in vector_rank else 0
             if index in keyword_rank:
                 score += 1 / (60 + keyword_rank[index])
             fused.append((index, score))
         fused.sort(key=lambda item: item[1], reverse=True)
-        exclude = set(a.lower() for a in (exclude_allergens or []))
         results = []
         for index, score in fused:
             candidate = self._candidates[index]
-            free_of = {a.lower() for a in candidate["allergens_free"]}
-            if not exclude.issubset(free_of):
-                continue
-            if any(allergen in candidate["substitute"].lower() for allergen in exclude):
-                continue
             results.append({
                 key: candidate[key] for key in (
                     "original", "substitute", "reason", "ratio",

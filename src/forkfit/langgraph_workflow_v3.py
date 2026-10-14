@@ -57,11 +57,10 @@ class ForkFitLangGraphWorkflow:
     def _build_substitution_tool():
         try:
             from forkfit.config import get_settings
-            from forkfit.knowledge.embeddings import EmbeddingClient
             from forkfit.knowledge.store import SubstitutionStore
             from forkfit.redis_utils import get_cache
             from forkfit.tools.substitution import SubstitutionTool
-            store = SubstitutionStore(); store.load(EmbeddingClient())
+            store = SubstitutionStore(); store.load()
             return SubstitutionTool(store, cache=get_cache(get_settings().redis_url))
         except Exception as exc:
             logger.warning("Substitution search is unavailable: %s", exc)
