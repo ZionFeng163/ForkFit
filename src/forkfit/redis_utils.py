@@ -124,10 +124,15 @@ def get_rate_limiter(redis_url: str | None = None) -> RateLimiter | None:
         return _rate_limiter
     if not redis_url:
         return None
+    redis = None
     try:
-        redis = Redis.from_url(redis_url, decode_responses=True)
+        redis = Redis.from_url(
+            redis_url, decode_responses=True, socket_connect_timeout=2, socket_timeout=2,
+        )
         redis.ping()
         _rate_limiter = RateLimiter(redis)
         return _rate_limiter
     except Exception:
+        if redis is not None:
+            redis.close()
         return None

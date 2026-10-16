@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from forkfit.api.routes_admin import router as admin_router
 from forkfit.api.routes_auth import router as auth_router
 from forkfit.api.routes_comments import router as comments_router
+from forkfit.api.routes_feedback import router as feedback_router
 from forkfit.api.routes_health import router as health_router
 from forkfit.api.routes_meal_plans import router as meal_plans_router
 from forkfit.api.routes_posts import router as posts_router
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(upload_router)
     app.include_router(comments_router)
+    app.include_router(feedback_router)
     app.include_router(health_router)
 
     upload_dir = os.getenv("UPLOAD_DIR", "uploads")

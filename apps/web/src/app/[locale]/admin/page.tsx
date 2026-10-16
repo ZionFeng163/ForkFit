@@ -7,6 +7,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { BrandMark } from "@/components/brand-logo";
 import { useAuth } from "@/components/auth-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { SiteFeedbackList } from "@/components/site-feedback";
 import {
   getAdminStats,
   getAdminHealth,
@@ -98,13 +99,14 @@ const Icons = {
   ),
 };
 
-type Tab = "dashboard" | "services" | "content" | "users";
+type Tab = "dashboard" | "services" | "content" | "users" | "feedback";
 
 const TAB_CONFIG: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "dashboard", label: "数据看板", icon: Icons.dashboard },
   { key: "services", label: "服务状态", icon: Icons.services },
   { key: "content", label: "内容管理", icon: Icons.content },
   { key: "users", label: "用户管理", icon: Icons.users },
+  { key: "feedback", label: "用户反馈", icon: Icons.runsStat },
 ];
 
 // ── Page Component ──────────────────────────────────────────────
@@ -240,6 +242,7 @@ function AdminLayout() {
           {tab === "dashboard" && <DashboardTab refreshKey={refreshKey} />}
           {tab === "services" && <ServicesTab refreshKey={refreshKey} />}
           {tab === "content" && <ContentTab refreshKey={refreshKey} />}
+          {tab === "feedback" && <SiteFeedbackList admin refreshKey={refreshKey} />}
           {tab === "users" && (
             <UsersTab refreshKey={refreshKey} currentUserId={user.id} />
           )}

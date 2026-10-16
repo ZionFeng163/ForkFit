@@ -87,7 +87,11 @@ export default async function Home({ params }: HomeProps) {
       </div>
 
       <footer className="border-t border-[var(--separator)] bg-[var(--surface)] py-7">
-        <div className="site-container text-xs text-[var(--muted)]">© 2026 ForkFit</div>
+        <div className="site-container flex flex-wrap items-center gap-x-6 text-sm text-[var(--muted-text)]">
+          <span>© 2026 ForkFit</span>
+          <Link href="/help" className="button-quiet">{isZh ? "使用与隐私" : "Use and privacy"}</Link>
+          <Link href="/help#feedback" className="button-quiet">{isZh ? "问题反馈" : "Feedback"}</Link>
+        </div>
       </footer>
     </AppShell>
   );

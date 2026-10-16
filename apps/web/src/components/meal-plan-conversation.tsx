@@ -70,6 +70,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
     (message) => message.message_id === conversation.data?.pending_message_id,
   );
   const isWaitingForMessage = pendingMessage && ["queued", "processing", "needs_confirmation"].includes(pendingMessage.status);
+  const isProcessing = pendingMessage && ["queued", "processing"].includes(pendingMessage.status);
   const versionOutOfSync = Boolean(conversation.data
     && (conversation.data.current_version_id ?? null) !== (currentVersionId ?? null));
   const sendBlocked = send.isPending || confirm.isPending || cancel.isPending
@@ -124,9 +125,6 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
                   ))}
                 </div>
               ) : null}
-              {message.status === "processing" || message.status === "queued" ? (
-                <span className="mt-2 flex items-center gap-1.5 text-xs text-[var(--muted-text)]"><Loader2 size={12} className="animate-spin" />{isZh ? "正在调整…" : "Working…"}</span>
-              ) : null}
               {message.status === "failed" && (
                 <span className="mt-2 block text-xs text-[var(--danger)]">{message.error?.message || (isZh ? "这次修改没有应用。" : "This change was not applied.")}</span>
               )}
@@ -136,6 +134,16 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
             return groupIndex === 0 ? (group.length > 0 && <details key="history" className="conversation-history"><summary>{isZh ? "历史对话" : "Conversation history"}</summary><div className="conversation-messages mt-3 space-y-3">{content}</div></details>) : <div key="recent" className="space-y-3">{content}</div>;
           })}
         </div>
+      )}
+
+      {isProcessing && !conversation.isError && (
+        <p role="status" aria-live="polite" className="mt-4 flex items-start gap-2 text-sm">
+          <Loader2 size={16} className="mt-1 shrink-0 animate-spin" aria-hidden="true" />
+          <span>{pendingMessage.status === "queued"
+            ? (isZh ? "已收到，排队等待处理。" : "Received, waiting in the queue.")
+            : (isZh ? "正在处理你的要求，完成后会显示结果或向你提问。" : "Processing your request. The result or a question will appear here.")}
+            {!initialPlanning && (isZh ? "当前菜单尚未改变。" : " Your current menu is unchanged.")}</span>
+        </p>
       )}
 
       {pendingMessage?.status === "needs_confirmation" && (
@@ -189,7 +197,7 @@ export function MealPlanConversation({ planId, currentVersionId, onVersionChange
           </button>
         ))}
       </div>
-      {conversation.isError && <p role="alert" className="mt-3 text-sm text-[var(--danger)]">{isZh ? "对话加载失败。" : "Could not load the conversation."}<button type="button" className="ml-2 underline" onClick={() => void conversation.refetch()}>{isZh ? "重试" : "Retry"}</button></p>}
+      {conversation.isError && <p role="alert" className="mt-3 text-sm text-[var(--danger)]">{conversation.data ? (isZh ? "暂时无法更新对话，任务是否完成尚未确认。" : "Cannot update the conversation. Task completion is not yet confirmed.") : (isZh ? "对话加载失败。" : "Could not load the conversation.")}<button type="button" className="ml-2 underline" onClick={() => void conversation.refetch()}>{isZh ? "重试" : "Retry"}</button></p>}
       {(send.isError || confirm.isError || cancel.isError) && (
         <p className="mt-3 text-sm text-[var(--danger)]">
           {(send.error instanceof Error && send.error.message) || (confirm.error instanceof Error && confirm.error.message) || (cancel.error instanceof Error && cancel.error.message) || (isZh ? "修改暂时无法提交。" : "Could not submit the change.")}

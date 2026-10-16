@@ -185,7 +185,8 @@ class BailianLLMClient:
                     ))
                 return body
             except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace")
+                with exc:
+                    detail = exc.read().decode("utf-8", errors="replace")
                 retryable = exc.code == 429 or 500 <= exc.code < 600
                 if retryable and attempt < self.max_retries:
                     time.sleep(0.2 * (attempt + 1))

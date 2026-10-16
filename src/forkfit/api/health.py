@@ -58,9 +58,9 @@ def _check_redis() -> tuple[bool, float, str]:
         import redis as redis_lib
 
         settings = get_settings()
-        client = redis_lib.from_url(settings.redis_url, socket_timeout=3)
         started = time.perf_counter()
-        client.ping()
+        with redis_lib.from_url(settings.redis_url, socket_connect_timeout=3, socket_timeout=3) as client:
+            client.ping()
         latency = round((time.perf_counter() - started) * 1000, 1)
         return True, latency, "connected"
     except Exception as exc:

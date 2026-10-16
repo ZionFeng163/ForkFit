@@ -24,6 +24,31 @@ import { getLocalizedLoginUrl, stripLocalePrefix } from "@/lib/auth-navigation";
 
 const API_PROXY_PREFIX = "/api/backend";
 
+export type SiteFeedback = {
+  id: string;
+  user_id: string;
+  category: "bug" | "suggestion" | "data_request";
+  content: string;
+  status: "open" | "resolved";
+  reply: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export function submitSiteFeedback(input: Pick<SiteFeedback, "category" | "content"> & { request_id: string }) {
+  return request<SiteFeedback>("/feedback", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function listSiteFeedback(admin: boolean, offset = 0, status = "") {
+  const params = new URLSearchParams({ limit: "20", offset: String(offset) });
+  if (admin && status) params.set("status", status);
+  return request<{ items: SiteFeedback[]; total: number }>(`${admin ? "/admin" : ""}/feedback?${params}`);
+}
+
+export function updateSiteFeedback(id: string, input: Pick<SiteFeedback, "status" | "reply">) {
+  return request<SiteFeedback>(`/admin/feedback/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
 type RequestOptions = RequestInit & {
   redirectOnUnauthorized?: boolean;
 };

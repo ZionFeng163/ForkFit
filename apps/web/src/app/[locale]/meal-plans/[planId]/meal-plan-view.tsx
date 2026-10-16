@@ -13,13 +13,13 @@ import { useAuth } from "@/components/auth-provider";
 import { useStoredState } from "@/lib/use-stored-state";
 
 const STAGES: Record<string, { zh: string; en: string }> = {
-  queued: { zh: "排队中", en: "In the queue" },
+  queued: { zh: "已提交，等待开始", en: "Submitted, waiting to start" },
   starting: { zh: "开始整理需求", en: "Getting started" },
   understanding: { zh: "整理你的想法", en: "Understanding your request" },
-  adapting_recipes: { zh: "看看每道菜是否合适", en: "Checking your recipes" },
+  adapting_recipes: { zh: "按你的要求调整菜谱", en: "Adapting recipes to your needs" },
   generating_combinations: { zh: "搭配每天的菜单", en: "Putting together each day" },
-  reviewing_combinations: { zh: "看看这几天是否均衡", en: "Balancing the week" },
-  revising_combination: { zh: "再调整一下安排", en: "Making a few final changes" },
+  reviewing_combinations: { zh: "审核菜单的搭配和可执行性", en: "Reviewing balance and practicality" },
+  revising_combination: { zh: "修正审核发现的问题", en: "Addressing review findings" },
   drafting: { zh: "安排每日菜单", en: "Planning each day" },
   validating_candidates: { zh: "检查时间和限制", en: "Checking time and constraints" },
   reviewing: { zh: "检查搭配和执行", en: "Checking the balance" },
@@ -72,23 +72,25 @@ export function MealPlanView({ planId }: { planId: string }) {
     return <div className="site-container py-20"><div className="state-panel"><Loader2 size={22} className="animate-spin" />{isZh ? "正在打开这份计划" : "Opening your plan"}…</div></div>;
   }
 
-  if (!plan || query.isError) {
+  if (!plan) {
     return <div className="site-container py-20 text-center"><p className="text-[var(--muted-text)]">{isZh ? "无法加载这份计划。" : "Could not load this plan."}</p><Link href="/meal-plans" className="button-secondary mt-5">{isZh ? "返回计划" : "Back to plans"}</Link></div>;
   }
 
   if (plan.status === "queued" || plan.status === "running") {
-    const stage = STAGES[plan.stage] ?? STAGES.starting;
+    const stage = STAGES[plan.status === "queued" ? "queued" : plan.stage]
+      ?? { zh: "正在处理你的规划", en: "Processing your plan" };
     return (
       <div className="site-container pb-20 pt-8 md:pt-12">
         <div className="mx-auto max-w-[760px]">
           <Link href="/meal-plans" className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-text)]"><ArrowLeft size={16} />{isZh ? "返回计划列表" : "Back to plans"}</Link>
           <section className="plan-progress">
-            <p className="eyebrow">{isZh ? "正在准备你的菜单" : "Preparing your menu"}</p>
-            <div className="mt-3 flex items-center gap-3 text-[var(--brand)]"><Loader2 size={23} className="animate-spin" /><span className="text-sm font-semibold">{isZh ? "正在为你安排" : "Planning for you"}</span></div>
-            <h1 className="mt-6 text-3xl font-bold tracking-[-0.045em] md:text-5xl">{isZh ? stage.zh : stage.en}</h1>
-            <p className="mt-4 max-w-xl leading-7 text-[var(--muted-text)]">{isZh ? "你的选择会保留，完成后还能继续调整。" : "Your choices are saved, and you can refine the menu later."}</p>
-            <div className="mt-9 h-1.5 overflow-hidden rounded-sm bg-[var(--line)]"><div className="h-full bg-[var(--brand)] transition-[width] duration-300" style={{ width: `${Math.max(3, plan.progress)}%` }} /></div>
-            <div className="mt-2 flex justify-between text-xs text-[var(--muted-text)]"><span>{isZh ? "处理中" : "Working"}</span><span>{plan.progress}%</span></div>
+            <h1 className="page-heading">{isZh ? "正在准备你的菜单" : "Preparing your menu"}</h1>
+            <div role="status" aria-live="polite" aria-atomic="true" className="mt-5 flex items-start gap-3">
+              {query.isError ? <AlertTriangle size={20} className="mt-0.5 shrink-0" aria-hidden="true" /> : <Loader2 size={20} className="mt-0.5 shrink-0 animate-spin text-[var(--brand)]" aria-hidden="true" />}
+              <p>{query.isError ? (isZh ? "暂时无法更新进度，不代表规划失败。正在尝试重新连接。" : "Progress is temporarily unavailable. This does not mean planning failed. Reconnecting.") : (isZh ? stage.zh : stage.en)}</p>
+            </div>
+            {query.isError && <button type="button" className="button-secondary mt-3" disabled={query.isFetching} onClick={() => void query.refetch()}>{isZh ? "重新连接" : "Reconnect"}</button>}
+            <p className="mt-4 max-w-xl leading-7 text-[var(--muted-text)]">{isZh ? "可以先离开，稍后从「吃饭计划」查看结果；需要补充信息时会在这里提问。" : "You can leave and return from Meal plans. Any questions will appear here."}</p>
           </section>
         </div>
       </div>
@@ -130,6 +132,7 @@ export function MealPlanView({ planId }: { planId: string }) {
   return (
     <div className="site-container pb-24 pt-8 md:pt-12">
       <Link href="/meal-plans" className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-text)] hover:text-[var(--text)]"><ArrowLeft size={16} />{isZh ? "返回计划列表" : "Back to plans"}</Link>
+      {query.isError && <p role="alert" className="mt-4 text-sm text-[var(--danger)]">{isZh ? "暂时无法更新菜单，当前显示上次保存的版本。" : "Cannot refresh the menu. Showing the last saved version."}<button type="button" className="ml-2 underline" onClick={() => void query.refetch()}>{isZh ? "重试" : "Retry"}</button></p>}
       <header className="plan-result-header mt-5">
         <div>
           <h1 className="page-heading">{result.title}</h1>

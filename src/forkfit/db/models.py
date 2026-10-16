@@ -214,6 +214,19 @@ class CommentRow(Base):
     )
 
 
+class FeedbackRow(Base):
+    __tablename__ = "site_feedback"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    category: Mapped[str] = mapped_column(String(24), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="open", index=True, nullable=False)
+    reply: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class FollowRow(Base):
     __tablename__ = "follows"
     follower_id: Mapped[str] = mapped_column(String(80), primary_key=True)

@@ -40,8 +40,8 @@ class EmbeddingClient:
                     "Content-Type": "application/json",
                 },
             )
-            resp = urllib.request.urlopen(req, timeout=30)
-            body = json.loads(resp.read())
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = json.loads(resp.read())
             for item in sorted(body["data"], key=lambda x: x["index"]):
                 all_embeddings.append(item["embedding"])
         return all_embeddings

@@ -8,7 +8,7 @@ import { FormEvent, useState } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { useAuth } from "@/components/auth-provider";
-import { useRouter } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { loginUser as apiLogin, registerUser } from "@/lib/api";
 import { getSafeReturnTo } from "@/lib/auth-navigation";
 
@@ -227,7 +227,7 @@ export function AuthPage({ defaultTab = "login" }: { defaultTab?: "login" | "reg
         </form>
       </div>
 
-      <p className="auth-terms">{tab === "login" ? "登录" : "注册"}即表示你同意平台使用规则和隐私说明。</p>
+      <p className="auth-terms">使用前请阅读 <Link href="/help" className="underline">公测使用与隐私说明</Link>。</p>
     </AuthLayout>
   );
 }

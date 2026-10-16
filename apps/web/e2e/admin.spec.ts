@@ -13,7 +13,7 @@ test.describe("后台", () => {
     await expect(page).toHaveURL(/\/zh\/admin$/);
     await expect(page.getByRole("heading", { name: "数据看板" })).toBeVisible();
 
-    for (const tab of ["服务状态", "内容管理", "用户管理", "数据看板"]) {
+    for (const tab of ["服务状态", "内容管理", "用户管理", "用户反馈", "数据看板"]) {
       await page.getByRole("button", { name: tab, exact: true }).first().click();
       await expect(page.getByRole("heading", { name: tab })).toBeVisible();
       await expectMainVisible(page);

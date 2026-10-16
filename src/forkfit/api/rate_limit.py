@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import HTTPException
+from redis.exceptions import RedisError
 
 from forkfit.config import get_settings
 from forkfit.redis_utils import get_rate_limiter
@@ -17,14 +18,20 @@ def enforce_rate_limit(
     if not settings.rate_limit_enabled:
         return
 
-    limiter = get_rate_limiter(settings.redis_url)
-    if limiter is None:
-        return
-
-    allowed, _remaining = limiter.is_allowed(
-        key,
-        max_requests=max_requests,
-        window_seconds=window_seconds,
-    )
+    try:
+        limiter = get_rate_limiter(settings.redis_url)
+        if limiter is None:
+            raise RedisError("Rate limiter unavailable")
+        allowed, _remaining = limiter.is_allowed(
+            key,
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+        )
+    except (RedisError, OSError):
+        raise HTTPException(
+            status_code=503,
+            detail="服务暂时不可用，请稍后重试。",
+            headers={"Retry-After": "10"},
+        ) from None
     if not allowed:
         raise HTTPException(status_code=429, detail=detail)

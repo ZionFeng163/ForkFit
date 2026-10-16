@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from forkfit.api.deps import current_user, get_comment_store, get_post_store, get_user_store, optional_current_user
 from forkfit.auth.models import CurrentUser
+from forkfit.api.rate_limit import enforce_rate_limit
 
 router = APIRouter(prefix="/users", tags=["users"])
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ def extract_my_preferences(
     user: CurrentUser = Depends(current_user),
 ) -> dict:
     locale = (body.locale if body else "en")
+    enforce_rate_limit(f"extract-preferences:{user.id}", max_requests=3, window_seconds=600)
     from forkfit.preference_extractor import UserPreferenceExtractor
     from forkfit.llm import BailianLLMClient
     from forkfit.tools.db_query import DBQueryTool

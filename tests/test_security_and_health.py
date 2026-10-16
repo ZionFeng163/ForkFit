@@ -3,10 +3,11 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from forkfit.api.app import create_app
 from forkfit.api.rate_limit import enforce_rate_limit
@@ -37,6 +38,46 @@ class StartupValidationTests(unittest.TestCase):
 
 
 class RateLimitTests(unittest.TestCase):
+    def test_unavailable_limiter_fails_closed(self) -> None:
+        settings = replace(get_settings(), app_env="production", rate_limit_enabled=True)
+        for limiter in (None, Mock(is_allowed=Mock(side_effect=RedisConnectionError("private connection details")))):
+            with (
+                self.subTest(limiter=limiter),
+                patch("forkfit.api.rate_limit.get_settings", return_value=settings),
+                patch("forkfit.api.rate_limit.get_rate_limiter", return_value=limiter),
+            ):
+                with self.assertRaises(HTTPException) as error:
+                    enforce_rate_limit("test", max_requests=1, window_seconds=60)
+                self.assertEqual(error.exception.status_code, 503)
+                self.assertEqual(error.exception.headers, {"Retry-After": "10"})
+                self.assertNotIn("private", error.exception.detail)
+
+    def test_explicit_test_mode_disable_does_not_connect(self) -> None:
+        with (
+            patch("forkfit.api.rate_limit.get_settings", return_value=replace(get_settings(), rate_limit_enabled=False)),
+            patch("forkfit.api.rate_limit.get_rate_limiter") as get_limiter,
+        ):
+            enforce_rate_limit("test", max_requests=1, window_seconds=60)
+            get_limiter.assert_not_called()
+
+    def test_limiter_recovers_after_connection_failure(self) -> None:
+        limiter = Mock()
+        limiter.is_allowed.side_effect = [RedisConnectionError(), (True, 1)]
+        with (
+            patch("forkfit.api.rate_limit.get_settings", return_value=replace(get_settings(), rate_limit_enabled=True)),
+            patch("forkfit.api.rate_limit.get_rate_limiter", return_value=limiter),
+        ):
+            with self.assertRaises(HTTPException):
+                enforce_rate_limit("test", max_requests=2, window_seconds=60)
+            enforce_rate_limit("test", max_requests=2, window_seconds=60)
+
+    def test_preference_extraction_is_limited_before_model_work(self) -> None:
+        from forkfit.api.routes_users import extract_my_preferences
+        with patch("forkfit.api.routes_users.enforce_rate_limit", side_effect=HTTPException(503)) as enforce:
+            with self.assertRaises(HTTPException):
+                extract_my_preferences(user=SimpleNamespace(id="test"))
+            enforce.assert_called_once_with("extract-preferences:test", max_requests=3, window_seconds=600)
+
     def test_enforce_rate_limit_raises_429_when_limited(self) -> None:
         fake_limiter = SimpleNamespace(is_allowed=lambda *args, **kwargs: (False, 0))
         settings = replace(get_settings(), rate_limit_enabled=True)
