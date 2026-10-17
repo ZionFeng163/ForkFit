@@ -43,7 +43,7 @@ def audit(root: Path, ref: str) -> dict:
         if actual != oid or actual_mode != mode:
             mismatched.append(name)
     index_files = {os.fsdecode(name) for name in git(root, "ls-files", "-z").split(b"\0") if name}
-    untracked = [os.fsdecode(name) for name in git(root, "ls-files", "--others", "--directory", "--exclude-standard", "-z").split(b"\0") if name]
+    untracked = [os.fsdecode(name) for name in git(root, "ls-files", "--others", "--directory", "--no-empty-directory", "--exclude-standard", "-z").split(b"\0") if name]
     index_matches = subprocess.run(["git", "-C", str(root), "diff", "--cached", "--quiet", commit]).returncode == 0
     head = git(root, "rev-parse", "HEAD").decode().strip()
     return {

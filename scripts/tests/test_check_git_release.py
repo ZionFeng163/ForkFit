@@ -29,6 +29,7 @@ class ReleaseAuditTests(unittest.TestCase):
     def test_clean_repository_and_ignored_runtime(self):
         (self.root / "runtime").mkdir()
         (self.root / "runtime/data.txt").write_text("preserve me")
+        (self.root / "empty-source-directory").mkdir()
         self.assertTrue(module.audit(self.root, "HEAD")["clean"])
 
     def test_raw_content_detects_change_hidden_from_git_status(self):
