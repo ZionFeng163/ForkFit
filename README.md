@@ -28,6 +28,8 @@ ForkFit 是一个 AI 驱动的菜谱定制平台。用户可以从社区菜谱�
 
 ## 启动
 
+发布以 `origin/main` 的已提交版本为准。部署、Git 一致性检查及用户数据边界见 [发布规范](docs/deployment.md)。
+
 当前生产部署以 VPS 实际运行方式为准：
 
 - Nginx 对外提供 `forkfit.shop` / `www.forkfit.shop`

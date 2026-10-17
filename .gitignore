@@ -30,3 +30,12 @@ src/forkfit/knowledge/.cache/
 
 # Local dev process state
 .forkfit-dev/
+
+# Runtime data and generated deployment metadata (not source code)
+/uploads/*
+/build/
+/release.json
+/DEPLOYED_COMMIT
+/.npm/
+/.config/nextjs-nodejs/
+/.claude/settings.local.json
